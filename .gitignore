@@ -1,0 +1,9 @@
+# ------------------------------------------------------------------------------
+# ignore backup + autosave files
+.#*
+*.el~
+
+# ------------------------------------------------------------------------------
+# yes, this is intended. `emacs-init.el' is generated from emacs-init.org
+emacs-init.el
+

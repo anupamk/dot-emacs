@@ -1,0 +1,1722 @@
+#+TITLE: My Emacs Configuration
+#+AUTHOR: Anupam Kapoor
+#+EMAIL: anupam.kapoor@gmail.com
+
+* Base Settings
+** Disable gooey 
+
++ I just want bare-bones windows with the modeline. GUI toolkit (gtk3
+  these days) components f.e buttons, scroll-bars etc. don't really
+  have any utility for me.
+
+#+begin_src emacs-lisp
+
+  (use-package emacs
+    :config
+
+    (blink-cursor-mode -1)
+    (menu-bar-mode -1)
+    (tool-bar-mode -1)
+    (scroll-bar-mode -1)
+    (horizontal-scroll-bar-mode -1)
+
+    (setq use-file-dialog nil)
+    (setq use-dialog-box t)
+    (setq inhibit-splash-screen t)
+    (setq x-alt-keysym 'meta)
+
+    :bind (("C-z"     . nil)
+           ("C-x C-z" . nil)
+           ("C-h h"   . nil)))
+
+#+end_src
+
+** User customizations in a separate location
+   
++ Store all user customizations in a separate disposable location for
+  saner behavior.
+
+#+begin_src emacs-lisp
+
+  (use-package emacs
+    :config
+    ;; -------------------------------------------------------------------------
+    ;; customizations in a separate place all together
+    (defvar anupamk:var/custom-file-name "~/.emacs.d/custom.el")
+    (setq custom-file anupamk:var/custom-file-name)
+
+    ;; -------------------------------------------------------------------------
+    ;; load customizations once initialization is complete
+    (defun anupamk/load-customizations ()
+      (let ((customization-file anupamk:var/custom-file-name))
+        (unless (file-exists-p customization-file)
+          (make-empty-file customization-file))
+        (load-file customization-file)))
+
+    :hook (after-init-hook . anupamk/load-customizations))
+
+#+end_src
+
+** Unannoy
+
++ Saner defaults make the whole thing so much better
+
+#+begin_src emacs-lisp
+
+  (use-package emacs
+    :config
+
+    ;; -------------------------------------------------------------------------
+    ;; dont show the startup screen
+    (setf inhibit-startup-message t)
+
+    ;; -------------------------------------------------------------------------
+    ;; no scratchpad by default, we can always create one ourselves. 
+    ;; see `anupamk:utils/create-new-scratch-buffer' for more details
+    (setf initial-scratch-message nil)
+
+    ;; -------------------------------------------------------------------------
+    ;; look ma, nobell
+    (setf ring-bell-function (lambda()))
+
+    ;; -------------------------------------------------------------------------
+    ;; disable backups
+    (setf backup-inhibited t
+          auto-save-default nil)
+
+    ;; -------------------------------------------------------------------------
+    ;; prefix for generating auto-save-list-file-name
+    (setf auto-save-list-file-prefix (locate-user-emacs-file "local/saves"))
+
+    ;; -------------------------------------------------------------------------
+    ;; echo unfinished commands after 0.1 seconds of pause
+    (setf echo-keystrokes 0.1)
+
+    ;; -------------------------------------------------------------------------
+    ;; allow single character to delete a region
+    (setf delete-active-region nil)
+
+    ;; -------------------------------------------------------------------------
+    ;; nullify function that is invoked to handle disabled commands i.e. all 
+    ;; commands work normally
+    (setf disabled-command-function nil)
+
+    ;; -------------------------------------------------------------------------
+    ;; prefer loading newer `.el' files over older `.elc'
+    (setf load-prefer-newer t)
+
+    ;; -------------------------------------------------------------------------
+    ;; enable column numbers
+    (setq column-number-mode t)
+
+    ;; -------------------------------------------------------------------------
+    ;; merge system and emacs clipboard
+    (setq select-enable-clipboard t)
+    (setq select-enable-primary t)
+
+    ;; -------------------------------------------------------------------------
+    ;; get rid of the insert key
+    (define-key global-map [(insert)] nil)
+
+    ;; -------------------------------------------------------------------------
+    ;; prevent accidental emacs-kill
+    (global-set-key (kbd "C-x C-c") (lambda()
+                                      (interactive)
+                                      (message "terminate this emacs session with \'M-x kill-emacs\'")))
+
+    ;; -------------------------------------------------------------------------
+    ;; disable full 'yes' or 'no'
+    (defalias 'yes-or-no-p 'y-or-n-p)
+
+    ;; -------------------------------------------------------------------------
+    ;; prefer utf-8 encoding
+    (prefer-coding-system        'utf-8)
+    (set-terminal-coding-system  'utf-8)
+    (set-keyboard-coding-system  'utf-8)
+    (set-language-environment    'utf-8)
+    (set-selection-coding-system 'utf-8)
+    (setq locale-coding-system   'utf-8)
+
+    ;; -------------------------------------------------------------------------
+    ;; additional space to put between lines when displaying a buffer
+    (setq-default line-spacing -1)
+
+    ;; -------------------------------------------------------------------------
+    ;; no tabs in sources
+    (setq-default indent-tabs-mode nil)
+
+    ;; -------------------------------------------------------------------------
+    ;; display buffer at its previous position
+    (setq switch-to-buffer-preserve-window-point t)
+
+    ;; -------------------------------------------------------------------------
+    ;; completion before indent
+    (setq tab-always-indent 'complete)
+
+    ;; -------------------------------------------------------------------------
+    ;; all themes are safe
+    (setq custom-safe-themes t)
+    )
+
+
+#+end_src
+
+** Delight
+
+   Edit / rename / remove modeline lighters for different packages.
+
+   #+begin_src emacs-lisp
+
+     (use-package delight
+       :ensure
+       :after use-package)
+
+   #+end_src
+   
+** Package lists
+
+   #+begin_src emacs-lisp
+
+     (use-package package
+       :commands (list-packages
+                  package-refresh-contents
+                  package-list-packages)
+       :hook (package-menu-mode . hl-line-mode))
+
+   #+end_src
+   
+* Utility functions
+
++ =use-package= allows declaring functions with the =:functions=
+  stanza in a package definition. Such functions are then made
+  available to the byte compiler
+
++ define a bunch of commonly used utility functions
+
+#+begin_src emacs-lisp
+
+  (use-package emacs
+
+    :functions (anupamk:utils/change-cursor-style
+                anupamk:utils/insert-current-date
+                anupamk:utils/rename-current-buffer-file
+                anupamk:utils/create-new-scratch-buffer
+                anupamk:utils/host-name-is
+                anupamk:utils/vi-match-paren
+                anupamk:utils/fill-to-end
+                anupamk:utils/copy-file-name-to-clipboard
+                anupamk:utils/toggle-invisibles
+                anupamk:utils/toggle-line-numbers
+                anupamk:utils/auto-fill-comments)
+
+    :config
+
+    ;; -------------------------------------------------------------------------
+    ;; change the cursor style
+    (defun anupamk:utils/change-cursor-style (cursor-type)
+      "Set the cursor type of the selected frame to CURSOR-TYPE.
+       When called interactively, prompt for the type to use.
+       To get the frame's current cursor type, use `frame-parameters'."
+      (interactive)
+      (list (intern (completing-read "Cursor type: "
+                                     (mapcar 'list '("box" "hollow" "bar" "hbar" nil)))))
+      (modify-frame-parameters (selected-frame) (list (cons 'cursor-type cursor-type))))
+
+    ;; -------------------------------------------------------------------------
+    ;; insert current date 
+    (defun anupamk:utils/insert-current-date (iso)
+      " Insert the current date at point.
+        When ISO is non-nil, insert the date in ISO 8601 format.
+        Otherwise insert the date as Mar 04, 2014.
+      "
+      (interactive "P")
+      (insert (format-time-string (if iso "%F" "%b %d, %Y"))))
+
+    ;; -------------------------------------------------------------------------
+    ;; rename current buffer to the desired name. the current name is copied 
+    ;; so you can just modify it, rather than typing it from scratch
+    (defun anupamk:utils/rename-current-buffer-file ()
+      "Renames current buffer and file it is visiting."
+      (interactive)
+      (let ((name (buffer-name))
+            (filename (buffer-file-name)))
+        (if (not (and filename (file-exists-p filename)))
+            (error "Buffer '%s' is not visiting a file!" name)
+          (let ((new-name (read-file-name "New name: " filename)))
+            (if (get-buffer new-name)
+                (error "A buffer named '%s' already exists!" new-name)
+              (rename-file filename new-name 1)
+              (rename-buffer new-name)
+              (set-visited-file-name new-name)
+              (set-buffer-modified-p nil)
+              (message "File '%s' successfully renamed to '%s'"
+                       name (file-name-nondirectory new-name)))))))
+
+
+    ;; -------------------------------------------------------------------------
+    ;; shortcut to create scratch buffers.
+    (defun anupamk:utils/create-new-scratch-buffer ()
+      "create a new scratch buffer to work in. (could be *scratch* - *scratch-X*)"
+      (interactive)
+      (let ((n 0)
+            bufname)
+        (while (progn
+                 (setq bufname (concat
+                                "*scratch-"
+                                (int-to-string n)
+                                "*"))
+                 (setq n (1+ n))
+                 (get-buffer bufname)))
+        (switch-to-buffer (get-buffer-create bufname))
+        (if (= n 1) initial-major-mode))) ; 1, because n was incremented
+
+    ;; -------------------------------------------------------------------------
+    ;; hostname predicate
+    (defun anupamk:utils/host-name-is (host_name)
+      "return true if host-name is `host_name'"
+      (string-equal (system-name) host_name))
+
+    ;; -----------------------------------------------------------------------------
+    ;; did vi(m) get anything right ? paren matching probably...
+    (defun anupamk:utils/vi-match-paren (arg)
+      "Go to the matching paren if on a paren; otherwise insert %."
+      (interactive "p")
+      (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
+            ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
+            (t (self-insert-command (or arg 1)))))
+
+
+    ;; ---------------------------------------------------------------------------
+    ;; fill current line with '-' upto '80' columns
+    (defun anupamk:utils/fill-to-end ()
+      (interactive)
+      (progn
+        (insert-char ?- (- 80 (current-column)))
+        (newline-and-indent)))
+
+    ;; ---------------------------------------------------------------------------
+    ;; copy file name to clipboard
+    (defun anupamk:utils/copy-file-name-to-clipboard ()
+      "Copy the current buffer file name to the clipboard."
+      (interactive)
+      (let ((filename (if (equal major-mode 'dired-mode)
+                          default-directory
+                        (buffer-file-name))))
+        (when filename
+          (kill-new filename)
+          (message "Copied buffer file name '%s' to the clipboard." filename))))
+
+    ;; ---------------------------------------------------------------------------
+    ;; toggle display of invisible characters
+    (defun anupamk:utils/toggle-invisibles ()
+      "toggle display of invisible characters"
+      (interactive)
+      (if (bound-and-true-p whitespace-mode)
+          (whitespace-mode -1)
+        (whitespace-mode)))
+
+    ;; ---------------------------------------------------------------------------
+    ;; toggle display of line-numbers
+    (defun anupamk:utils/toggle-line-numbers ()
+      "toggle display of line-numbers in all buffers"
+      (interactive)
+      (if (bound-and-true-p display-line-numbers-mode)
+          (display-line-numbers-mode -1)
+        (display-line-numbers-mode)))
+
+    ;; ---------------------------------------------------------------------------
+    ;; auto fill comments in programming modes only
+    (defun anupamk:utils/auto-fill-comments ()
+      "comments in programming mode are automatically filled"
+      (setq-local comment-auto-fill-only-comments t)
+      (auto-fill-mode 1))
+
+    )
+#+end_src
+
+* Interface and interactions
+** Appearance
+*** Font Configuration
+
+    + On high dpi displays, I have found =Pragmata= to be excellent
+      typeface for text based interactions. Use that.
+
+      #+begin_src emacs-lisp
+
+        (use-package emacs
+          :config
+          (set-face-attribute 'default nil :font "PragmataPro Mono" :height 130)
+
+          ;; -------------------------------------------------------------------
+          ;; bold faces are quite annoying. remove them all
+          (defun anupamk:utils/unbold-all-faces ()
+            "unbold all faces in emacs"
+            (mapc (lambda (face)
+                 (when (eq (face-attribute face :weight) 'bold)
+                   (set-face-attribute face nil :weight 'normal)))
+               (face-list)))
+
+          :hook (after-init-hook . anupamk:utils/unbold-all-faces))
+
+      #+end_src
+
+*** Color theme
+
+    + I /really/ love the low-contrast =zenburn= theme for long term
+      interactions with Emacs.
+
+ #+begin_src emacs-lisp
+
+   (use-package zenburn-theme
+     :ensure
+     :config
+     :custom-face
+     (diff-added    ((t :foreground "green"   :underline nil)))
+     (diff-removed  ((t :foreground "red"     :underline nil)))
+     (highlight     ((t :background "#989890" :underline nil))))
+
+ #+end_src
+
+*** Frame Configuration
+
+    + All frames have a golden cursor sans vertical or horizontal
+      scroll bars.
+
+ #+begin_src emacs-lisp
+
+   (use-package emacs
+     :init
+     (load-theme 'zenburn :no-confirm)
+
+     :config
+     (setq default-frame-alist '((cursor-color               . "gold")
+                                 (vertical-scroll-bars       . nil)
+                                 (horizontal-scroll-bar-mode . nil)
+                                 )))
+
+ #+end_src
+
+*** Fringe Configuration
+
+    + Fringes are areas on left and right side of an Emacs frame which
+      are typically used to show status related feedback.
+
+    + Default =8= pixel wide fringe on both sides of an Emacs frame is
+      just too much for my taste. I just configure it to be =6= pixels
+      wide on the left side of the frame, and =0= pixels wide on the
+      right side.
+
+ #+begin_src emacs-lisp
+
+   (use-package fringe
+     :config
+     (fringe-mode '(6 . 0))
+     (setq-default fringes-outside-margins nil)
+     (setq-default indicate-buffer-boundaries nil)
+     (setq-default indicate-empty-lines nil)
+     (setq-default overflow-newline-into-fringe t))
+
+ #+end_src
+
+** Some semblance of mouse sanity in emacs
+
++ Default mouse behavior in Emacs can be agumented with some saner
+  defaults. 
+
+#+begin_src emacs-lisp
+
+  (use-package emacs
+    :config
+    ;; -------------------------------------------------------------------------
+    ;; some semblance of mouse sanity in emacs
+
+    ;; enable `sloppy' focus on emacs-frames aka what is good in fvwm2 is also 
+    ;; good in emacs
+    (setq mouse-autoselect-window t)
+
+    ;; copy to kill-ring upon mouse adjustments of the region.
+    (setq mouse-drag-copy-region t)
+
+    ;; resize frames independent of `frame-char-{height,width}'
+    (setq frame-resize-pixelwise t)
+    )
+
+
+#+end_src
+
+** Customize scrolling behavior
+
+#+begin_src emacs-lisp
+
+  (use-package smooth-scrolling
+    :ensure
+    :delight
+    :config
+    (smooth-scrolling-mode 1)
+
+    ;; -------------------------------------------------------------------------
+    ;; how much should we scroll when the mouse-wheel is spun around ? when the 
+    ;; <CTRL> key is held, change the size of text in the buffer
+    (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)
+                                        ((control) . text-scale)))
+
+    ;; stop scrolling by huge margins
+    (setq scroll-conservatively most-positive-fixnum)
+    (setq scroll-preserve-screen-position t)
+
+    )
+
+#+end_src
+
+** Visual feedback for common activities
+
++ Incremental search and query replace highlight is quite useful.
++ Highlight regions when the mark is active.
++ Highlight current line in all windows in all modes.
+
+#+begin_src emacs-lisp
+
+  (use-package emacs
+    :config
+
+    ;; -------------------------------------------------------------------------
+    (setq search-highlight t)
+    (setq query-replace-highlight t)
+    (setq transient-mark-mode t)
+
+    ;; -------------------------------------------------------------------------
+    ;; enable highlighting on current line as well as current line on all 
+    ;; windows.
+    (require 'hl-line)
+    (custom-set-variables '(global-hl-line-sticky-flag t))
+    (global-hl-line-mode 1))
+
+#+end_src
+
+** Modeline customizations
+
+   #+begin_src emacs-lisp
+
+     (use-package telephone-line
+       :ensure
+       :config
+
+       (telephone-line-defsegment anupamk/telephone-line-segment-clock ()
+         "display current time"
+         (format-time-string "[%H:%M %m/%d]"))
+
+       ;; ---------------------------------------------------------------------------
+       ;; lhs of modeline
+       (setq telephone-line-lhs '((nil . (telephone-line-buffer-segment
+                                          telephone-line-position-segment
+                                          anupamk/telephone-line-segment-clock))))
+
+       ;; ---------------------------------------------------------------------------
+       ;; rhs of modeline
+       (setq telephone-line-rhs '((accent . (telephone-line-vc-segment))))
+
+       :hook (after-init-hook . (lambda() (telephone-line-mode 1))))
+
+   #+end_src
+
+   #+RESULTS:
+   | (lambda nil (telephone-line-mode 1)) | anupamk:utils/unbold-all-faces | anupamk/load-customizations | #[0 \303\211\235\203 \304"\301\305!\210\210	\205 \306 \210\307\211\207 [command-line-args desktop-save-mode inhibit-startup-screen --no-desktop delete 0 desktop-read t] 4] | x-wm-set-size-hint | tramp-register-archive-file-name-handler | magit-maybe-define-global-key-bindings | magit-auto-revert-mode--init-kludge | magit-startup-asserts | magit-version | table--make-cell-map |
+   
+* Keyboard configuration
+** Global keys
+ + Years of Emacs use has resulted in some good, and some not so good
+   keybindings. These are all defined here.
+
+ + In Emacs Lisp, if =foo= is a symbol, then ='foo= and =#'foo= are
+   completely equivalent. The latter form (with =#'=) is preferred when
+   =foo= is a function, as it documents the fact that it is intended to
+   be funcalled.
+
+ #+begin_src emacs-lisp
+
+   (use-package emacs
+     :config
+
+     ;; -------------------------------------------------------------------------
+     ;; <meta-g> : goes to a specific line
+     (global-set-key (kbd "M-g") #'goto-line)
+
+     ;; -------------------------------------------------------------------------
+     ;; recenter current line
+     (global-set-key (kbd "C-c r") #'recenter)
+
+     ;; -------------------------------------------------------------------------
+     ;; jump to begining / end of buffer
+     (global-set-key (kbd "C-c <end>")  #'end-of-buffer)
+     (global-set-key (kbd "C-c <home>") #'beginning-of-buffer)
+
+     ;; -------------------------------------------------------------------------
+     ;; create a new scratch buffer
+     (global-set-key (kbd "C-c n") #'anupamk:utils/create-new-scratch-buffer)
+
+     ;; -------------------------------------------------------------------------
+     ;; rename current buffer
+     (global-set-key (kbd "C-c C-x C-r") #'anupamk:utils/rename-current-buffer-file)
+
+     ;; -------------------------------------------------------------------------
+     ;; vi style parenthesis matching
+     (global-set-key (kbd "%") #'anupamk:utils/vi-match-paren)
+
+     ;; -------------------------------------------------------------------------
+     ;; regex search always
+     (global-set-key [remap isearch-forward]  #'isearch-forward-regexp)
+     (global-set-key [remap isearch-backward] #'isearch-backward-regexp)
+
+     ;; -------------------------------------------------------------------------
+     ;; visual demarcation in code
+     (global-set-key (kbd "C-c e") #'anupamk:utils/fill-to-end)
+
+     ;; ------------------------------------------------------------------------
+     ;; <esc> to quit from a command
+     (global-set-key (kbd "<escape>") #'keyboard-escape-quit)
+
+     ;; ---------------------------------------------------------------------------
+     ;; toggle line-number and invisible character display in buffers
+     (global-set-key (kbd "C-c <f6>") #'anupamk:utils/toggle-invisibles)
+     (global-set-key (kbd "C-c <f7>") #'anupamk:utils/toggle-line-numbers)
+
+     )
+
+ #+end_src
+
+ #+RESULTS:
+ : t
+
+** Window movement
+   
+   + Emacs already has =windmove= package which provides a set of
+     routines to for selection of windows in a frame
+     geometrically. Thus, =windmove-left= will select a window
+     immediately to the left of the current selected window etc.
+
+   + FWIW, =julia-assange= (yes, /that/ one) had
+     =change-windows-intuitively.el= which predated this !
+
+
+     #+begin_src emacs-lisp
+
+       (use-package windmove
+         :ensure
+         :delight
+         :commands windmove
+         :config
+
+         ;; --------------------------------------------------------------------
+         ;; movement that falls-of-the-edge of the frame will wrap around to 
+         ;; find the window on the opposite side of the frame.
+         (setq windmove-wrap-around t)
+
+         :bind (("M-C-<up>"    . windmove-up)
+                ("M-C-<down>"  . windmove-down)
+                ("M-C-<left>"  . windmove-left)
+                ("M-C-<right>" . windmove-right)))
+
+     #+end_src
+
+** Buffer movement
+
+   + With =buffer-move=, Emacs provides builtin functionality for
+     moving buffers in various windows much more easily than =C-x b=
+     everywhere.
+
+
+   #+begin_src emacs-lisp
+
+     (use-package buffer-move
+       :ensure
+       :delight
+       :commands buffer-move
+
+       :bind (("C-S-<up>"     . buf-move-up)
+              ("C-S-<down>"   . buf-move-down)
+              ("C-S-<left>"   . buf-move-left)
+              ("C-S-<right>"  . buf-move-right)))
+
+   #+end_src
+
+   #+RESULTS:
+   : buf-move-right
+
+* Selection candidates and search methods
+** Completion framework
+*** Ivy+Swiper+Counsel
+
+    IMHO, optimal way of using Emacs is via searching and narrowing
+    selection candidates. 
+
+**** Configuration for Ivy
+
+     + =ivy= is an interactive interface for completion in Emacs. It
+       is the mechanism that handles all selection lists, narrowing
+       them etc.
+
+       #+begin_src emacs-lisp
+
+         (use-package ivy
+           :ensure
+           :delight
+
+           :config
+           (setq ivy-count-format "(%d/%d) ")
+           (setq ivy-height-alist '((t lambda (_caller) (/ (window-height) 4))))
+           (setq ivy-use-virtual-buffers t)
+           (setq ivy-wrap t)
+
+           ;; ---------------------------------------------------------------------------
+           ;; `ivy--regex-plus'       : use a '.*' regex wildcard in place of a single space
+           ;; `ivy--regex-fuzzy'      : use a '.*' regex wildcard between each input letter
+           ;; `ivy--regex-or-literal' : if string isn't a regex, escape it
+           (setq ivy-re-builders-alist '((counsel-M-x                    . ivy--regex-fuzzy)
+                                         (ivy-switch-buffer              . ivy--regex-fuzzy)
+                                         (ivy-switch-buffer-other-window . ivy--regex-fuzzy)
+                                         (counsel-rg                     . ivy--regex-or-literal)
+                                         (t                              . ivy--regex-plus)))
+
+           (setq ivy-display-style 'fancy)
+           (setq ivy-use-selectable-prompt t)
+           (setq ivy-fixed-height-minibuffer nil)
+
+           (setq ivy-initial-inputs-alist '((counsel-M-x                    . "^")
+                                            (ivy-switch-buffer              . "^")
+                                            (ivy-switch-buffer-other-window . "^")
+                                            (counsel-describe-function      . "^")
+                                            (counsel-describe-variable      . "^")
+                                            (t                              . "")))
+
+           (ivy-set-occur 'counsel-fzf 'counsel-fzf-occur)
+           (ivy-set-occur 'counsel-rg 'counsel-ag-occur)
+           (ivy-set-occur 'ivy-switch-buffer 'ivy-switch-buffer-occur)
+           (ivy-set-occur 'swiper 'swiper-occur)
+           (ivy-set-occur 'swiper-isearch 'swiper-occur)
+           (ivy-set-occur 'swiper-multi 'counsel-ag-occur)
+
+           :hook ((after-init     . ivy-mode)
+                  (ivy-occur-mode . hl-line-mode))
+
+           :bind (("C-S-r" . ivy-resume)
+                  ("M-ESC" . ivy-immediate-done)
+                  :map ivy-occur-mode-map
+                  ("f"          . forward-char)
+                  ("b"          . backward-char)
+                  ("n"          . ivy-occur-next-line)
+                  ("p"          . ivy-occur-previous-line)
+                  ("<C-return>" . ivy-occur-press)))
+
+       #+end_src
+
+**** Prescient for sorting an filtering results
+     + =prescient= provides a filtering and scoring system that can
+       interface with Ivy. The scoring is based on frequency and
+       recency of commands, giving you results that you are most
+       likely to use.
+
+       #+begin_src emacs-lisp
+
+         (use-package prescient
+           :ensure
+           :delight
+           :custom
+           (prescient-history-length 500)
+           (prescient-save-file "~/.emacs.d/prescient-items")
+           (prescient-filter-method '(literal regexp))
+
+           :config
+           (prescient-persist-mode 1))
+
+         (use-package ivy-prescient
+           :ensure
+           :delight
+           :after (prescient counsel)
+
+           :custom
+           (ivy-prescient-sort-commands '(:not counsel-grep
+                                               counsel-rg
+                                               counsel-switch-buffer
+                                               ivy-switch-buffer
+                                               swiper
+                                               swiper-multi))
+           (ivy-prescient-retain-classic-highlighting t)
+           (ivy-prescient-enable-filtering nil)
+           (ivy-prescient-enable-sorting t)
+  
+           :config
+           (ivy-prescient-mode 1))
+
+       #+end_src
+
+**** Configuration for Counsel
+
+     + =counsel= enhances capabilities of Emacs for navigating the
+       file-system ofcourse exploits Ivy for doing so.
+
+       #+begin_src emacs-lisp
+         (use-package counsel
+           :ensure
+           :delight
+           :after ivy
+           :config
+           (setq counsel-yank-pop-preselect-last t)
+           (setq counsel-rg-base-command
+                 "rg -SHn --no-heading --color never --no-follow --hidden %s")
+           (setq counsel-find-file-occur-cmd; TODO Simplify this
+                 "ls -a | grep -i -E '%s' | tr '\\n' '\\0' | xargs -0 ls -d --group-directories-first")
+
+           (defun prot/counsel-fzf-rg-files (&optional input dir)
+             "Run `fzf' in tandem with `ripgrep' to find files in the
+         present directory.  If invoked from inside a version-controlled
+         repository, then the corresponding root is used instead."
+             (interactive)
+             (let* ((process-environment
+                     (cons (concat "FZF_DEFAULT_COMMAND=rg -Sn --color never --files --no-follow --hidden")
+                           process-environment))
+                    (vc (vc-root-dir)))
+               (if dir
+                   (counsel-fzf input dir)
+                 (if (eq vc nil)
+                     (counsel-fzf input default-directory)
+                   (counsel-fzf input vc)))))
+
+           (defun prot/counsel-fzf-dir (arg)
+             "Specify root directory for `counsel-fzf'."
+             (prot/counsel-fzf-rg-files ivy-text
+                                        (read-directory-name
+                                         (concat (car (split-string counsel-fzf-cmd))
+                                                 " in directory: "))))
+
+           (defun prot/counsel-rg-dir (arg)
+             "Specify root directory for `counsel-rg'."
+             (let ((current-prefix-arg '(4)))
+               (counsel-rg ivy-text nil "")))
+
+           ;; Pass functions as appropriate Ivy actions (accessed via M-o)
+           (ivy-add-actions
+            'counsel-fzf
+            '(("r" prot/counsel-fzf-dir "change root directory")
+              ("g" prot/counsel-rg-dir "use ripgrep in root directory")))
+
+           (ivy-add-actions
+            'counsel-rg
+            '(("r" prot/counsel-rg-dir "change root directory")
+              ("z" prot/counsel-fzf-dir "find file with fzf in root directory")))
+
+           (ivy-add-actions
+            'counsel-find-file
+            '(("g" prot/counsel-rg-dir "use ripgrep in root directory")
+              ("z" prot/counsel-fzf-dir "find file with fzf in root directory")))
+
+           ;; Remove commands that only work with key bindings
+           (put 'counsel-find-symbol 'no-counsel-M-x t)
+           :bind (("M-x"     . counsel-M-x)
+                  ("C-x C-f" . counsel-find-file)
+                  ("M-f"     . counsel-find-file)
+                  ("M-F"     . find-file-other-window)
+                  ("C-x b"   . ivy-switch-buffer)
+                  ("C-x B"   . counsel-switch-buffer-other-window)
+                  ("C-x d"   . counsel-dired)
+                  ("M-D"     . dired-other-window)
+                  ("C-x C-r" . counsel-recentf)
+                  ("C-h f"   . counsel-describe-function)
+                  ("C-h v"   . counsel-describe-variable)
+                  ("M-s r"   . counsel-rg)
+                  ("M-s g"   . counsel-git-grep)
+                  ("M-s l"   . counsel-find-library)
+                  ("M-s z"   . prot/counsel-fzf-rg-files)
+                  :map ivy-minibuffer-map
+                  ("C-r"     . counsel-minibuffer-history)
+                  ("C-SPC"   . ivy-restrict-to-matches)))
+
+
+       #+end_src
+
+
+**** Counsel and projectile
+     Project management via projectile.
+
+***** Projectile Setup
+
+      #+begin_src emacs-lisp
+
+        (use-package projectile
+          :ensure t
+          :delight
+          :config
+          (setq projectile-indexing-method 'alien)
+          (setq projectile-enable-caching t)
+          (setq projectile-completion-system 'ivy))
+
+      #+end_src
+
+***** Counsel-Projectile interface
+
+      #+begin_src emacs-lisp
+
+        (use-package counsel-projectile
+          :ensure t
+          :config
+          (add-to-list 'ivy-initial-inputs-alist '(counsel-projectile-switch-project . ""))
+          :hook (after-init . counsel-projectile-mode)
+
+          :bind-keymap ("M-s p" . projectile-command-map)
+          :bind (("M-s b" . counsel-projectile-switch-to-buffer)))
+
+      #+end_src
+
+**** Swiper commands and settings
+     
+     + =swiper= is the search tool powered by Ivy.
+
+       #+begin_src emacs-lisp
+
+         (use-package swiper
+           :ensure
+           :delight
+           :after ivy
+           :config
+           (setq swiper-action-recenter t)
+           (setq swiper-goto-start-of-match t)
+           (setq swiper-include-line-number-in-search t)
+           :bind (("C-S-s" . swiper)
+                  ("M-s s" . swiper-multi)
+                  ("M-s w" . swiper-thing-at-point)))
+
+       #+end_src
+
+** Isearch configuration
+
+   #+begin_src emacs-lisp
+
+     (use-package isearch
+       :config
+       (setq search-whitespace-regexp ".*?")
+       (setq search-highlight t)
+       (setq isearch-lax-whitespace t)
+       (setq isearch-regexp-lax-whitespace nil)
+       (setq isearch-lazy-highlight t)
+
+       ;; ----------------------------------------------------------------------
+       ;; these are newer...
+       (setq isearch-lazy-count t)
+       (setq lazy-count-prefix-format "(%s/%s) ")
+       (setq lazy-count-suffix-format "[%s of %s]")
+       (setq isearch-yank-on-move 'shift)
+       (setq isearch-allow-scroll 'unlimited))
+
+   #+end_src
+
+* Directory management
+** Perliminary dired configuration
+
+   #+begin_src emacs-lisp
+
+     (use-package dired
+       :config
+       (setq dired-recursive-copies 'always)
+
+       ;; ----------------------------------------------------------------------
+       ;; ask for confirmation on deletes only at the top-level, not for
+       ;; subsequent ones
+       (setq dired-recursive-deletes 'top)
+
+       ;; ----------------------------------------------------------------------
+       ;; show hidden directories and files before others
+       (setq dired-listing-switches "-AFhlvt --group-directories-first")
+
+       ;; ----------------------------------------------------------------------
+       ;; do-what-i-mean target for quick dired operations
+       (setq dired-dwim-target t)
+  
+       :hook ((dired-mode . dired-hide-details-mode)
+              (dired-mode . hl-line-mode)))
+
+   #+end_src
+
+** Dired =aux= configuration
+
+   #+begin_src emacs-lisp
+
+     (use-package dired-aux
+       :config
+       (setq dired-isearch-filenames 'dwim)
+
+       ;; ---------------------------------------------------------------------------
+       ;; introduced in later Emacs versions
+       (setq dired-create-destination-dirs 'always)
+       (setq dired-vc-rename-file t))
+
+   #+end_src
+  
+** Finding in dired buffers
+
+   #+begin_src emacs-lisp
+
+     (use-package find-dired
+       :after dired
+       :config
+       (setq find-ls-option ;; applies to `find-name-dired'
+        '("-ls" . "-AFhlv --group-directories-first"))
+       (setq find-name-arg "-iname"))
+
+   #+end_src
+   
+** Async dired
+
+   #+begin_src emacs-lisp
+
+     (use-package async
+       :ensure
+       :delight)
+
+     (use-package dired-async
+       :after (dired async)
+       :hook (dired-mode . dired-async-mode))
+   #+end_src
+
+** Dynamically filter directory listing
+
+   #+begin_src emacs-lisp
+
+     (use-package dired-narrow
+       :ensure
+       :after dired
+       :config
+       (setq dired-narrow-exit-when-one-left t)
+       (setq dired-narrow-enable-blinking t)
+       (setq dired-narrow-blink-time 0.3)
+       :bind (:map dired-mode-map
+                   ("M-s n" . dired-narrow)))
+
+   #+end_src
+
+** Editable dired buffers
+
+   #+begin_src emacs-lisp
+
+     (use-package wdired
+       :after dired
+       :commands (wdired-mode
+                  wdired-change-to-wdired-mode)
+       :config
+       (setq wdired-allow-to-change-permissions t)
+       (setq wdired-create-parent-directories t))
+
+   #+end_src
+   
+** Dired subtree
+
+   #+begin_src emacs-lisp
+
+     (use-package dired-subtree
+       :ensure
+       :after dired
+       :bind (:map dired-mode-map
+                   ("<tab>"           . dired-subtree-toggle)
+                   ("<C-tab>"         . dired-subtree-cycle)
+                   ("<S-iso-lefttab>" . dired-subtree-remove)))
+
+   #+end_src
+
+** Dired-X
+
+   Enable additional features shipped with Emacs.
+
+   #+begin_src emacs-lisp
+
+     (use-package dired-x
+       :after dired
+       :bind (("C-c j"     . dired-jump)
+              ("C-c C-j j" . dired-jump-other-window))
+
+       :hook
+       (dired-mode . (lambda ()
+                       (setq dired-clean-confirm-killing-deleted-buffers t))))
+
+   #+end_src
+   
+** Sorting dired buffers
+
+   #+begin_src emacs-lisp
+
+     (use-package dired-quick-sort
+       ;; usage: hit 'S' in dired buffer, which brings up the sorting
+       ;; menu. Sorting choice is remembered for new dired-buffers.
+       :ensure
+       :config
+       (dired-quick-sort-setup))
+
+   #+end_src
+   
+* Applications and utilties
+** Which key
+
+   =which-key= is a minor mode for Emacs that displays the key
+   bindings following your currently entered incomplete command
+   
+   #+begin_src emacs-lisp
+
+     (use-package which-key
+       :ensure
+       :commands which-key-C-h-dispatch
+       :config
+  
+       (setq which-key-show-early-on-C-h t)
+       (setq which-key-idle-delay 10000)
+       (setq which-key-idle-secondary-delay 0.05)
+       (setq which-key-popup-type 'side-window)
+       (setq which-key-show-prefix 'echo)
+       (setq which-key-max-display-columns 6)
+       (setq which-key-separator " ")
+       (setq which-key-special-keys '("SPC" "TAB" "RET" "ESC" "DEL"))
+       :hook (after-init . which-key-mode))
+
+   #+end_src
+
+** Uniquify file names in buffers
+
+   #+begin_src emacs-lisp
+
+     (use-package uniquify
+       :config
+
+       ;; forward                       bar/mumble/name    quux/mumble/name
+       ;; reverse                       name\mumble\bar    name\mumble\quux
+       ;; post-forward                  name|bar/mumble    name|quux/mumble
+       ;; post-forward-angle-brackets   name<bar/mumble>   name<quux/mumble>
+       ;; nil                           name               name<2>
+       (setf uniquify-buffer-name-style 'post-forward-angle-brackets))
+
+   #+end_src
+
+** Record history
+*** Recent files and directories
+
+    #+begin_src emacs-lisp
+
+      (use-package recentf
+        :functions (rjs/recentf-rename-directory
+                    rjs/recentf-rename-file
+                    rjs/recentf-rename-notify
+                    contrib/recentf-add-dired-directory)
+  
+        :config
+        (setq recentf-save-file "~/.emacs.d/recentf")
+        (setq recentf-max-menu-items 10)
+        (setq recentf-max-saved-items 200)
+        (setq recentf-show-file-shortcuts-flag nil)
+
+        ;; rename entries in recentf when moving files in dired
+        (defun rjs/recentf-rename-directory (oldname newname)
+          ;; oldname, newname and all entries of recentf-list should already
+          ;; be absolute and normalised so I think this can just test whether
+          ;; oldname is a prefix of the element.
+          (setq recentf-list
+                (mapcar (lambda (name)
+                          (if (string-prefix-p oldname name)
+                              (concat newname (substring name (length oldname)))
+                            name))
+                        recentf-list))
+          (recentf-cleanup))
+
+        (defun rjs/recentf-rename-file (oldname newname)
+          (setq recentf-list
+                (mapcar (lambda (name)
+                          (if (string-equal name oldname)
+                              newname
+                            oldname))
+                        recentf-list))
+          (recentf-cleanup))
+
+        (defun rjs/recentf-rename-notify (oldname newname &rest args)
+          (if (file-directory-p newname)
+              (rjs/recentf-rename-directory oldname newname)
+            (rjs/recentf-rename-file oldname newname)))
+
+        (advice-add 'dired-rename-file :after #'rjs/recentf-rename-notify)
+
+        (defun contrib/recentf-add-dired-directory ()
+          "Include Dired buffers in the `recentf' list.  Particularly
+      useful when combined with a completion framework's ability to
+      display virtual buffers."
+          (when (and (stringp dired-directory)
+                     (equal "" (file-name-nondirectory dired-directory)))
+            (recentf-add-file dired-directory)))
+
+        :hook ((after-init . recentf-mode)
+               (dired-mode . contrib/recentf-add-dired-directory)))
+
+    #+end_src
+*** Minibuffer
+
+    #+begin_src emacs-lisp
+
+      (use-package savehist
+        :config
+        (setq savehist-file "~/.emacs.d/savehist")
+        (setq history-length 10000)
+        (setq history-delete-duplicates t)
+        (setq savehist-save-minibuffer-history t)
+        (savehist-mode 1))
+
+    #+end_src
+    
+*** Point
+
+    Where is the point at ?
+
+    #+begin_src emacs-lisp
+
+      (use-package saveplace
+        :config
+        (setq save-place-file "~/.emacs.d/saveplace")
+        (save-place-mode 1))
+
+    #+end_src
+*** Desktop state
+    Use =desktop+= for saving and restoring desktop state.
+
+    #+begin_src emacs-lisp
+
+      (use-package desktop+
+        :ensure
+
+        :config
+        ;; ---------------------------------------------------------------------------
+        ;; from : https://stackoverflow.com/questions/18612742/emacs-desktop-save-mode-error
+        (setq desktop-restore-forces-onscreen nil)
+
+        ;; not much to do except that we use desktop+-create-auto and
+        ;; desktop+-load-auto for automatically generating desktop-names
+        ;; while saving and restoring desktop sessions
+        )
+
+    #+end_src
+** Dynamic word completion
+
+   #+begin_src emacs-lisp
+
+     (use-package dabbrev
+       :commands dabbrev-expand
+       :delight
+       :config
+       (setq dabbrev-abbrev-char-regexp nil)
+       (setq dabbrev-backward-only nil)
+       (setq dabbrev-case-distinction nil)
+       (setq dabbrev-case-fold-search t)
+       (setq dabbrev-case-replace nil)
+       (setq dabbrev-eliminate-newlines nil)
+       (setq dabbrev-upcase-means-case-search t))
+
+     (use-package hippie-exp
+       :delight
+       :after dabbrev
+       :commands hippie-expand
+       :config
+       (setq hippie-expand-try-functions-list
+             '(try-expand-dabbrev
+               try-expand-dabbrev-visible
+               try-expand-dabbrev-from-kill
+               try-expand-dabbrev-all-buffers
+               try-expand-list
+               try-expand-list-all-buffers
+               try-expand-line
+               try-expand-line-all-buffers
+               try-complete-file-name-partially
+               try-complete-file-name
+               try-expand-all-abbrevs))
+       (setq hippie-expand-verbose t))
+
+
+   #+end_src
+** Auto revert
+
+   #+begin_src emacs-lisp
+
+     (use-package autorevert
+       :config
+       (global-auto-revert-mode 1))
+
+   #+end_src
+** Version control
+*** Magit
+
+    #+begin_src emacs-lisp
+
+      (use-package magit
+        :ensure
+        :diminish
+        :config
+
+        ;; ---------------------------------------------------------------------------
+        ;; whether to show word-granularity differences within diff hunks
+        (setq magit-diff-refine-hunk t)
+
+        ;; ---------------------------------------------------------------------------
+        ;; move untracked files section behind Unstaged changes section
+        (magit-add-section-hook 'magit-status-sections-hook
+                                'magit-insert-untracked-files
+                                'magit-insert-unpushed-commits t)
+
+        (remove-hook 'git-commit-finish-query-functions
+                     'git-commit-check-style-conventions)
+
+        :bind  (("C-c g" . magit-status)
+                ("C-c l" . magit-log)
+                ("C-h B" . magit-blame)))
+
+    #+end_src
+*** Magit filenotify and git-timemachine setup
+
+    #+begin_src emacs-lisp
+
+      (use-package magit-filenotify
+        :requires filenotify
+        :ensure
+        :delight
+        :config
+        (define-key magit-status-mode-map (kbd "`") 'magit-filenotify-mode))
+
+      (use-package git-timemachine :ensure t)
+
+    #+end_src
+    
+*** Diff highlight
+
+    #+begin_src emacs-lisp
+
+      (use-package diff-hl
+        :ensure
+        :delight
+        :init
+        (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
+
+        :config
+
+        ;; enable it in all buffers
+        (global-diff-hl-mode))
+
+    #+end_src
+    
+*** Git overview in dired
+
+    #+begin_src emacs-lisp
+
+      (use-package dired-git-info
+        :ensure 
+        :after dired
+        :config
+        (setq dgi-commit-message-format "%h\t%s\t%cr")
+        :bind (:map dired-mode-map
+                    (")" . dired-git-info-mode)))
+
+    #+end_src
+    
+** TRAMP configuration
+
+   #+begin_src emacs-lisp
+
+     (use-package tramp
+       :ensure
+
+       :functions (anupamk:tramp/edit-file-with-sudo
+                   anupamk:tramp/find-file-root-header-warning)
+       :config
+
+       ;; ---------------------------------------------------------------------------
+       ;; see relevant section of `~/settings/dot.zshrc' for more
+       ;; information on how this customization works
+       (setq tramp-terminal-type "tramp")
+
+       ;; ---------------------------------------------------------------------------
+       ;; setup a verbose tramp session
+       (setq tramp-verbose 9)
+
+       ;; ---------------------------------------------------------------------------
+       ;; the default method for file transfer
+       (setq tramp-default-method "ssh")
+
+       ;; ---------------------------------------------------------------------------
+       ;; make a big-red-banner across the top of the buffer while editing
+       ;; file as root.
+       (make-face 'anupamk:tramp/find-file-root-header-face)
+       (set-face-attribute 'anupamk:tramp/find-file-root-header-face nil
+                           :foreground "white"
+                           :background "dark red")
+
+       (defun anupamk:tramp/find-file-root-header-warning ()
+         "*Display a warning in header line of the current buffer.
+     This function is suitable to add to `find-file-hook'."
+         (when (string-equal
+                (file-remote-p (or buffer-file-name default-directory) 'user)
+                "root")
+
+           (let* ((warning " WARNING: EDITING FILE AS ROOT! ")
+                  (space (+ 6 (- (window-width) (length warning))))
+                  (bracket (make-string (/ space 2) ?*))
+                  (warning (concat bracket warning bracket)))
+
+             (setq header-line-format (propertize
+                                       warning 'face 'anupamk:tramp/find-file-root-header-face)))))
+
+       (add-hook 'find-file-hook  #'anupamk:tramp/find-file-root-header-warning)
+       (add-hook 'dired-mode-hook #'anupamk:tramp/find-file-root-header-warning)
+
+       ;; ---------------------------------------------------------------------------
+       ;; edit currently open file as root
+       (defun anupamk:tramp/edit-file-with-sudo ()
+         "Take the file currently being edited, and open it as root with `sudo'."
+         (interactive)
+         (let ((file-name (buffer-file-name)))
+           (when file-name
+             (find-alternate-file (concat "/sudo::" file-name)))))
+
+       ;; ----------------------------------------------------------------------
+       ;; edit file as root
+       (global-set-key (kbd "C-c f r") #'anupamk:tramp/edit-file-with-sudo))
+   #+end_src
+
+   #+RESULTS:
+   
+** Bookmark places in buffer
+
+   #+begin_src emacs-lisp
+
+     (use-package bookmark
+       :ensure
+       :delight
+  
+       :functions (anupamk:bookmark/quick-save-bookmark)
+       :config
+       (defun anupamk:bookmark/quick-save-bookmark ()
+         "Save bookmark with name as 'buffer:row:col'"
+         (interactive)
+         (bookmark-set (format "%s:%s:line %s:column %s"
+                               (thing-at-point 'symbol)
+                               (buffer-name)
+                               (line-number-at-pos)
+                               (current-column)))
+         (message "Bookmarked saved at current position"))
+
+       (setq bookmark-save-flag 1)
+
+       :bind  (("C-c b m" . anupamk:bookmark/quick-save-bookmark)))
+
+   #+end_src
+   
+* Language settings
+
+This section is all about configurations and packages that deal with
+programming language enhancements
+
+** All programming mode configuration
+
+   Enable auto-filling of comments for all programming modes.
+   
+   #+begin_src emacs-lisp
+
+     (use-package emacs
+       :hook
+       (prog-mode-hook . anupamk:utils/auto-fill-comments))
+
+   #+end_src
+   
+** C/C++ Programming
+
+   This is one of the most used modes in day-to-day activities
+   
+*** Language Server Configuration
+
+    #+begin_src emacs-lisp
+
+      (use-package eglot
+        :ensure
+        :delight
+
+        :init
+        (defvar anupamk:var/clangd-executable "/usr/sbin/clangd")
+
+        :config
+
+        ;; ---------------------------------------------------------------------------
+        ;; both c and c++ buffers can be managed via eglot
+        (add-to-list 'eglot-server-programs `((c++-mode) ,anupamk:var/clangd-executable))
+        (add-hook 'c++-mode-hook 'eglot-ensure)
+
+        (add-to-list 'eglot-server-programs `((c-mode) ,anupamk:var/clangd-executable))
+        (add-hook 'c-mode-hook 'eglot-ensure))
+
+    #+end_src
+
+*** Font locking
+
+    #+begin_src emacs-lisp
+
+      (use-package modern-cpp-font-lock
+        :ensure
+        :delight
+        :hook (c++-mode . modern-c++-font-lock-mode))
+
+    #+end_src
+
+*** Code formatting
+
+    =clang-format= seems to be quite heavily used for large projects,
+    and generally does a reasonable job.
+    
+      #+begin_src emacs-lisp
+
+        (use-package clang-format
+          :ensure)
+
+      #+end_src
+
+*** Some utility functions 
+
+    Define some utility functions for working with c/c++ sources.
+    
+    #+begin_src emacs-lisp
+
+      (use-package emacs
+        :functions (anupamk:cc-utils/compile-eventually
+                    anupamk:cc-utils/compile-eventually-with-make
+                    anupamk:cc-utils/quick-compile-cmdstr
+                    anupamk:cc-utils/clang-fmt-and-recenter)
+
+        :config
+
+        (defun anupamk:cc-utils/compile-eventually (search-fname compile-cmdstr)
+          "recursively search up the directory tree for 'search-file-name',
+      and when found, run 'compile-cmdstr'"
+
+          ;; find the root of the development-tree
+          (defvar search-root-dir (file-name-directory buffer-file-name))
+          (defvar devel-root-dir (locate-dominating-file search-root-dir search-fname))
+
+          ;; do the build
+          (if devel-root-dir (with-temp-buffer (cd devel-root-dir)
+                                               (compile compile-cmdstr))
+            (progn  (message (concat "unable to find: '"
+                                     search-fname "' within: '"
+                                     search-root-dir "', running quick-compile"))
+              (compile (anupamk:cc-utils/quick-compile-cmdstr)))))
+
+
+        (defun anupamk:cc-utils/compile-eventually-with-make ()
+          "compile with make"
+          (interactive)
+          (anupamk:cc-utils/compile-eventually "Makefile" "make"))
+
+        ;; ---------------------------------------------------------------------
+          ;; quickly compile single source c/c++ programs. it produces final
+        ;; executable in the 'obj' sub-directory. the executable is called
+        ;; `file-name' without the extension
+        ;;
+        ;; this, a file called `<some-path>/foo.cpp' will produce an
+        ;; executable called `<some-path>/obj/foo'
+        (defun anupamk:cc-utils/quick-compile-cmdstr()
+          "quick compile single-file c/c++ programs"
+
+          ;; -------------------------------------------------------------------
+          ;; how we build c/c++ sources are almost fixed
+          ;;     -fdiagnostics-color=never ==> no ansii colorized output
+          (defvar qc-cmd-prefix:c   "gcc -fdiagnostics-color=never -std=c99 -g -O2 -Wall -o obj/")
+          (defvar qc-cmd-prefix:cpp "g++ -fdiagnostics-color=never -std=c++17 -g -O2 -Wall -o obj/")
+
+          ;; first setup the appropriate compilation command based on buffer
+          ;; major-mode
+          (setq-local compile-command
+                      (format "%s%s %s"
+                              ;; %s: 'qc-cmd-prefix:{c,cpp}'
+                              (if (eq major-mode 'c-mode)
+                                  qc-cmd-prefix:c
+                                qc-cmd-prefix:cpp)
+
+                              ;; %s: 'obj/<file-name>'
+                              (file-name-nondirectory (file-name-sans-extension (buffer-file-name)))
+
+                              ;; %s: '<file-name>.{c,cpp}'
+                              (file-name-nondirectory (buffer-file-name)))))
+
+        ;; ---------------------------------------------------------------------------
+        ;; format through clang-format
+        (defun anupamk:cc-utils/clang-fmt-and-recenter ()
+          (interactive)
+          (clang-format-buffer)
+          (recenter))
+
+        )
+
+
+    #+end_src
+   
+*** C/C++ Mode Configuration
+
+    #+begin_src emacs-lisp
+
+      (use-package cc-mode
+        :ensure
+        :functions (anupamk:cc/common-mode-hook
+                    anupamk:cc/c++-mode-hook
+                    anupamk:cc/c-mode-hook)
+        :init
+
+        (defun anupamk:cc/common-mode-hook ()
+          ;; -------------------------------------------------------------------------
+          ;; '_' is not a modifier anymore
+          (modify-syntax-entry ?_ "w")
+
+          ;; -------------------------------------------------------------------------
+          ;; any specific code-fmt'ing related changes
+          (setf c-basic-offset 8
+
+                ;; -------------------------------------------------------------------
+                ;; Distance between tab stops (for display of tab
+                ;; characters), in columns.
+                tab-width 8
+
+                ;; -------------------------------------------------------------------
+                ;; spaces instead of tabs :)
+                indent-tabs-mode nil
+
+                ;; -------------------------------------------------------------------
+                ;; column beyond which automatic line-wrapping should happen.
+                fill-column 80
+
+                ;; -------------------------------------------------------------------
+                ;; column to indent right-margin comments to...
+                comment-column 60
+
+                ;; -------------------------------------------------------------------
+                ;; Specifies how M-x indent-for-comment should handle
+                ;; comment-only lines. When this variable is non-nil,
+                ;; comment-only lines are indented according to syntactic
+                ;; analysis via `c-offsets-alist'.  Otherwise, the comment
+                ;; is indented as if it was preceded by code.  Note that
+                ;; this variable does not affect how the normal line
+                ;; indentation treats comment-only lines.
+                c-indent-comments-syntactically-p t)
+
+          ;; -------------------------------------------------------------------------
+          ;; syntax-help:
+          ;;
+          ;;  +   c-basic-offset times 1
+          ;;  -   c-basic-offset times -1
+          ;;  ++  c-basic-offset times 2
+          ;;  --  c-basic-offset times -2
+          ;;  *   c-basic-offset times 0.5
+          ;;  /   c-basic-offset times -0.5
+          (c-set-offset 'case-label '+)
+          (c-set-offset 'access-label '/)
+          (c-set-offset 'label '/))
+
+        (defun anupamk:cc/c++-mode-hook ()
+          (anupamk:cc/common-mode-hook)
+          (setq comment-start "///")
+          (setq comment-end ""))
+
+        (defun anupamk:cc/c-mode-hook ()
+          (anupamk:cc/common-mode-hook))
+
+        :config
+        ;; ---------------------------------------------------------------------------
+        ;; one true style
+        (add-to-list 'c-default-style '(c-mode . "k&r"))
+
+        ;; ---------------------------------------------------------------------------
+        ;; add our mode specific hooks
+        (add-hook 'c-mode-hook    #'anupamk:cc/c-mode-hook)
+        (add-hook 'c++-mode-hook  #'anupamk:cc/c++-mode-hook)
+
+        ;; ---------------------------------------------------------------------------
+        ;; jump directly to source when we see compilation errors
+        (add-to-list 'compilation-search-path (getenv "PWD"))
+
+        ;; ---------------------------------------------------------------------------
+        ;; host specific builders
+        (when  (or (anupamk:utils/host-name-is "virat")
+                   (anupamk:utils/host-name-is "fatcat"))
+          (global-set-key (kbd "C-<return>") #'anupamk:cc-utils/compile-eventually-with-make)))
+
+    #+end_src
+    
+*** Setup keybindings
+
+    #+begin_src emacs-lisp
+
+      (use-package emacs
+        :config
+        (define-key c-mode-map (kbd "RET")     #'newline-and-indent)
+        (define-key c-mode-map (kbd "C-<ret>") #'recompile)
+        (define-key c-mode-map (kbd "C-M-f")   #'anupamk:cc-utils/clang-fmt-and-recenter))
+
+    #+end_src
+    
+** Python Programming
+
+** Shell Scripting
+** Org Mode
+*** Preliminaries
+
+    + While editing code blocks in org-mode buffers, we want =<tab>=
+      to indent natively.
+
+    + Also, in org-mode buffers we want a =visual-line= which allows
+      word-wrap etc. to happen on =visual= lines rather than =logical=
+      lines.
+
+    #+begin_src emacs-lisp
+
+      (use-package org
+        :ensure
+        :functions (anupamk/do-org-mode-setup)
+
+        :config
+        (defun anupamk/do-org-mode-setup ()
+          "run these commands every time an org-mode buffer starts up"
+
+          ;; -------------------------------------------------------------------------
+          ;; indent text according to outline structure
+          (org-indent-mode)
+
+          ;; -------------------------------------------------------------------------
+          ;; code-blocks within org-mode
+          (setq org-src-window-setup 'current-window)
+          (setq org-src-fontify-natively t)
+          (setq org-src-preserve-indentation t)
+          (setq org-src-tab-acts-natively t)
+          (setq org-confirm-babel-evaluate nil)
+          (setq org-edit-src-content-indentation 0)
+    
+          ;; -------------------------------------------------------------------------
+          ;; when `visual-line-mode' is enabled, word-wrap is turned on, and 
+          ;; simple editing commands are redefined to act on visual lines, not 
+          ;; logical lines.
+          (visual-line-mode 1))
+
+        :hook (org-mode . anupamk/do-org-mode-setup))
+
+    #+end_src
+
+*** Easy addition of source blocks
+
+    + Since version 9.2, org-mode has moved to a new mechanism called
+      /structured-template/. Which makes it a bit harder to add
+      source-code blocks.
+
+    + Bring the old easy templating system back via =org-tempo= and
+      minor tweaks. With this configuration I can now say =<el[TAB]=
+      which expands into the familiar =#+begin_src emacs-lisp
+      ... #+end_src= block.
+
+      #+begin_src emacs-lisp
+      
+        (require 'org-tempo)
+        (add-to-list 'org-structure-template-alist '("sh"   . "src shell"))
+        (add-to-list 'org-structure-template-alist '("el"   . "src emacs-lisp"))
+        (add-to-list 'org-structure-template-alist '("py"   . "src python"))
+       
+      #+end_src
+
