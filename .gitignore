@@ -1,9 +1,28 @@
 # ------------------------------------------------------------------------------
-# ignore backup + autosave files
+# ignore backup, autosave, byte-compiled files
 .#*
 *.el~
+*.*~
+*.elc
+.*
 
 # ------------------------------------------------------------------------------
 # yes, this is intended. `emacs-init.el' is generated from emacs-init.org
 emacs-init.el
 
+# ------------------------------------------------------------------------------
+# ignore elpa/* this is fetched everytime we initialize the configuration
+elpa/*
+
+# ------------------------------------------------------------------------------
+# and other transient stuff that we can ignore
+transient/*
+tramp
+savehist
+saveplace
+prescient-items
+recentf
+package-quickstart.el
+custom.el
+desktops/*
+local/*
