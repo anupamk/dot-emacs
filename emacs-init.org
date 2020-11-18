@@ -390,6 +390,7 @@
 
      :config
      (setq default-frame-alist '((cursor-color               . "gold")
+                                 (mouse-color                . "gold")
                                  (vertical-scroll-bars       . nil)
                                  (horizontal-scroll-bar-mode . nil)
                                  )))
@@ -1406,23 +1407,91 @@
 
    #+end_src
    
+** Bindings for C.R.U.X
+   
+   Some bindings for `Collection of Ridiculously Useful eXtensions' 
+   
+   #+begin_src emacs-lisp
+
+     (use-package crux
+       :ensure
+       :bind (("C-a" . crux-move-beginning-of-line)))
+
+   #+end_src
+
 * Language settings
 
 This section is all about configurations and packages that deal with
 programming language enhancements
 
-** All programming mode configuration
-
-   Enable auto-filling of comments for all programming modes.
+** All programming languages
+*** Automatic comment folding 
+    Enable auto-filling of comments for all programming modes.
    
-   #+begin_src emacs-lisp
+    #+begin_src emacs-lisp
 
-     (use-package emacs
-       :hook
-       (prog-mode-hook . anupamk:utils/auto-fill-comments))
+      (use-package emacs
+        :hook
+        (prog-mode-hook . anupamk:utils/auto-fill-comments))
 
-   #+end_src
-   
+    #+end_src
+
+*** Data marshalling / un-marshalling
+    Enable protobuf
+
+    #+begin_src emacs-lisp
+
+      (use-package protobuf-mode
+        :ensure)
+
+    #+end_src
+
+*** Deadgrep for easy searching
+
+    #+begin_src emacs-lisp
+
+      (use-package deadgrep
+        :ensure
+
+        :init
+        (defvar tw-repo-root (getenv "TWAK_REPO_NAME"))
+
+        :functions (anupamk:deadgrep/get-repo-root-dir)
+
+        :config
+
+        ;; ---------------------------------------------------------------------------
+        ;; find the fully-qualified name of the root repository
+        (defun anupamk:deadgrep/get-repo-root-dir ()
+          "return the name of the root tarana repository"
+          (concat "/tarana/home/anupam/source-code/tw-repos/"
+                  twak-repo-name
+                  "/tarana3/cpu/applications/src/")))
+
+      (global-set-key (kbd "C-M-g")  #'deadgrep)
+
+    #+end_src
+
+    #+RESULTS:
+
+** Build systems
+*** CMake for C/C++ projects
+
+    #+begin_src emacs-lisp
+      (use-package cmake-mode
+        :ensure)
+
+    #+end_src
+
+*** Bazel
+
+    #+begin_src emacs-lisp
+    
+      (use-package bazel-mode
+        :ensure)
+
+    #+end_src
+
 ** C/C++ Programming
 
    This is one of the most used modes in day-to-day activities
@@ -1436,7 +1505,14 @@ programming language enhancements
         :delight
 
         :init
-        (defvar anupamk:var/clangd-executable "/usr/sbin/clangd")
+
+        ;; ---------------------------------------------------------------------------
+        ;; host specific clangd executable
+        (defvar anupamk:var/clangd-executable 
+          (when (or (anupamk:utils/host-name-is "devel1.india.taranawireless.com")
+                    (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com"))
+            "/usr/bin/clangd-11")
+          (executable-find "clangd"))
 
         :config
 
@@ -1482,9 +1558,9 @@ programming language enhancements
       (use-package emacs
         :functions (anupamk:cc-utils/compile-eventually
                     anupamk:cc-utils/compile-eventually-with-make
+                    anupamk:cc-utils/compile-eventually-with-bazel
                     anupamk:cc-utils/quick-compile-cmdstr
                     anupamk:cc-utils/clang-fmt-and-recenter)
-
         :config
 
         (defun anupamk:cc-utils/compile-eventually (search-fname compile-cmdstr)
@@ -1504,13 +1580,23 @@ programming language enhancements
               (compile (anupamk:cc-utils/quick-compile-cmdstr)))))
 
 
+        ;; ---------------------------------------------------------------------------
+        ;; compile with a makefile
         (defun anupamk:cc-utils/compile-eventually-with-make ()
           "compile with make"
           (interactive)
           (anupamk:cc-utils/compile-eventually "Makefile" "make"))
 
+        ;; ---------------------------------------------------------------------------
+        ;; compile with bazel
+        (defun anupamk:cc-utils/compile-eventually-with-bazel(target)
+          "compile with bazel"
+          (interactive)
+          (defvar bazel-compile-cmdstr (concat "set -e ; time t3 build --gen-compile-commands -c " target " | cut -c26-"))
+          (anupamk:cc-utils/compile-eventually "bazel_build_defs" bazel-compile-cmdstr))
+
         ;; ---------------------------------------------------------------------
-          ;; quickly compile single source c/c++ programs. it produces final
+        ;; quickly compile single source c/c++ programs. it produces final
         ;; executable in the 'obj' sub-directory. the executable is called
         ;; `file-name' without the extension
         ;;
@@ -1555,7 +1641,7 @@ programming language enhancements
 *** C/C++ Mode Configuration
 
     #+begin_src emacs-lisp
-
+    
       (use-package cc-mode
         :ensure
         :functions (anupamk:cc/common-mode-hook
@@ -1650,7 +1736,16 @@ programming language enhancements
         :config
         (define-key c-mode-map (kbd "RET")     #'newline-and-indent)
         (define-key c-mode-map (kbd "C-<ret>") #'recompile)
-        (define-key c-mode-map (kbd "C-M-f")   #'anupamk:cc-utils/clang-fmt-and-recenter))
+        (define-key c-mode-map (kbd "C-M-f")   #'anupamk:cc-utils/clang-fmt-and-recenter)
+
+        ;; ---------------------------------------------------------------------------
+        ;; host specific bindings
+        (when (or (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com")
+                  (anupamk:utils/host-name-is "devel1.india.taranawireless.com"))
+          (global-set-key (kbd "C-<f2>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.b10.1xx")))
+          (global-set-key (kbd "C-<f3>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.p10.xx")))
+          (global-set-key (kbd "C-<f4>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.h10.1xx")))
+          ))
 
     #+end_src
     
