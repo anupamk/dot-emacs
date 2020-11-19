@@ -1465,14 +1465,16 @@ programming language enhancements
         (defun anupamk:deadgrep/get-repo-root-dir ()
           "return the name of the root tarana repository"
           (concat "/tarana/home/anupam/source-code/tw-repos/"
-                  twak-repo-name
-                  "/tarana3/cpu/applications/src/")))
+                  tw-repo-root
+                  "/tarana3/cpu/applications/src/"))
+
+        (when (or (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com")
+                  (anupamk:utils/host-name-is "devel1.india.taranawireless.com"))
+          (setq deadgrep-project-root-function #'anupamk:deadgrep/get-repo-root-dir)))
 
       (global-set-key (kbd "C-M-g")  #'deadgrep)
 
     #+end_src
-
-    #+RESULTS:
 
 ** Build systems
 *** CMake for C/C++ projects
@@ -1641,12 +1643,13 @@ programming language enhancements
 *** C/C++ Mode Configuration
 
     #+begin_src emacs-lisp
-    
+
       (use-package cc-mode
         :ensure
         :functions (anupamk:cc/common-mode-hook
                     anupamk:cc/c++-mode-hook
                     anupamk:cc/c-mode-hook)
+
         :init
 
         (defun anupamk:cc/common-mode-hook ()
@@ -1696,7 +1699,16 @@ programming language enhancements
           ;;  /   c-basic-offset times -0.5
           (c-set-offset 'case-label '+)
           (c-set-offset 'access-label '/)
-          (c-set-offset 'label '/))
+          (c-set-offset 'label '/)
+
+          ;; -------------------------------------------------------------------------
+          ;; format buffer on save.
+          ;;
+          ;; no need to complicate this whole thing with
+          ;; `locate-dominating-file' business etc. etc. , as `clang-format'
+          ;; already looks for a `.clang-format' file up the directory tree
+          ;; recursively.
+          (add-hook 'before-save-hook #'clang-format-buffer))
 
         (defun anupamk:cc/c++-mode-hook ()
           (anupamk:cc/common-mode-hook)
@@ -1718,14 +1730,7 @@ programming language enhancements
 
         ;; ---------------------------------------------------------------------------
         ;; jump directly to source when we see compilation errors
-        (add-to-list 'compilation-search-path (getenv "PWD"))
-
-        ;; ---------------------------------------------------------------------------
-        ;; host specific builders
-        (when  (or (anupamk:utils/host-name-is "virat")
-                   (anupamk:utils/host-name-is "fatcat"))
-          (global-set-key (kbd "C-<return>") #'anupamk:cc-utils/compile-eventually-with-make)))
-
+        (add-to-list 'compilation-search-path (getenv "PWD")))
     #+end_src
     
 *** Setup keybindings
@@ -1736,10 +1741,21 @@ programming language enhancements
         :config
         (define-key c-mode-map (kbd "RET")     #'newline-and-indent)
         (define-key c-mode-map (kbd "C-<ret>") #'recompile)
-        (define-key c-mode-map (kbd "C-M-f")   #'anupamk:cc-utils/clang-fmt-and-recenter)
 
         ;; ---------------------------------------------------------------------------
-        ;; host specific bindings
+        ;; host specific bindings: just update the global-map rather than
+        ;; the mode-specific map. this is just for convenience
+        ;; ---------------------------------------------------------------------------
+
+        ;; ---------------------------------------------------------------------------
+        ;; use make usually
+        (when  (or (anupamk:utils/host-name-is "virat")
+                   (anupamk:utils/host-name-is "fatcat"))
+          (global-set-key (kbd "C-<return>") #'anupamk:cc-utils/compile-eventually-with-make))
+
+
+        ;; ---------------------------------------------------------------------------
+        ;; use bazel un-usually :)
         (when (or (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com")
                   (anupamk:utils/host-name-is "devel1.india.taranawireless.com"))
           (global-set-key (kbd "C-<f2>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.b10.1xx")))
