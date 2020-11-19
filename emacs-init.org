@@ -520,9 +520,6 @@
 
    #+end_src
 
-   #+RESULTS:
-   | (lambda nil (telephone-line-mode 1)) | anupamk:utils/unbold-all-faces | anupamk/load-customizations | #[0 \303\211\235\203 \304"\301\305!\210\210	\205 \306 \210\307\211\207 [command-line-args desktop-save-mode inhibit-startup-screen --no-desktop delete 0 desktop-read t] 4] | x-wm-set-size-hint | tramp-register-archive-file-name-handler | magit-maybe-define-global-key-bindings | magit-auto-revert-mode--init-kludge | magit-startup-asserts | magit-version | table--make-cell-map |
-   
 * Keyboard configuration
 ** Global keys
  + Years of Emacs use has resulted in some good, and some not so good
@@ -585,9 +582,6 @@
 
  #+end_src
 
- #+RESULTS:
- : t
-
 ** Window movement
    
    + Emacs already has =windmove= package which provides a set of
@@ -639,9 +633,6 @@
               ("C-S-<right>"  . buf-move-right)))
 
    #+end_src
-
-   #+RESULTS:
-   : buf-move-right
 
 * Selection candidates and search methods
 ** Completion framework
@@ -1379,8 +1370,6 @@
        (global-set-key (kbd "C-c f r") #'anupamk:tramp/edit-file-with-sudo))
    #+end_src
 
-   #+RESULTS:
-   
 ** Bookmark places in buffer
 
    #+begin_src emacs-lisp
@@ -1766,6 +1755,77 @@ programming language enhancements
     #+end_src
     
 ** Python Programming
+
+   + =elpy= strives to give IDE like features for programming in
+     python within Emacs. Set that up here.
+
+   + Following packages also need to be =pip= installed to get
+     the most bhang-for-buck: =jedi=, =autopep8=, =flake8=, =ipython=,
+     =importmagic= and =yapf=.
+
+   #+begin_src emacs-lisp
+
+     ;; -----------------------------------------------------------------------------
+     ;; on the fly syntax check feedback
+     (use-package flycheck
+       :ensure)
+
+     ;; -----------------------------------------------------------------------------
+     ;; use `black' for formatting, `elpy' recognizes it, and enables it
+     ;; automatically on file-save
+     (use-package blacken
+       :ensure
+       :config
+       (setq blacken-line-length 80))
+
+     ;; -----------------------------------------------------------------------------
+     ;; completion using jedi
+     (use-package jedi
+       :ensure
+       :config
+       ;; ---------------------------------------------------------------------------
+       ;; automatically start completion after inserting a '.' character
+       (setq jedi:complete-on-dot t))
+
+     ;; -----------------------------------------------------------------------------
+     ;; the package that ties all other packages together
+     (use-package elpy
+       :ensure
+
+       :init
+       (elpy-enable)
+
+       :bind
+       (:map elpy-mode-map
+             ("C-M-n" . elpy-nav-forward-block)
+             ("C-M-p" . elpy-nav-backward-block))
+
+       :hook ((elpy-mode-hook . flycheck-mode)
+              (elpy-mode-hook . blacken-mode)
+              (elpy-mode-hook . jedi:setup))
+
+       :config
+
+       ;; ---------------------------------------------------------------------------
+       ;; remove flymake
+       (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+
+       ;; ---------------------------------------------------------------------------
+       ;; don't echo python's shell output in the echo area after input
+       ;; has been sent to the shell
+       (setq elpy-shell-echo-output nil)
+
+       ;; ---------------------------------------------------------------------------
+       ;; setup python interpreter for the rpc backend
+       (setq elpy-rpc-python-command "python3")
+       (setq elpy-rpc-timeout 2)
+
+       ;; ---------------------------------------------------------------------------
+       ;; the python interpreter
+       (setq python-shell-interpreter "ipython3")
+       (setq python-shell-interpreter-args "--simple-prompt -i"))
+
+   #+end_src
 
 ** Shell Scripting
 ** Org Mode

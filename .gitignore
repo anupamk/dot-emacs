@@ -27,3 +27,5 @@ custom.el
 desktops/*
 local/*
 bookmarks
+elpy/*
+ac-comphist.dat
