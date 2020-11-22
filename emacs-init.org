@@ -1408,6 +1408,40 @@
 
    #+end_src
 
+** Momentarily flashing text regions on prominent actions
+
+   + The included =pulse= library provides functions to flash a region
+     of text. The most useful general application is to flash the line
+     the cursor is on as a navigational aid or accessibility feature.
+
+   #+begin_src emacs-lisp
+
+     (use-package emacs
+       :init
+       (require 'pulse)
+
+       :functions (anupamk:pulse/pulse-line)
+
+       :config
+       (defun anupamk:pulse/pulse-line (&rest _)
+         "Pulse the current line."
+         (pulse-momentary-highlight-one-line (point)))
+
+       ;; ----------------------------------------------------------------------
+       ;; when do we want to flash ?
+       (dolist (pulse-command '(scroll-up-command
+                                scroll-down-command
+                                recenter-top-bottom
+                                windmove-up
+                                windmove-down
+                                windmove-right
+                                windmove-left
+                                windmove-wrap-around))
+
+         (advice-add pulse-command :after #'anupamk:pulse/pulse-line)))
+
+   #+end_src
+
 * Language settings
 
 This section is all about configurations and packages that deal with
