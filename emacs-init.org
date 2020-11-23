@@ -1533,21 +1533,20 @@ programming language enhancements
 
         ;; ---------------------------------------------------------------------------
         ;; host specific clangd executable
-        (defvar anupamk:var/clangd-executable 
-          (when (or (anupamk:utils/host-name-is "devel1.india.taranawireless.com")
-                    (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com"))
-            "/usr/bin/clangd-11")
-          (executable-find "clangd"))
+        (defvar anupamk:eglot/clangd-executable
+          (cond ((or (anupamk:utils/host-name-is "devel1.india.taranawireless.com")
+                     (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com"))
+                 "/usr/bin/clangd-11")
+
+                (t (executable-find "clangd")))
+          "clangd-executable value")
 
         :config
+        (add-to-list 'eglot-server-programs (list '(c++-mode c-mode) anupamk:eglot/clangd-executable))
 
-        ;; ---------------------------------------------------------------------------
-        ;; both c and c++ buffers can be managed via eglot
-        (add-to-list 'eglot-server-programs `((c++-mode) ,anupamk:var/clangd-executable))
-        (add-hook 'c++-mode-hook 'eglot-ensure)
-
-        (add-to-list 'eglot-server-programs `((c-mode) ,anupamk:var/clangd-executable))
-        (add-hook 'c-mode-hook 'eglot-ensure))
+        :hook
+        (c-mode-hook   . eglot-ensure)
+        (c++-mode-hook . eglot-ensure))
 
     #+end_src
 
