@@ -1616,8 +1616,8 @@ programming language enhancements
         (defun anupamk:cc-utils/compile-eventually-with-bazel(target)
           "compile with bazel"
           (interactive)
-          (defvar bazel-compile-cmdstr (concat "set -e ; time t3 build --gen-compile-commands -c " target " | cut -c26-"))
-          (anupamk:cc-utils/compile-eventually "bazel_build_defs" bazel-compile-cmdstr))
+          (let ((bazel-compile-cmdstr (concat "set -e ; time t3 build --gen-compile-commands -c " target " | cut -c26-")))
+            (anupamk:cc-utils/compile-eventually "bazel_build_defs" bazel-compile-cmdstr)))
 
         ;; ---------------------------------------------------------------------
         ;; quickly compile single source c/c++ programs. it produces final
