@@ -1666,94 +1666,96 @@ programming language enhancements
 
     #+begin_src emacs-lisp
 
-            (use-package cc-mode
-              :ensure
-              :functions (anupamk:cc/common-mode-hook
-                          anupamk:cc/c++-mode-hook
-                          anupamk:cc/c-mode-hook)
+      (use-package cc-mode
+        :ensure
+        :functions (anupamk:cc/common-mode-hook
+                    anupamk:cc/c++-mode-hook
+                    anupamk:cc/c-mode-hook)
 
-              :init
+        :init
 
-              (defun anupamk:cc/common-mode-hook ()
-                ;; -------------------------------------------------------------------------
-                ;; '_' is not a modifier anymore
-                (modify-syntax-entry ?_ "w")
+        (defun anupamk:cc/common-mode-hook ()
+          ;; -------------------------------------------------------------------------
+          ;; '_' is not a modifier anymore
+          (modify-syntax-entry ?_ "w")
 
-                ;; -------------------------------------------------------------------------
-                ;; any specific code-fmt'ing related changes
-                (setf c-basic-offset 8
+          ;; -------------------------------------------------------------------------
+          ;; any specific code-fmt'ing related changes
+          (setf c-basic-offset 8
 
-                      ;; -------------------------------------------------------------------
-                      ;; Distance between tab stops (for display of tab
-                      ;; characters), in columns.
-                      tab-width 8
+                ;; -------------------------------------------------------------------
+                ;; Distance between tab stops (for display of tab
+                ;; characters), in columns.
+                tab-width 8
 
-                      ;; -------------------------------------------------------------------
-                      ;; spaces instead of tabs :)
-                      indent-tabs-mode nil
+                ;; -------------------------------------------------------------------
+                ;; spaces instead of tabs :)
+                indent-tabs-mode nil
 
-                      ;; -------------------------------------------------------------------
-                      ;; column beyond which automatic line-wrapping should happen.
-                      fill-column 80
+                ;; -------------------------------------------------------------------
+                ;; column beyond which automatic line-wrapping should happen.
+                fill-column 80
 
-                      ;; -------------------------------------------------------------------
-                      ;; column to indent right-margin comments to...
-                      comment-column 60
+                ;; -------------------------------------------------------------------
+                ;; column to indent right-margin comments to...
+                comment-column 60
 
-                      ;; -------------------------------------------------------------------
-                      ;; Specifies how M-x indent-for-comment should handle
-                      ;; comment-only lines. When this variable is non-nil,
-                      ;; comment-only lines are indented according to syntactic
-                      ;; analysis via `c-offsets-alist'.  Otherwise, the comment
-                      ;; is indented as if it was preceded by code.  Note that
-                      ;; this variable does not affect how the normal line
-                      ;; indentation treats comment-only lines.
-                      c-indent-comments-syntactically-p t)
+                ;; -------------------------------------------------------------------
+                ;; Specifies how M-x indent-for-comment should handle
+                ;; comment-only lines. When this variable is non-nil,
+                ;; comment-only lines are indented according to syntactic
+                ;; analysis via `c-offsets-alist'.  Otherwise, the comment
+                ;; is indented as if it was preceded by code.  Note that
+                ;; this variable does not affect how the normal line
+                ;; indentation treats comment-only lines.
+                c-indent-comments-syntactically-p t)
 
-                ;; -------------------------------------------------------------------------
-                ;; syntax-help:
-                ;;
-                ;;  +   c-basic-offset times 1
-                ;;  -   c-basic-offset times -1
-                ;;  ++  c-basic-offset times 2
-                ;;  --  c-basic-offset times -2
-                ;;  *   c-basic-offset times 0.5
-                ;;  /   c-basic-offset times -0.5
-                (c-set-offset 'case-label '+)
-                (c-set-offset 'access-label '/)
-                (c-set-offset 'label '/)
+          ;; -------------------------------------------------------------------------
+          ;; syntax-help:
+          ;;
+          ;;  +   c-basic-offset times 1
+          ;;  -   c-basic-offset times -1
+          ;;  ++  c-basic-offset times 2
+          ;;  --  c-basic-offset times -2
+          ;;  *   c-basic-offset times 0.5
+          ;;  /   c-basic-offset times -0.5
+          (c-set-offset 'case-label '+)
+          (c-set-offset 'access-label '/)
+          (c-set-offset 'label '/)
 
-                ;; -------------------------------------------------------------------------
-                ;; clang-format c/c++ *only* files before save
-                ;;
-                ;; when `add-hook' is invoked with a non-nil 4th argument (as
-                ;; here), the hook's buffer-local value is modified rather than
-                ;; the global value. thereby, effectively making the hook
-                ;; buffer-local.
-                (add-hook 'before-save-hook #'clang-format-buffer nil t))
+          ;; -------------------------------------------------------------------------
+          ;; clang-format c/c++ *only* files before save
+          ;;
+          ;; when `add-hook' is invoked with a non-nil 4th argument (as
+          ;; here), the hook's buffer-local value is modified rather than
+          ;; the global value. thereby, effectively making the hook
+          ;; buffer-local.
+          (add-hook 'before-save-hook #'clang-format-buffer nil t))
 
-              (defun anupamk:cc/c++-mode-hook ()
-                (anupamk:cc/common-mode-hook)
-                (setq comment-start "///")
-                (setq comment-end ""))
+        (defun anupamk:cc/c++-mode-hook ()
+          (anupamk:cc/common-mode-hook)
+          (setq comment-start "///")
+          (setq comment-end ""))
 
-              (defun anupamk:cc/c-mode-hook ()
-                (anupamk:cc/common-mode-hook))
+        (defun anupamk:cc/c-mode-hook ()
+          (anupamk:cc/common-mode-hook))
 
-              :config
-              ;; ---------------------------------------------------------------------------
-              ;; one true style
-              (add-to-list 'c-default-style '(c-mode . "k&r"))
+        :config
+        ;; ---------------------------------------------------------------------------
+        ;; one true style
+        (add-to-list 'c-default-style '(c-mode . "k&r"))
 
-              ;; ---------------------------------------------------------------------------
-              ;; jump directly to source when we see compilation errors
-              (add-to-list 'compilation-search-path (getenv "PWD"))
+        ;; ---------------------------------------------------------------------------
+        ;; jump directly to source when we see compilation errors
+        (add-to-list 'compilation-search-path (getenv "PWD"))
 
-              ;; ---------------------------------------------------------------------------
-              ;; add our mode specific hooks
-              :hook
-              (c-mode-hook   . anupamk:cc/c-mode-hook)
-              (c++-mode-hook . anupamk:cc/c++-mode-hook))
+        ;; ---------------------------------------------------------------------------
+        ;; add our mode specific hooks
+        :hook
+        (c-mode-hook   . anupamk:cc/c-mode-hook)
+        (c++-mode-hook . anupamk:cc/c++-mode-hook))
+
+
 
     #+end_src
     
