@@ -1724,13 +1724,12 @@ programming language enhancements
           (c-set-offset 'label '/)
 
           ;; -------------------------------------------------------------------------
-          ;; format buffer on save.
+          ;; clang-format c/c++ *only* files before save 
           ;;
-          ;; no need to complicate this whole thing with
-          ;; `locate-dominating-file' business etc. etc. , as `clang-format'
-          ;; already looks for a `.clang-format' file up the directory tree
-          ;; recursively.
-          (add-hook 'before-save-hook #'clang-format-buffer))
+          ;; note the `t' as the 4th argument below. if non-nil, says to
+          ;; modify the hook's buffer-local value rather than its global
+          ;; value, which makes the hook buffer-local...
+          (add-hook 'before-save-hook #'clang-format-buffer nil t))
 
         (defun anupamk:cc/c++-mode-hook ()
           (anupamk:cc/common-mode-hook)
@@ -1746,13 +1745,15 @@ programming language enhancements
         (add-to-list 'c-default-style '(c-mode . "k&r"))
 
         ;; ---------------------------------------------------------------------------
-        ;; add our mode specific hooks
-        (add-hook 'c-mode-hook    #'anupamk:cc/c-mode-hook)
-        (add-hook 'c++-mode-hook  #'anupamk:cc/c++-mode-hook)
+        ;; jump directly to source when we see compilation errors
+        (add-to-list 'compilation-search-path (getenv "PWD"))
 
         ;; ---------------------------------------------------------------------------
-        ;; jump directly to source when we see compilation errors
-        (add-to-list 'compilation-search-path (getenv "PWD")))
+        ;; add our mode specific hooks
+        :hook
+        (c-mode-hook   . anupamk:cc/c-mode-hook)
+        (c++-mode-hook . anupamk:cc/c++-mode-hook))
+
     #+end_src
     
 *** Setup keybindings
