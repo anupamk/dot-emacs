@@ -1541,8 +1541,36 @@ programming language enhancements
                 (t (executable-find "clangd")))
           "clangd-executable value")
 
+        ;; ---------------------------------------------------------------------------
+        ;; final executable string that we use
+        (defvar anupamk:eglot/clangd-exec-cmdstr
+          (list anupamk:eglot/clangd-executable
+
+                ;; -------------------------------------------------------------------
+                ;; clangd arguments
+
+                ;; 4 threads
+                "-j=4"
+
+                ;; include index symbols not defined in scopes as well
+                "--all-scopes-completion=1"
+
+                ;; background indexing is enabled
+                "--background-index=1"
+
+                ;; 128 results are enough for anyone
+                "--limit-results=128"
+
+                ;; info level logging
+                "--log=info")
+
+        "clangd executable string")
+
         :config
-        (add-to-list 'eglot-server-programs (list '(c++-mode c-mode) anupamk:eglot/clangd-executable))
+        ;; ---------------------------------------------------------------------------
+        ;; dont care about using eglot anywhere else...
+        (setq eglot-server-programs nil)
+        (add-to-list 'eglot-server-programs (cons (list 'c++-mode 'c-mode) anupamk:eglot/clangd-exec-cmdstr))
 
         :hook
         (c-mode-hook   . eglot-ensure)
