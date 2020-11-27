@@ -1574,6 +1574,15 @@ programming language enhancements
         (setq eglot-server-programs nil)
         (add-to-list 'eglot-server-programs (cons (list 'c++-mode 'c-mode) anupamk:eglot/clangd-exec-cmdstr))
 
+        ;; ---------------------------------------------------------------------------
+        ;; disable annoying and _distracting_ over-the-top stuff
+        (setq eglot-ignored-server-capabilites
+              '(:documentHighlightProvider    ; highlight symbols automatically
+                :documentSymbolProvider       ; list symbols in a buffer
+                :hoverProvider                ; documentation on hover
+                :signatureHelpProvider        ; function-signature help
+                ))
+
         :hook
         (c-mode-hook   . eglot-ensure)
         (c++-mode-hook . eglot-ensure))
