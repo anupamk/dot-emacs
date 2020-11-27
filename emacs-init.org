@@ -1702,6 +1702,22 @@ programming language enhancements
 
         :init
 
+        (defvar anupamk:cc/c-basic-offset
+          (cond ((or (anupamk:utils/host-name-is "devel1.india.taranawireless.com")
+                     (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com"))
+                 2)                           ; yeech
+                (t 8))                        ; sanity
+          "host specific cc-mode basic-offset")
+
+
+        (defvar anupamk:cc/tab-width
+          (cond ((or (anupamk:utils/host-name-is "devel1.india.taranawireless.com")
+                     (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com"))
+                 2)                           ; yeech
+                (t 8))                        ; sanity
+          "host specific cc-mode tab-width")
+
+
         (defun anupamk:cc/common-mode-hook ()
           ;; -------------------------------------------------------------------------
           ;; '_' is not a modifier anymore
@@ -1709,12 +1725,12 @@ programming language enhancements
 
           ;; -------------------------------------------------------------------------
           ;; any specific code-fmt'ing related changes
-          (setf c-basic-offset 8
+          (setf c-basic-offset anupamk:cc/c-basic-offset
 
                 ;; -------------------------------------------------------------------
                 ;; Distance between tab stops (for display of tab
                 ;; characters), in columns.
-                tab-width 8
+                tab-width anupamk:cc/tab-width
 
                 ;; -------------------------------------------------------------------
                 ;; spaces instead of tabs :)
