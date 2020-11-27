@@ -673,11 +673,11 @@
            (setq ivy-use-selectable-prompt t)
            (setq ivy-fixed-height-minibuffer nil)
 
-           (setq ivy-initial-inputs-alist '((counsel-M-x                    . "^")
-                                            (ivy-switch-buffer              . "^")
-                                            (ivy-switch-buffer-other-window . "^")
-                                            (counsel-describe-function      . "^")
-                                            (counsel-describe-variable      . "^")
+           (setq ivy-initial-inputs-alist '((counsel-M-x                    . "")
+                                            (ivy-switch-buffer              . "")
+                                            (ivy-switch-buffer-other-window . "")
+                                            (counsel-describe-function      . "")
+                                            (counsel-describe-variable      . "")
                                             (t                              . "")))
 
            (ivy-set-occur 'counsel-fzf 'counsel-fzf-occur)
@@ -1371,6 +1371,8 @@
    #+end_src
 
 ** Bookmark places in buffer
+
+   + Jump to a specific location with the =C-x r b= binding
 
    #+begin_src emacs-lisp
 
