@@ -474,6 +474,7 @@
 + Incremental search and query replace highlight is quite useful.
 + Highlight regions when the mark is active.
 + Highlight current line in all windows in all modes.
++ Show matching parenthesis.
 
 #+begin_src emacs-lisp
 
@@ -490,7 +491,16 @@
     ;; windows.
     (require 'hl-line)
     (custom-set-variables '(global-hl-line-sticky-flag t))
-    (global-hl-line-mode 1))
+    (global-hl-line-mode 1)
+
+    ;; ---------------------------------------------------------------------------
+    ;; highlight matching parenthesis quickly in the most unobtrusive way
+    ;; possible
+    (require 'paren)
+    (setq show-paren-style 'parenthesis)
+    (setq show-paren-delay 0)
+    (set-face-foreground 'show-paren-mismatch "orange red")
+    (show-paren-mode t))
 
 #+end_src
 
