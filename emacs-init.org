@@ -345,7 +345,7 @@
 
         (use-package emacs
           :config
-          (set-face-attribute 'default nil :font "PragmataPro Mono" :height 130)
+          (set-face-attribute 'default nil :font "PragmataPro Mono" :height 120)
 
           ;; -------------------------------------------------------------------
           ;; bold faces are quite annoying. remove them all
