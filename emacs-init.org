@@ -1442,6 +1442,96 @@
 
    #+end_src
 
+** VTerm t.h.e full-fledged terminal within
+
+   =vterm= is /fast/ full fledged terminal emulator within
+   Emacs. Built as a dynamic module on top of libvterm, it provides an
+   overall better experience as compared to alternatives
+   f.e. =ansi-term=.
+
+   With some minor tweaks to zsh configuration, we get better overall
+   /harmonized/ interaction between the two.
+
+
+   #+begin_src emacs-lisp
+
+     (use-package vterm
+       :ensure t
+       :custom
+       ;; ---------------------------------------------------------------------------
+       ;; ignore bold text properties
+       (vterm-disable-bold t)
+
+       ;; ---------------------------------------------------------------------------
+       ;; ignore underline text properties
+       (vterm-disable-underline t)
+
+       ;; ---------------------------------------------------------------------------
+       ;; ignore inverse-video text properties
+       (vterm-disable-inverse-video t)
+
+       ;; ---------------------------------------------------------------------------
+       ;; how big should the scrollback buffer be ?
+       (vterm-max-scrollback 10000)
+
+       ;; ---------------------------------------------------------------------------
+       ;; Controls whether or not to exclude the prompt when copying a line
+       ;; in vterm-copy-mode
+       (vterm-copy-exclude-prompt t)
+
+       :config
+
+       ;; ---------------------------------------------------------------------------
+       ;; set vterm buffer non-default font
+       (defun anupamk/set-vterm-font ()
+         "custom font in the vterm buffer"
+         (interactive)
+         (set (make-local-variable 'buffer-face-mode-face) '(:family "PragmataPro Mono Liga" :height 110))
+         (buffer-face-mode))
+
+       ;; ---------------------------------------------------------------------------
+       ;; ensure that <C-backspace> should kill the previous word
+       (define-key vterm-mode-map (kbd "<C-backspace>")
+         (lambda () (interactive) (vterm-send-key (kbd "C-w"))))
+
+       ;; ---------------------------------------------------------------------------
+       ;; make counsel use correction function to yank in vterm buffers
+       (defun vterm-counsel-yank-pop-action (orig-fun &rest args)
+         (if (equal major-mode 'vterm-mode)
+             (let ((inhibit-read-only t)
+                   (yank-undo-function (lambda (_start _end) (vterm-undo))))
+               (cl-letf (((symbol-function 'insert-for-yank)
+                          (lambda (str) (vterm-send-string str t))))
+                 (apply orig-fun args)))
+           (apply orig-fun args)))
+
+       (advice-add 'counsel-yank-pop-action :around #'vterm-counsel-yank-pop-action)
+
+       ;; ---------------------------------------------------------------------------
+       ;; directory tracking
+       (add-to-list 'vterm-eval-cmds '("update-pwd" (lambda (path) (setq default-directory path))))
+
+       ;; ---------------------------------------------------------------------------
+       ;; open files below the current window
+       (push (list "find-file-below"
+                   (lambda (path)
+                     (if-let* ((buf (find-file-noselect path))
+                               (window (display-buffer-below-selected buf nil)))
+                         (select-window window)
+                       (message "Failed to open file: %s" path))))
+             vterm-eval-cmds)
+
+       ;; ---------------------------------------------------------------------------
+       ;; quick-n-dirty new vterm instances
+       (global-set-key (kbd "C-M-<S-return>") (lambda() (interactive) (vterm)))
+
+       :hook
+       (vterm-mode-hook . anupamk/set-vterm-font)
+
+       )
+
+   #+end_src
+
 * Language settings
 
 This section is all about configurations and packages that deal with
