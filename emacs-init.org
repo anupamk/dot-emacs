@@ -440,20 +440,6 @@
 
     ;; resize frames independent of `frame-char-{height,width}'
     (setq frame-resize-pixelwise t)
-    )
-
-
-#+end_src
-
-** Customize scrolling behavior
-
-#+begin_src emacs-lisp
-
-  (use-package smooth-scrolling
-    :ensure
-    :delight
-    :config
-    (smooth-scrolling-mode 1)
 
     ;; -------------------------------------------------------------------------
     ;; how much should we scroll when the mouse-wheel is spun around ? when the 
@@ -461,11 +447,8 @@
     (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)
                                         ((control) . text-scale)))
 
-    ;; stop scrolling by huge margins
-    (setq scroll-conservatively most-positive-fixnum)
-    (setq scroll-preserve-screen-position t)
-
     )
+
 
 #+end_src
 
