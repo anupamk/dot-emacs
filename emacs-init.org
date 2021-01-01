@@ -482,7 +482,12 @@
     (require 'paren)
     (setq show-paren-style 'parenthesis)
     (setq show-paren-delay 0)
+
+    ;; ---------------------------------------------------------------------------
+    ;; who sez color is bad ? a.n.g.r.y fruit bowl
     (set-face-foreground 'show-paren-mismatch "orange red")
+    (set-face-background 'show-paren-match "black")
+    (set-face-foreground 'show-paren-match "gold")
     (show-paren-mode t))
 
 #+end_src
