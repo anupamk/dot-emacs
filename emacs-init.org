@@ -207,7 +207,8 @@
                 anupamk:utils/copy-file-name-to-clipboard
                 anupamk:utils/toggle-invisibles
                 anupamk:utils/toggle-line-numbers
-                anupamk:utils/auto-fill-comments)
+                anupamk:utils/auto-fill-comments
+                anupamk:utils/dired-open-all-marked-files)
 
     :config
 
@@ -330,6 +331,13 @@
       "comments in programming mode are automatically filled"
       (setq-local comment-auto-fill-only-comments t)
       (auto-fill-mode 1))
+
+    ;; ---------------------------------------------------------------------------
+    ;; open all marked files in a dired buffer f.e. via M-x find-dired
+    (defun anupamk:utils/dired-open-all-marked-files ()
+      "open all marked files in a dired buffer"
+      (interactive)
+      (mapc 'find-file (dired-get-marked-files)))
 
     )
 #+end_src
