@@ -349,31 +349,33 @@
     + On high dpi displays, I have found =Pragmata= to be excellent
       typeface for text based interactions. Use that.
 
-      #+begin_src emacs-lisp
+    + Moreover we want host specific settings for this.
 
-        (use-package emacs
-          :config
+    #+begin_src emacs-lisp
 
-          ;; ---------------------------------------------------------------------------
-          ;; host specific font configuration
-          (let ((anupamk/buffer-font-height (cond ((anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com") 130)
-                                                  ((anupamk:utils/host-name-is "devel1.india.taranawireless.com") 130)
-                                                  (t 120))))
+      (use-package emacs
+        :config
 
-            (set-face-attribute 'default nil :font "PragmataPro Mono" :height anupamk/buffer-font-height))
+        ;; ---------------------------------------------------------------------------
+        ;; host specific font configuration
+        (let ((anupamk/buffer-font-height (cond ((anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com") 130)
+                                                ((anupamk:utils/host-name-is "devel1.india.taranawireless.com") 130)
+                                                (t 110))))
 
-          ;; -------------------------------------------------------------------
-          ;; bold faces are quite annoying. remove them all
-          (defun anupamk:utils/unbold-all-faces ()
-            "unbold all faces in emacs"
-            (mapc (lambda (face)
-                 (when (eq (face-attribute face :weight) 'bold)
-                   (set-face-attribute face nil :weight 'normal)))
-               (face-list)))
+          (set-face-attribute 'default nil :font "PragmataPro Mono" :height anupamk/buffer-font-height))
 
-          :hook (after-init-hook . anupamk:utils/unbold-all-faces))
+        ;; -------------------------------------------------------------------
+        ;; bold faces are quite annoying. remove them all
+        (defun anupamk:utils/unbold-all-faces ()
+          "unbold all faces in emacs"
+          (mapc (lambda (face)
+               (when (eq (face-attribute face :weight) 'bold)
+                 (set-face-attribute face nil :weight 'normal)))
+             (face-list)))
 
-      #+end_src
+        :hook (after-init-hook . anupamk:utils/unbold-all-faces))
+
+    #+end_src
 
 *** Color theme
 
