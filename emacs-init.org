@@ -358,8 +358,8 @@
 
         ;; ---------------------------------------------------------------------------
         ;; host specific font configuration
-        (let ((anupamk/buffer-font-height (cond ((anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com") 130)
-                                                ((anupamk:utils/host-name-is "devel1.india.taranawireless.com") 130)
+        (let ((anupamk/buffer-font-height (cond ((anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com") 140)
+                                                ((anupamk:utils/host-name-is "aws-devel-01") 140)
                                                 (t 110))))
 
           (set-face-attribute 'default nil :font "PragmataPro Mono" :height anupamk/buffer-font-height))
@@ -1594,12 +1594,12 @@ programming language enhancements
         ;; find the fully-qualified name of the root repository
         (defun anupamk:deadgrep/get-repo-root-dir ()
           "return the name of the root tarana repository"
-          (concat "/tarana/home/anupam/source-code/tw-repos/"
+          (concat "/twbuild/anupam.kapoor/source-code/tw-repos/"
                   tw-repo-root
                   "/tarana3/cpu/applications/src/"))
 
         (when (or (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com")
-                  (anupamk:utils/host-name-is "devel1.india.taranawireless.com"))
+                  (anupamk:utils/host-name-is "aws-devel-01"))
           (setq deadgrep-project-root-function #'anupamk:deadgrep/get-repo-root-dir)))
 
       (global-set-key (kbd "C-M-g")  #'deadgrep)
@@ -1641,7 +1641,7 @@ programming language enhancements
         ;; ---------------------------------------------------------------------------
         ;; host specific clangd executable
         (defvar anupamk:eglot/clangd-executable
-          (cond ((or (anupamk:utils/host-name-is "devel1.india.taranawireless.com")
+          (cond ((or (anupamk:utils/host-name-is "aws-devel-01")
                      (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com"))
                  "/usr/bin/clangd-11")
 
@@ -1819,7 +1819,7 @@ programming language enhancements
         :init
 
         (defvar anupamk:cc/c-basic-offset
-          (cond ((or (anupamk:utils/host-name-is "devel1.india.taranawireless.com")
+          (cond ((or (anupamk:utils/host-name-is "aws-devel-01")
                      (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com"))
                  2)                           ; yeech
                 (t 8))                        ; sanity
@@ -1827,7 +1827,7 @@ programming language enhancements
 
 
         (defvar anupamk:cc/tab-width
-          (cond ((or (anupamk:utils/host-name-is "devel1.india.taranawireless.com")
+          (cond ((or (anupamk:utils/host-name-is "aws-devel-01")
                      (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com"))
                  2)                           ; yeech
                 (t 8))                        ; sanity
@@ -1943,7 +1943,7 @@ programming language enhancements
         ;; ---------------------------------------------------------------------------
         ;; use bazel un-usually :)
         (when (or (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com")
-                  (anupamk:utils/host-name-is "devel1.india.taranawireless.com"))
+                  (anupamk:utils/host-name-is "aws-devel-01"))
           (global-set-key (kbd "C-<f2>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.b10.1xx")))
           (global-set-key (kbd "C-<f3>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.p10.xx")))
           (global-set-key (kbd "C-<f4>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.h10.1xx")))
