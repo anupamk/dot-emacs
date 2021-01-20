@@ -364,7 +364,7 @@
 
           (set-face-attribute 'default nil :font "PragmataPro Mono" :height anupamk/buffer-font-height))
 
-        ;; -------------------------------------------------------------------
+        ;; ---------------------------------------------------------------------------
         ;; bold faces are quite annoying. remove them all
         (defun anupamk:utils/unbold-all-faces ()
           "unbold all faces in emacs"
@@ -1947,6 +1947,7 @@ programming language enhancements
           (global-set-key (kbd "C-<f2>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.b10.1xx")))
           (global-set-key (kbd "C-<f3>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.p10.xx")))
           (global-set-key (kbd "C-<f4>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.h10.1xx")))
+          (global-set-key (kbd "C-<f5>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.r10.xxx")))
           ))
 
     #+end_src
