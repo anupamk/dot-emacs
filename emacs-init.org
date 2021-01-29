@@ -1663,8 +1663,8 @@ programming language enhancements
                 ;; -------------------------------------------------------------------
                 ;; clangd arguments
 
-                ;; 4 threads
-                "-j=4"
+                ;; 8 threads (4 -> 8) we have cpu cores to burn
+                "-j=8"
 
                 ;; include index symbols not defined in scopes as well
                 "--all-scopes-completion=1"
@@ -1676,7 +1676,7 @@ programming language enhancements
                 "--limit-results=128"
 
                 ;; info level logging
-                "--log=info")
+                "--log=error")
 
         "clangd executable string")
 
