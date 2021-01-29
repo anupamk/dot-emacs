@@ -589,10 +589,17 @@
      (global-set-key (kbd "<escape>") #'keyboard-escape-quit)
 
      ;; ---------------------------------------------------------------------------
-     ;; toggle line-number and invisible character display in buffers
-     (global-set-key (kbd "C-c <f6>") #'anupamk:utils/toggle-invisibles)
-     (global-set-key (kbd "C-c <f7>") #'anupamk:utils/toggle-line-numbers)
-
+     ;; define some keybindings via the `C-x t` prefix, for toggling
+     ;; different behaviors.
+     ;;
+     ;; just rollls off the tongue doesn't it ?
+     (bind-keys :prefix-map toggle-map
+                :prefix "C-x t"
+                ("i" . anupamk:utils/toggle-invisibles)
+                ("l" . anupamk:utils/toggle-line-numbers)
+                ("f" . hs-toggle-hiding)
+                ("t" . text-mode)
+                ("R" . anupamk:tramp/edit-file-with-sudo))
      )
 
  #+end_src
