@@ -1556,6 +1556,29 @@
 
    #+end_src
 
+** Hide-Show For Code Folding
+
+   + Code folding enables hiding and showing blocks of text in
+     different buffers. Built in =hideshow= mode, makes this quite
+     seamless experience.
+
+   + Add that by default to all programming modes. The `C-x t` prefix
+     for toggle-map, then binds =C-x t f= for toggling this behavior.
+
+   #+begin_src emacs-lisp
+
+
+     (use-package hideshow
+       :ensure t
+       :config
+
+       :hook
+       ((prog-mode-hook . hs-minor-mode))
+
+       )
+
+   #+end_src
+
 * Language settings
 
 This section is all about configurations and packages that deal with
