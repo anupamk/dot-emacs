@@ -856,6 +856,7 @@
       #+begin_src emacs-lisp
 
         (use-package projectile
+          :disabled
           :ensure t
           :delight
           :config
@@ -870,6 +871,7 @@
       #+begin_src emacs-lisp
 
         (use-package counsel-projectile
+          :disabled
           :ensure t
           :config
           (add-to-list 'ivy-initial-inputs-alist '(counsel-projectile-switch-project . ""))
@@ -1583,6 +1585,47 @@
 
 This section is all about configurations and packages that deal with
 programming language enhancements
+
+** Project Configuration
+
+   + Since about version =25= or thereabouts, Emacs introduced the
+     native project management via =project.el=. =eglot= by default
+     uses that for its activities. Let us set that up.
+
+     #+begin_src emacs-lisp
+
+       (use-package project
+         :ensure nil
+         :bind (("C-c p f" . project-find-file)
+                ("C-c p r" . project-find-regexp))
+
+         :config
+         (defvar project-root-markers '("Cargo.toml"            ; rust ?
+                                        "WORKSPACE"             ; bazel
+                                        "compile_commands.json" ; c/c++ now
+                                        "compile_flags.txt")    ; clangd
+           "Files or directories that indicate the root of a project.")
+
+         (defun anupamk:project-utils/project-root-p (path)
+           "Check if current PATH has any of project root markers."
+           (let ((results (mapcar (lambda (marker)
+                                    (file-exists-p (concat path marker)))
+                                  project-root-markers)))
+             (eval `(or ,@ results))))
+
+         (defun anupamk:project-utils/project-find-root (path)
+           "Tail-recursive search in PATH for root markers."
+           (let* ((this-dir (file-name-as-directory (file-truename path)))
+                  (parent-dir (expand-file-name (concat this-dir "../")))
+                  (system-root-dir (expand-file-name "/")))
+
+             (cond ((anupamk:project-utils/project-root-p this-dir) (cons 'transient this-dir))
+                   ((equal system-root-dir this-dir) nil)
+                   (t (anupamk:project-utils/project-find-root parent-dir)))))
+
+         (add-to-list 'project-find-functions #'anupamk:project-utils/project-find-root))
+
+     #+end_src
 
 ** All programming languages
 *** Automatic comment folding 
