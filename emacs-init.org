@@ -1701,71 +1701,94 @@ programming language enhancements
 
    This is one of the most used modes in day-to-day activities
    
-*** Language Server Configuration
+*** LSP Client Configuration
+**** EGLOT
 
-    #+begin_src emacs-lisp
+     + Although a bit 'barebones' at times, =eglot= seems to have
+       couple of things in its favor. Most notable among them being
+       inbuilt into Emacs, and being almost /zero touch/ in setting it
+       up.
 
-      (use-package eglot
-        :ensure
-        :delight
+     #+begin_src emacs-lisp
 
-        :init
+       (use-package eglot
+         :ensure
+         :delight
 
-        ;; ---------------------------------------------------------------------------
-        ;; host specific clangd executable
-        (defvar anupamk:eglot/clangd-executable
-          (cond ((or (anupamk:utils/host-name-is "aws-devel-01")
-                     (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com"))
-                 "/usr/bin/clangd-11")
+         :init
 
-                (t (executable-find "clangd")))
-          "clangd-executable value")
+         ;; ---------------------------------------------------------------------------
+         ;; host specific clangd executable
+         (defvar anupamk:eglot/clangd-executable
+           (cond ((or (anupamk:utils/host-name-is "aws-devel-01")
+                      (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com"))
+                  "/usr/bin/clangd-11")
 
-        ;; ---------------------------------------------------------------------------
-        ;; final executable string that we use
-        (defvar anupamk:eglot/clangd-exec-cmdstr
-          (list anupamk:eglot/clangd-executable
+                 (t (executable-find "clangd")))
+           "clangd-executable value")
 
-                ;; -------------------------------------------------------------------
-                ;; clangd arguments
+         ;; ---------------------------------------------------------------------------
+         ;; final executable string that we use
+         (defvar anupamk:eglot/clangd-exec-cmdstr
+           (list anupamk:eglot/clangd-executable
 
-                ;; 8 threads (4 -> 8) we have cpu cores to burn
-                "-j=8"
+                 ;; -------------------------------------------------------------------
+                 ;; clangd arguments
 
-                ;; include index symbols not defined in scopes as well
-                "--all-scopes-completion=1"
+                 ;; 8 threads (4 -> 8) we have cpu cores to burn
+                 "-j=8"
 
-                ;; background indexing is enabled
-                "--background-index=1"
+                 ;; include index symbols not defined in scopes as well
+                 "--all-scopes-completion=1"
 
-                ;; 128 results are enough for anyone
-                "--limit-results=128"
+                 ;; background indexing is enabled
+                 "--background-index=1"
 
-                ;; info level logging
-                "--log=error")
+                 ;; 128 results are enough for anyone
+                 "--limit-results=128"
 
-        "clangd executable string")
+                 ;; info level logging
+                 "--log=error")
 
-        :config
-        ;; ---------------------------------------------------------------------------
-        ;; dont care about using eglot anywhere else...
-        (setq eglot-server-programs nil)
-        (add-to-list 'eglot-server-programs (cons (list 'c++-mode 'c-mode) anupamk:eglot/clangd-exec-cmdstr))
+           "clangd executable string")
 
-        ;; ---------------------------------------------------------------------------
-        ;; disable annoying and _distracting_ over-the-top stuff
-        (setq eglot-ignored-server-capabilites
-              '(:documentHighlightProvider    ; highlight symbols automatically
-                :documentSymbolProvider       ; list symbols in a buffer
-                :hoverProvider                ; documentation on hover
-                :signatureHelpProvider        ; function-signature help
-                ))
+         ;; ---------------------------------------------------------------------------
+         ;; ccls executable and its command string
+         (defvar anupamk:eglot/ccls-executable
+           (cond ((or (anupamk:utils/host-name-is "aws-devel-01")
+                      (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com"))
+                  "/tarana/homes/anupam.kapoor/local/usr/bin/ccls")
 
-        :hook
-        (c-mode-hook   . eglot-ensure)
-        (c++-mode-hook . eglot-ensure))
+                 (t (executable-find "ccls")))
+           "ccls-executable value")
 
-    #+end_src
+         ;; ---------------------------------------------------------------------------
+         ;; final executable string that we use
+         (defvar anupamk:eglot/ccls-exec-cmdstr
+           (list anupamk:eglot/ccls-executable)
+         "clangd executable string")
+
+         :config
+         ;; ---------------------------------------------------------------------------
+         ;; dont care about using eglot anywhere else...
+         (setq eglot-server-programs nil)
+         ;; (add-to-list 'eglot-server-programs (cons (list 'c++-mode 'c-mode) anupamk:eglot/clangd-exec-cmdstr))
+         (add-to-list 'eglot-server-programs (cons (list 'c++-mode 'c-mode) anupamk:eglot/ccls-exec-cmdstr))
+
+         ;; ---------------------------------------------------------------------------
+         ;; disable annoying and _distracting_ over-the-top stuff
+         (setq eglot-ignored-server-capabilites
+               '(:documentHighlightProvider    ; highlight symbols automatically
+                 :documentSymbolProvider       ; list symbols in a buffer
+                 :hoverProvider                ; documentation on hover
+                 :signatureHelpProvider        ; function-signature help
+                 ))
+
+         :hook
+         (c-mode-hook   . eglot-ensure)
+         (c++-mode-hook . eglot-ensure))
+
+     #+end_src
 
 *** Font locking
 
