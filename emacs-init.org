@@ -836,8 +836,7 @@
                   ("C-x C-r" . counsel-recentf)
                   ("C-h f"   . counsel-describe-function)
                   ("C-h v"   . counsel-describe-variable)
-                  ("M-s r"   . counsel-rg)
-                  ("M-s g"   . counsel-git-grep)
+                  ("C-c C-r" . counsel-rg)
                   ("M-s l"   . counsel-find-library)
                   ("M-s z"   . prot/counsel-fzf-rg-files)
                   :map ivy-minibuffer-map
@@ -846,7 +845,6 @@
 
 
        #+end_src
-
 
 **** Counsel and projectile
      Project management via projectile.
@@ -901,6 +899,81 @@
                   ("M-s w" . swiper-thing-at-point)))
 
        #+end_src
+
+**** Enable wgrep
+
+     With =wgrep= we can edit the results of grep invokation and save
+     changes to affected buffers. Quite useful !
+
+     #+begin_src emacs-lisp
+
+       (use-package wgrep
+         :ensure
+         :config
+         (setq wgrep-auto-save-buffer t)
+         (setq wgrep-change-readonly-file t))
+
+     #+end_src
+
+
+**** Enable ripgrep
+
+     This is the emacs interface to ripgrep.
+
+     #+begin_src emacs-lisp
+
+       (use-package rg
+         :ensure
+         :after wgrep
+         :config
+
+         (setq rg-group-result t)
+         (setq rg-hide-command t)
+         (setq rg-show-columns nil)
+         (setq rg-show-header t)
+         (setq rg-custom-type-aliases nil)
+         (setq rg-default-alias-fallback "all")
+
+         (rg-define-search prot/rg-vc-or-dir
+           "RipGrep in project root or present directory."
+           :query ask
+           :format regexp
+           :files "everything"
+           :dir (let ((vc (vc-root-dir)))
+                  (if vc
+                      vc                         ; search root project dir
+                    default-directory))          ; or from the current dir
+           :confirm prefix
+           :flags ("--hidden -g !.git"))
+
+         (rg-define-search prot/rg-ref-in-dir
+           "RipGrep for thing at point in present directory."
+           :query point
+           :format regexp
+           :files "everything"
+           :dir default-directory
+           :confirm prefix
+           :flags ("--hidden -g !.git"))
+
+         (defun prot/rg-save-search-as-name ()
+           "Save `rg' buffer, naming it after the current search query.
+
+       This function is meant to be mapped to a key in `rg-mode-map'."
+           (interactive)
+           (let ((pattern (car rg-pattern-history)))
+             (rg-save-search-as-name (concat "«" pattern "»"))))
+
+         :bind (("M-s g" . prot/rg-vc-or-dir)
+                ("M-s r" . prot/rg-ref-in-dir)
+                :map rg-mode-map
+                ("s" . prot/rg-save-search-as-name)
+                ("C-n" . next-line)
+                ("C-p" . previous-line)
+                ("M-n" . rg-next-file)
+                ("M-p" . rg-prev-file)))
+
+     #+end_src
+
 
 ** Isearch configuration
 
@@ -1746,6 +1819,17 @@ programming language enhancements
 
                  ;; 128 results are enough for anyone
                  "--limit-results=128"
+
+                ;; info level logging
+                "--log=error"
+
+                ;; enable cross file renaming
+                "--cross-file-rename"
+
+                ;; detailed completion i.e. One completion item for each
+                ;; semantically distinct completion, with full type
+                ;; information
+                "--completion-style=detailed"
 
                  ;; info level logging
                  "--log=error")
