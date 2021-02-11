@@ -212,7 +212,7 @@
 
     :config
 
-    ;; -------------------------------------------------------------------------
+    ;; ---------------------------------------------------------------------------
     ;; change the cursor style
     (defun anupamk:utils/change-cursor-style (cursor-type)
       "Set the cursor type of the selected frame to CURSOR-TYPE.
@@ -223,7 +223,7 @@
                                      (mapcar 'list '("box" "hollow" "bar" "hbar" nil)))))
       (modify-frame-parameters (selected-frame) (list (cons 'cursor-type cursor-type))))
 
-    ;; -------------------------------------------------------------------------
+    ;; ---------------------------------------------------------------------------
     ;; insert current date 
     (defun anupamk:utils/insert-current-date (iso)
       " Insert the current date at point.
@@ -233,7 +233,7 @@
       (interactive "P")
       (insert (format-time-string (if iso "%F" "%b %d, %Y"))))
 
-    ;; -------------------------------------------------------------------------
+    ;; ---------------------------------------------------------------------------
     ;; rename current buffer to the desired name. the current name is copied 
     ;; so you can just modify it, rather than typing it from scratch
     (defun anupamk:utils/rename-current-buffer-file ()
@@ -254,7 +254,7 @@
                        name (file-name-nondirectory new-name)))))))
 
 
-    ;; -------------------------------------------------------------------------
+    ;; ---------------------------------------------------------------------------
     ;; shortcut to create scratch buffers.
     (defun anupamk:utils/create-new-scratch-buffer ()
       "create a new scratch buffer to work in. (could be *scratch* - *scratch-X*)"
@@ -271,13 +271,13 @@
         (switch-to-buffer (get-buffer-create bufname))
         (if (= n 1) initial-major-mode))) ; 1, because n was incremented
 
-    ;; -------------------------------------------------------------------------
+    ;; ---------------------------------------------------------------------------
     ;; hostname predicate
     (defun anupamk:utils/host-name-is (host_name)
       "return true if host-name is `host_name'"
       (string-equal (system-name) host_name))
 
-    ;; -----------------------------------------------------------------------------
+    ;; ---------------------------------------------------------------------------
     ;; did vi(m) get anything right ? paren matching probably...
     (defun anupamk:utils/vi-match-paren (arg)
       "Go to the matching paren if on a paren; otherwise insert %."
@@ -288,12 +288,12 @@
 
 
     ;; ---------------------------------------------------------------------------
-    ;; fill current line with '-' upto '80' columns
+    ;; fill current line with '-' upto '80' columns, let the user have
+    ;; the satisfaction of inserting a newline
     (defun anupamk:utils/fill-to-end ()
       (interactive)
       (progn
-        (insert-char ?- (- 80 (current-column)))
-        (newline-and-indent)))
+        (insert-char ?- (- 80 (current-column)))))
 
     ;; ---------------------------------------------------------------------------
     ;; copy file name to clipboard
@@ -359,8 +359,8 @@
         ;; ---------------------------------------------------------------------------
         ;; host specific font configuration
         (let ((anupamk/buffer-font-height (cond ((anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com") 110)
-                                                ((anupamk:utils/host-name-is "aws-devel-01") 109)
-                                                (t 110))))
+                                                ((anupamk:utils/host-name-is "aws-devel-01") 122)
+                                                (t 120))))
 
           (set-face-attribute 'default nil :font "PragmataPro Mono" :height anupamk/buffer-font-height))
 
@@ -589,6 +589,10 @@
      (global-set-key (kbd "<escape>") #'keyboard-escape-quit)
 
      ;; ---------------------------------------------------------------------------
+     ;; create a new-frame
+     (global-set-key (kbd "C-c C-n") #'make-frame)
+
+     ;; ---------------------------------------------------------------------------
      ;; define some keybindings via the `C-x t` prefix, for toggling
      ;; different behaviors.
      ;;
@@ -628,10 +632,10 @@
          ;; find the window on the opposite side of the frame.
          (setq windmove-wrap-around t)
 
-         :bind (("M-C-<up>"    . windmove-up)
-                ("M-C-<down>"  . windmove-down)
-                ("M-C-<left>"  . windmove-left)
-                ("M-C-<right>" . windmove-right)))
+         :bind (("C-s-<up>"    . windmove-up)
+                ("C-s-<down>"  . windmove-down)
+                ("C-s-<left>"  . windmove-left)
+                ("C-s-<right>" . windmove-right)))
 
      #+end_src
 
@@ -689,7 +693,7 @@
                                          (ivy-switch-buffer              . ivy--regex-fuzzy)
                                          (ivy-switch-buffer-other-window . ivy--regex-fuzzy)
                                          (counsel-rg                     . ivy--regex-or-literal)
-                                         (t                              . ivy--regex-plus)))
+                                         (t                              . ivy--regex-fuzzy)))
 
            (setq ivy-display-style 'fancy)
            (setq ivy-use-selectable-prompt t)
@@ -845,40 +849,6 @@
 
 
        #+end_src
-
-**** Counsel and projectile
-     Project management via projectile.
-
-***** Projectile Setup
-
-      #+begin_src emacs-lisp
-
-        (use-package projectile
-          :disabled
-          :ensure t
-          :delight
-          :config
-          (setq projectile-indexing-method 'alien)
-          (setq projectile-enable-caching t)
-          (setq projectile-completion-system 'ivy))
-
-      #+end_src
-
-***** Counsel-Projectile interface
-
-      #+begin_src emacs-lisp
-
-        (use-package counsel-projectile
-          :disabled
-          :ensure t
-          :config
-          (add-to-list 'ivy-initial-inputs-alist '(counsel-projectile-switch-project . ""))
-          :hook (after-init . counsel-projectile-mode)
-
-          :bind-keymap ("M-s p" . projectile-command-map)
-          :bind (("M-s b" . counsel-projectile-switch-to-buffer)))
-
-      #+end_src
 
 **** Swiper commands and settings
      
@@ -1238,7 +1208,11 @@
                (dired-mode . contrib/recentf-add-dired-directory)))
 
     #+end_src
+
 *** Minibuffer
+
+    + Not sure why saving history is not default. Let's enable that,
+      and few more things that make sense
 
     #+begin_src emacs-lisp
 
@@ -1622,7 +1596,7 @@
 
        ;; ---------------------------------------------------------------------------
        ;; quick-n-dirty new vterm instances
-       (global-set-key (kbd "C-M-<S-return>") (lambda() (interactive) (vterm)))
+       (global-set-key (kbd "C-M-<return>") (lambda() (interactive) (vterm)))
 
        :hook
        (vterm-mode-hook . anupamk/set-vterm-font)
@@ -1701,6 +1675,19 @@ programming language enhancements
      #+end_src
 
 ** All programming languages
+*** Commonly used keybindings
+
+    #+begin_src emacs-lisp
+
+      (use-package emacs
+        :config
+
+        :bind ("C-c C-r"   . recompile)
+
+        )
+
+    #+end_src
+
 *** Automatic comment folding 
     Enable auto-filling of comments for all programming modes.
    
@@ -1778,9 +1765,9 @@ programming language enhancements
 **** EGLOT
 
      + Although a bit 'barebones' at times, =eglot= seems to have
-       couple of things in its favor. Most notable among them being
-       inbuilt into Emacs, and being almost /zero touch/ in setting it
-       up.
+       couple of things in its favor. Most notable being almost /zero
+       touch/ 'provisioning' and another one being part of Emacs
+       itself.
 
      #+begin_src emacs-lisp
 
@@ -1820,9 +1807,6 @@ programming language enhancements
                  ;; 128 results are enough for anyone
                  "--limit-results=128"
 
-                ;; info level logging
-                "--log=error"
-
                 ;; enable cross file renaming
                 "--cross-file-rename"
 
@@ -1856,11 +1840,12 @@ programming language enhancements
          ;; ---------------------------------------------------------------------------
          ;; dont care about using eglot anywhere else...
          (setq eglot-server-programs nil)
-         ;; (add-to-list 'eglot-server-programs (cons (list 'c++-mode 'c-mode) anupamk:eglot/clangd-exec-cmdstr))
-         (add-to-list 'eglot-server-programs (cons (list 'c++-mode 'c-mode) anupamk:eglot/ccls-exec-cmdstr))
+         (add-to-list 'eglot-server-programs (cons (list 'c++-mode 'c-mode) anupamk:eglot/clangd-exec-cmdstr))
+         ;;;(add-to-list 'eglot-server-programs (cons (list 'c++-mode 'c-mode) anupamk:eglot/ccls-exec-cmdstr))
 
          ;; ---------------------------------------------------------------------------
-         ;; disable annoying and _distracting_ over-the-top stuff
+         ;; disable annoying, _distracting_, over-the-top features that serve
+         ;; no useful purpose at all (imnsho)
          (setq eglot-ignored-server-capabilites
                '(:documentHighlightProvider    ; highlight symbols automatically
                  :documentSymbolProvider       ; list symbols in a buffer
@@ -2126,8 +2111,9 @@ programming language enhancements
                   (anupamk:utils/host-name-is "aws-devel-01"))
           (global-set-key (kbd "C-<f2>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.b10.1xx")))
           (global-set-key (kbd "C-<f3>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.p10.xx")))
-          (global-set-key (kbd "C-<f4>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.h10.1xx")))
-          (global-set-key (kbd "C-<f5>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.r10.xxx")))
+          (global-set-key (kbd "C-<f4>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.r10.xxx")))
+          (global-set-key (kbd "C-<f5>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.h10.1xx")))
+          (global-set-key (kbd "C-<f6>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.h10.2xx")))
           ))
 
     #+end_src

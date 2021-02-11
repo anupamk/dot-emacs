@@ -49,17 +49,17 @@
 ;; GCMH - the Garbage Collector Magic Hack
 ;;
 ;; Enforce a sneaky Garbage Collection strategy to minimize GC
-;; interference with the activity. During normal use a high GC
-;; threshold is set. When idling GC is immediately triggered and a low
-;; threshold is set.
+;; interference with the activity. During normal usage a high GC
+;; threshold is set. When idling, GC is immediately triggered and a
+;; low threshold is set.
 (use-package gcmh
   :ensure
   :delight
   :init
   (setq gcmh-verbose             t
-        gcmh-lows-cons-threshold #x40000 ; 4mb
-        gcmh-high-cons-threshold most-positive-fixnum ; let-er-rrip
-        gcmh-idle-delay          3600)
+        gcmh-lows-cons-threshold (* 16 1024 1024)  ; 16mb
+        gcmh-high-cons-threshold (* 128 1024 1024) ; 128mb
+        gcmh-idle-delay          5)
   :config
   (gcmh-mode 1))
 

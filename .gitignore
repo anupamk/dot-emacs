@@ -9,6 +9,7 @@
 # ------------------------------------------------------------------------------
 # yes, this is intended. `emacs-init.el' is generated from emacs-init.org
 emacs-init.el
+emacs-init.html
 
 # ------------------------------------------------------------------------------
 # ignore elpa/* this is fetched everytime we initialize the configuration
@@ -33,3 +34,4 @@ projectile-bookmarks.eld
 projectile.cache
 places
 projects
+url/*
