@@ -414,7 +414,15 @@
                                  (mouse-color                . "gold")
                                  (vertical-scroll-bars       . nil)
                                  (horizontal-scroll-bar-mode . nil)
-                                 )))
+                                 ))
+
+     ;; ---------------------------------------------------------------------------
+     ;; remove bold fonts from all frames...
+     (add-hook 'after-make-frame-functions
+               (lambda(current-frame)
+                     (with-selected-frame current-frame
+                       (anupamk:utils/unbold-all-faces)))))
+
 
  #+end_src
 
