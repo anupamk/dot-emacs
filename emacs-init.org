@@ -1831,28 +1831,11 @@ programming language enhancements
 
            "clangd executable string")
 
-         ;; ---------------------------------------------------------------------------
-         ;; ccls executable and its command string
-         (defvar anupamk:eglot/ccls-executable
-           (cond ((or (anupamk:utils/host-name-is "aws-devel-01")
-                      (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com"))
-                  "/tarana/homes/anupam.kapoor/local/usr/bin/ccls")
-
-                 (t (executable-find "ccls")))
-           "ccls-executable value")
-
-         ;; ---------------------------------------------------------------------------
-         ;; final executable string that we use
-         (defvar anupamk:eglot/ccls-exec-cmdstr
-           (list anupamk:eglot/ccls-executable)
-         "clangd executable string")
-
          :config
          ;; ---------------------------------------------------------------------------
          ;; dont care about using eglot anywhere else...
          (setq eglot-server-programs nil)
          (add-to-list 'eglot-server-programs (cons (list 'c++-mode 'c-mode) anupamk:eglot/clangd-exec-cmdstr))
-         ;;;(add-to-list 'eglot-server-programs (cons (list 'c++-mode 'c-mode) anupamk:eglot/ccls-exec-cmdstr))
 
          ;; ---------------------------------------------------------------------------
          ;; disable annoying, _distracting_, over-the-top features that serve
