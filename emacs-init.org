@@ -20,6 +20,10 @@
     (scroll-bar-mode -1)
     (horizontal-scroll-bar-mode -1)
 
+    ;; ---------------------------------------------------------------------------
+    ;; i need some space man
+    (setq-default line-spacing 0.15)
+
     (setq use-file-dialog nil)
     (setq use-dialog-box t)
     (setq inhibit-splash-screen t)
