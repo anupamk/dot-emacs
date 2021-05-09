@@ -602,7 +602,7 @@
 
      ;; ---------------------------------------------------------------------------
      ;; create a new-frame
-     (global-set-key (kbd "C-c C-n") #'make-frame)
+     (global-set-key (kbd "C-c N") #'make-frame)
 
      ;; ---------------------------------------------------------------------------
      ;; define some keybindings via the `C-x t` prefix, for toggling
@@ -644,10 +644,10 @@
          ;; find the window on the opposite side of the frame.
          (setq windmove-wrap-around t)
 
-         :bind (("C-s-<up>"    . windmove-up)
-                ("C-s-<down>"  . windmove-down)
-                ("C-s-<left>"  . windmove-left)
-                ("C-s-<right>" . windmove-right)))
+         :bind (("C-<M-up>"    . windmove-up)
+                ("C-<M-down>"  . windmove-down)
+                ("C-<M-left>"  . windmove-left)
+                ("C-<M-right>" . windmove-right)))
 
      #+end_src
 
@@ -1448,9 +1448,8 @@
            (when file-name
              (find-alternate-file (concat "/sudo::" file-name)))))
 
-       ;; ----------------------------------------------------------------------
-       ;; edit file as root
-       (global-set-key (kbd "C-c f r") #'anupamk:tramp/edit-file-with-sudo))
+       )
+
    #+end_src
 
 ** Bookmark places in buffer
