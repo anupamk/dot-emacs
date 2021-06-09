@@ -1224,7 +1224,7 @@
 *** Minibuffer
 
     + Not sure why saving history is not default. Let's enable that,
-      and few more things that make sense
+      and few more things that make sense f.e. search, kill, regexp-search etc.
 
     #+begin_src emacs-lisp
 
@@ -1234,6 +1234,12 @@
         (setq history-length 10000)
         (setq history-delete-duplicates t)
         (setq savehist-save-minibuffer-history t)
+
+        ;; ---------------------------------------------------------------------------
+        ;; nice to have
+        (setq savehist-additional-variables '(kill-ring
+                                              search-ring
+                                              regexp-search-ring))
         (savehist-mode 1))
 
     #+end_src
