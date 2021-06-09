@@ -610,12 +610,12 @@
      ;;
      ;; just rollls off the tongue doesn't it ?
      (bind-keys :prefix-map toggle-map
-                :prefix "C-x t"
+                :prefix "C-c t"
                 ("i" . anupamk:utils/toggle-invisibles)
                 ("l" . anupamk:utils/toggle-line-numbers)
                 ("f" . hs-toggle-hiding)
                 ("t" . text-mode)
-                ("R" . anupamk:tramp/edit-file-with-sudo))
+                ("R" . anupamk:edit-file-with-sudo))
      )
 
  #+end_src
@@ -1414,23 +1414,36 @@
        (setq tramp-default-method "ssh")
 
        ;; ---------------------------------------------------------------------------
-       ;; make a big-red-banner across the top of the buffer while editing
-       ;; file as root.
-       (make-face 'anupamk:tramp/find-file-root-header-face)
-       (set-face-attribute 'anupamk:tramp/find-file-root-header-face nil
-                           :foreground "white"
-                           :background "dark red")
-
+       ;; display a red-banner across the file when it is being edited as root
        (defun anupamk:tramp/find-file-root-header-warning ()
          "*Display a warning in header line of the current buffer.
      This function is suitable to add to `find-file-hook'."
-         (when (string-equal
-                (file-remote-p (or buffer-file-name default-directory) 'user)
-                "root")
+
+         ;; -------------------------------------------------------------------------
+         ;; file opened as user == root ?
+         (when (string-equal (file-remote-p (or buffer-file-name default-directory) 'user)
+                             "root")
+
+           ;; -----------------------------------------------------------------------
+           ;; header warning face
+           (make-face 'anupamk:tramp/find-file-root-header-face)
+           (set-face-attribute 'anupamk:tramp/find-file-root-header-face nil
+                               :height 1.2
+                               :width 'normal
+                               :foreground "white"
+                               :background "dark red")
 
            (let* ((warning " WARNING: EDITING FILE AS ROOT! ")
-                  (space (+ 6 (- (window-width) (length warning))))
-                  (bracket (make-string (/ space 2) ?*))
+
+                  ;; ----------------------------------------------------------------
+                  ;; ok, so we want to account for the ':height' face-attribute as
+                  ;; well, so that the warning text is not too badly skewed while
+                  ;; getting displayed.
+                  (space (- (truncate (/ (window-width)
+                                         (face-attribute 'anupamk:tramp/find-file-root-header-face :height)))
+                            (length warning)))
+
+                  (bracket (make-string (+ 1 (/ space 2)) ?*))
                   (warning (concat bracket warning bracket)))
 
              (setq header-line-format (propertize
@@ -1441,13 +1454,12 @@
 
        ;; ---------------------------------------------------------------------------
        ;; edit currently open file as root
-       (defun anupamk:tramp/edit-file-with-sudo ()
+       (defun anupamk:edit-file-with-sudo (&optional fname)
          "Take the file currently being edited, and open it as root with `sudo'."
-         (interactive)
-         (let ((file-name (buffer-file-name)))
-           (when file-name
-             (find-alternate-file (concat "/sudo::" file-name)))))
-
+         (interactive "P")
+         (if (or fname (not buffer-file-name))
+             (find-file (concat "/sudo::" (read-file-name "find file (as root): ")))
+           (find-alternate-file (concat "/sudo::" buffer-file-name))))
        )
 
    #+end_src
