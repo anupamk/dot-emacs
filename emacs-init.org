@@ -1697,17 +1697,14 @@ programming language enhancements
                  (cons 'vc anupamk:project-root)))))
 
          ;; ---------------------------------------------------------------------------
-         ;; possible project markers
-         (defvar project-root-markers (list "Cargo.toml"
-                                            "WORKSPACE"
-                                            "compile_commands.json"
-                                            "compile_flags.txt"
-                                            ".git")
-
-         "list of possible project root markers that we care about")
-
+         ;; just a wrapper over the real thaang
          (defun anupamk:project-utils/locate-project-root (dirname)
-           (anupamk:project-utils/do-locate-project-root dirname project-root-markers))
+           (let ((project-root-markers (list "Cargo.toml"
+                                             "WORKSPACE"
+                                             "compile_commands.json"
+                                             "compile_flags.txt"
+                                             ".git")))
+             (anupamk:project-utils/do-locate-project-root dirname project-root-markers)))
 
          (add-hook 'project-find-functions #'anupamk:project-utils/locate-project-root))
 
