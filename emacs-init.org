@@ -364,7 +364,7 @@
         ;; host specific font configuration
         (let ((anupamk/buffer-font-height (cond ((anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com") 110)
                                                 ((anupamk:utils/host-name-is "aws-devel-01") 122)
-                                                (t 120))))
+                                                (t 110))))
 
           (set-face-attribute 'default nil :font "PragmataPro Mono" :height anupamk/buffer-font-height))
 
