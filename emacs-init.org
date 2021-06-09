@@ -1659,8 +1659,9 @@ programming language enhancements
 ** Project Configuration
 
    + Since about version =25= or thereabouts, Emacs introduced the
-     native project management via =project.el=. =eglot= by default
-     uses that for its activities. Let us set that up.
+     native project management via =project.el=. =eglot= (the built-in
+     lsp client), by default, uses that for its activities. Let us set
+     that up.
 
      #+begin_src emacs-lisp
 
@@ -1670,30 +1671,39 @@ programming language enhancements
                 ("C-c p r" . project-find-regexp))
 
          :config
-         (defvar project-root-markers '("Cargo.toml"            ; rust ?
-                                        "WORKSPACE"             ; bazel
-                                        "compile_commands.json" ; c/c++ now
-                                        "compile_flags.txt")    ; clangd
-           "Files or directories that indicate the root of a project.")
 
-         (defun anupamk:project-utils/project-root-p (path)
-           "Check if current PATH has any of project root markers."
-           (let ((results (mapcar (lambda (marker)
-                                    (file-exists-p (concat path marker)))
-                                  project-root-markers)))
-             (eval `(or ,@ results))))
+         ;; --------------------------------------------------------------------
+         ;; find project root-dir by searching (recursively) through a list of
+         ;; project-root-markers.
+         (defun anupamk:project-utils/do-locate-project-root (dirname all-marker-lists)
+           "find project root directory (starting from DIRNAME) by searching
+       for markers defined in ALL-MARKER-LISTS"
 
-         (defun anupamk:project-utils/project-find-root (path)
-           "Tail-recursive search in PATH for root markers."
-           (let* ((this-dir (file-name-as-directory (file-truename path)))
-                  (parent-dir (expand-file-name (concat this-dir "../")))
-                  (system-root-dir (expand-file-name "/")))
+           (when all-marker-lists
+             (let ((anupamk:project-root (locate-dominating-file dirname (car all-marker-lists))))
+               (if (not anupamk:project-root)
+                   ;; -------------------------------------------------------------------
+                   ;; keep looking ...
+                   (anupamk:project-utils/do-locate-project-root dirname (cdr all-marker-lists))
 
-             (cond ((anupamk:project-utils/project-root-p this-dir) (cons 'transient this-dir))
-                   ((equal system-root-dir this-dir) nil)
-                   (t (anupamk:project-utils/project-find-root parent-dir)))))
+                 ;; ---------------------------------------------------------------------
+                 ;; we got a live one
+                 (cons 'vc anupamk:project-root)))))
 
-         (add-to-list 'project-find-functions #'anupamk:project-utils/project-find-root))
+         ;; ---------------------------------------------------------------------------
+         ;; possible project markers
+         (defvar project-root-markers (list "Cargo.toml"
+                                            "WORKSPACE"
+                                            "compile_commands.json"
+                                            "compile_flags.txt"
+                                            ".git")
+
+         "list of possible project root markers that we care about")
+
+         (defun anupamk:project-utils/locate-project-root (dirname)
+           (anupamk:project-utils/do-locate-project-root dirname project-root-markers))
+
+         (add-hook 'project-find-functions #'anupamk:project-utils/locate-project-root))
 
      #+end_src
 
