@@ -100,9 +100,11 @@
     (setf ring-bell-function (lambda()))
 
     ;; -------------------------------------------------------------------------
-    ;; disable backups
+    ;; littering is a punishable offence in this and other states.
     (setf backup-inhibited t
-          auto-save-default nil)
+          auto-save-default nil
+          make-backup-files nil
+          create-lockfiles nil)
 
     ;; -------------------------------------------------------------------------
     ;; prefix for generating auto-save-list-file-name
@@ -179,8 +181,17 @@
     ;; -------------------------------------------------------------------------
     ;; all themes are safe
     (setq custom-safe-themes t)
-    )
 
+    ;; ---------------------------------------------------------------------------
+    ;; write over selected text on input. just like other editors.
+    (delete-selection-mode t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; less noisy emacs-lisp compilation
+    (setq byte-compile-warnings '(not free-vars unresolved noruntime lexical make-local))
+    (setq native-comp-async-report-warnings-errors nil)
+
+    )
 
 #+end_src
 
