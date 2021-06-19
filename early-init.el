@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; no-byte-compile: t -*-
+
 ;; -----------------------------------------------------------------------------
 ;; starting with emacs-27.1, and early-init is now required to control
 ;; things with greater precision.

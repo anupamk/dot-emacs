@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; no-byte-compile: t -*-
+
 ;; -----------------------------------------------------------------------------
 ;; this is the bootstrap file which is loaded when emacs
 ;; starts. subsequently it loads `emacs-init.el' which is generated
