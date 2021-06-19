@@ -394,7 +394,7 @@
         ;; host specific font configuration
         (let ((anupamk/buffer-font-height (cond ((anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com") 110)
                                                 ((anupamk:utils/host-name-is "aws-devel-01") 122)
-                                                (t 110))))
+                                                (t 120))))
 
           (set-face-attribute 'default nil :font "PragmataPro Mono" :height anupamk/buffer-font-height))
 
@@ -1618,7 +1618,7 @@
        (defun anupamk/set-vterm-font ()
          "custom font in the vterm buffer"
          (interactive)
-         (set (make-local-variable 'buffer-face-mode-face) '(:family "PragmataPro Mono Liga" :height 110))
+         (set (make-local-variable 'buffer-face-mode-face) '(:family "PragmataPro Mono" :height 110))
          (buffer-face-mode))
 
        ;; ---------------------------------------------------------------------------
@@ -1655,7 +1655,7 @@
 
        ;; ---------------------------------------------------------------------------
        ;; quick-n-dirty new vterm instances
-       (global-set-key (kbd "C-M-<return>") (lambda() (interactive) (vterm)))
+       (global-set-key (kbd "C-c C-<return>") (lambda() (interactive) (vterm)))
 
        :hook
        (vterm-mode-hook . anupamk/set-vterm-font)
