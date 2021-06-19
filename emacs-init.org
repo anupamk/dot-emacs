@@ -35,6 +35,22 @@
 
 #+end_src
 
+** Start Server
+
+   + Start the emacs-server if not already running. New frames can
+     connect to a running instance with appropriate =emacsclient -c=
+     invokation.
+
+#+begin_src emacs-lisp
+
+  (use-package emacs
+    :init
+    (unless (and (fboundp 'server-running-p)
+                 (server-running-p))
+      (server-start)))
+
+#+end_src
+
 ** User customizations in a separate location
    
 + Store all user customizations in a separate disposable location for
