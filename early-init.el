@@ -1,6 +1,11 @@
 ;; -*- lexical-binding: t; no-byte-compile: t -*-
 
 ;; -----------------------------------------------------------------------------
+;; Defer garbage collection to later
+(setq gc-cons-threshold most-positive-fixnum
+      gc-cons-percentage 0.6)
+
+;; -----------------------------------------------------------------------------
 ;; starting with emacs-27.1, and early-init is now required to control
 ;; things with greater precision.
 ;;
@@ -13,14 +18,22 @@
 
 ;; -----------------------------------------------------------------------------
 ;; do not initialise the package manager. this is done in `init.el'
-(setq package-enable-at-startup t)
+(setq package-enable-at-startup nil)
 
 ;; -----------------------------------------------------------------------------
 ;; allow loading from the package cache.
 (setq package-quickstart t)
 
 ;; -----------------------------------------------------------------------------
-;; do not resize the frame at this early stage.
+;; don't fancy looking at un-styled emacs gui-components. disable
+;; those elements early
+(push '(menu-bar-lines . 0) default-frame-alist)
+(push '(tool-bar-lines . 0) default-frame-alist)
+(push '(vertical-scroll-bars) default-frame-alist)
+
+;; -----------------------------------------------------------------------------
+;; do not resize the frame at this early stage, it is quite an
+;; expensive task
 (setq frame-inhibit-implied-resize t)
 
 ;; -----------------------------------------------------------------------------
