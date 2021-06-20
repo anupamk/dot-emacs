@@ -1700,9 +1700,10 @@ programming language enhancements
 ** Project Configuration
 
    + Since about version =25= or thereabouts, Emacs introduced the
-     native project management via =project.el=. =eglot= (the built-in
-     lsp client), by default, uses that for its activities. Let us set
-     that up.
+     native project management via =project.el=
+
+     =eglot= (the built-in lsp client), by default, uses that for its
+     activities. Let us set that up.
 
      #+begin_src emacs-lisp
 
