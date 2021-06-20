@@ -1787,9 +1787,6 @@ programming language enhancements
       (use-package deadgrep
         :ensure
 
-        :init
-        (defvar tw-repo-root (getenv "TWAK_REPO_NAME"))
-
         :functions (anupamk:deadgrep/get-repo-root-dir)
 
         :config
@@ -1798,9 +1795,10 @@ programming language enhancements
         ;; find the fully-qualified name of the root repository
         (defun anupamk:deadgrep/get-repo-root-dir ()
           "return the name of the root tarana repository"
-          (concat "/twbuild/anupam.kapoor/source-code/tw-repos/"
-                  tw-repo-root
-                  "/tarana3/cpu/applications/src/"))
+          (let ((tw-repo-root (getenv "TWAK_REPO_NAME")))
+            (concat "/twbuild/anupam.kapoor/source-code/tw-repos/"
+                    tw-repo-root
+                    "/tarana3/cpu/applications/src/")))
 
         (when (or (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com")
                   (anupamk:utils/host-name-is "aws-devel-01"))
