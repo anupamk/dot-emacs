@@ -191,6 +191,11 @@
     (setq byte-compile-warnings '(not free-vars unresolved noruntime lexical make-local))
     (setq native-comp-async-report-warnings-errors nil)
 
+    ;; ---------------------------------------------------------------------------
+    ;; max number of bytes to read from a process in a single chunk. 4m
+    ;; is reasonable for lsp based c/c++ programming...
+    (setq read-process-output-max (* 4 1024 1024))
+
     )
 
 #+end_src
