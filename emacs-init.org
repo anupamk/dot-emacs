@@ -1822,7 +1822,7 @@ programming language enhancements
 
     #+begin_src emacs-lisp
     
-      (use-package bazel-mode
+      (use-package bazel
         :ensure)
 
     #+end_src
