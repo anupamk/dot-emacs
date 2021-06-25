@@ -18,7 +18,7 @@
 
 ;; initialize the packages, avoiding re-initialization
 (unless (bound-and-true-p package--initialized)
-  (setq package-enable-at-startup nil)
+  (setq package-enable-at-startup t)
   (package-initialize))
 
 ;; make sure that `use-package' is available.
