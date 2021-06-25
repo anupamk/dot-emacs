@@ -599,7 +599,7 @@
 
      ;; -------------------------------------------------------------------------
      ;; <meta-g> : goes to a specific line
-     (global-set-key (kbd "M-g") #'goto-line)
+     (global-set-key (kbd "C-c g") #'goto-line)
 
      ;; -------------------------------------------------------------------------
      ;; recenter current line
@@ -709,287 +709,239 @@
 
 * Selection candidates and search methods
 ** Completion framework
-*** Ivy+Swiper+Counsel
 
-    IMHO, optimal way of using Emacs is via searching and narrowing
-    selection candidates. 
+*** Consult+Orderless+Vertico+Marginalia
 
-**** Configuration for Ivy
+    + IMHO, optimal way of using Emacs is via searching and narrowing
+      selection candidates.
 
-     + =ivy= is an interactive interface for completion in Emacs. It
-       is the mechanism that handles all selection lists, narrowing
-       them etc.
+      #+begin_src emacs-lisp
 
-       #+begin_src emacs-lisp
+        ;; -----------------------------------------------------------------------------
+        ;; consult provides various practical commands based on the Emacs
+        ;; completion function completing-read, which allows to quickly select
+        ;; an item from a list of candidates with completion.
+        (use-package consult
+          :ensure t
 
-         (use-package ivy
-           :ensure
-           :delight
+          ;; ===========================================================================
+          ;; init configuration is always executed
+          :init
 
-           :config
-           (setq ivy-count-format "(%d/%d) ")
-           (setq ivy-height-alist '((t lambda (_caller) (/ (window-height) 4))))
-           (setq ivy-use-virtual-buffers t)
-           (setq ivy-wrap t)
+          ;; ---------------------------------------------------------------------------
+          ;; configure register formatting, which improves registe preview for
+          ;; `consult-register', `consult-register-load',
+          ;; `consult-register-store' and the emacs builtins.
+          (setq register-preview-delay 0
+                register-preview-function #'consult-register-format)
 
-           ;; ---------------------------------------------------------------------------
-           ;; `ivy--regex-plus'       : use a '.*' regex wildcard in place of a single space
-           ;; `ivy--regex-fuzzy'      : use a '.*' regex wildcard between each input letter
-           ;; `ivy--regex-or-literal' : if string isn't a regex, escape it
-           (setq ivy-re-builders-alist '((counsel-M-x                    . ivy--regex-fuzzy)
-                                         (ivy-switch-buffer              . ivy--regex-fuzzy)
-                                         (ivy-switch-buffer-other-window . ivy--regex-fuzzy)
-                                         (counsel-rg                     . ivy--regex-or-literal)
-                                         (t                              . ivy--regex-fuzzy)))
+          ;; ---------------------------------------------------------------------------
+          ;; tweak register preview window. this adds thin lines, sorting and
+          ;; hides the mode line of the window
+          (advice-add #'register-preview :override #'consult-register-window)
 
-           (setq ivy-display-style 'fancy)
-           (setq ivy-use-selectable-prompt t)
-           (setq ivy-fixed-height-minibuffer nil)
+          ;; ===========================================================================
+          ;; configure other variables and modes here, after lazily loading
+          ;; the package
+          :config
 
-           (setq ivy-initial-inputs-alist '((counsel-M-x                    . "")
-                                            (ivy-switch-buffer              . "")
-                                            (ivy-switch-buffer-other-window . "")
-                                            (counsel-describe-function      . "")
-                                            (counsel-describe-variable      . "")
-                                            (t                              . "")))
+          ;; ---------------------------------------------------------------------------
+          ;; show absolute line-numbers when narrowing is active
+          (setq consult-line-numbers-widen t)
 
-           (ivy-set-occur 'counsel-fzf 'counsel-fzf-occur)
-           (ivy-set-occur 'counsel-rg 'counsel-ag-occur)
-           (ivy-set-occur 'ivy-switch-buffer 'ivy-switch-buffer-occur)
-           (ivy-set-occur 'swiper 'swiper-occur)
-           (ivy-set-occur 'swiper-isearch 'swiper-occur)
-           (ivy-set-occur 'swiper-multi 'counsel-ag-occur)
+          ;; ---------------------------------------------------------------------------
+          ;; configure the narrowing key.
+          (setq consult-narrow-key ">")
 
-           :hook ((after-init     . ivy-mode)
-                  (ivy-occur-mode . hl-line-mode))
+          ;; ---------------------------------------------------------------------------
+          ;; some consult commands support live previews, f.e., when we scroll
+          ;; through items of `consult-line', the buffer will scroll to the
+          ;; corresponding position.
+          ;;
+          ;; by default automatic preview is on. a better approach is to
+          ;; disable automatic preview where file loading is involved.
+          (consult-customize
+           consult-ripgrep consult-git-grep consult-grep
+           consult-bookmark consult-recent-file consult-xref
+           consult--source-file consult--source-project-file consult--source-bookmark
+           :preview-key (kbd "M-."))
 
-           :bind (("C-S-r" . ivy-resume)
-                  ("M-ESC" . ivy-immediate-done)
-                  :map ivy-occur-mode-map
-                  ("f"          . forward-char)
-                  ("b"          . backward-char)
-                  ("n"          . ivy-occur-next-line)
-                  ("p"          . ivy-occur-previous-line)
-                  ("<C-return>" . ivy-occur-press)))
+          ;; ---------------------------------------------------------------------------
+          ;; setup the project root for `project.el'
+          (setq consult-project-root-function
+                (lambda ()
+                  (when-let (project (project-current))
+                    (car (project-roots project)))))
 
-       #+end_src
+          ;; ===========================================================================
+          ;; replace bindings
+          :bind (
+                 ;; --------------------------------------------------------------------
+                 ;; C-c bindings (mode-specific-map)
+                 ("C-c h"    . consult-history)
+                 ("C-c m"    . consult-mode-command)
+                 ("C-c b"    . consult-bookmark)
+                 ("C-c k"    . consult-kmacro)
 
-**** Prescient for sorting an filtering results
-     + =prescient= provides a filtering and scoring system that can
-       interface with Ivy. The scoring is based on frequency and
-       recency of commands, giving you results that you are most
-       likely to use.
+                 ;; --------------------------------------------------------------------
+                 ;; C-x bindings (ctl-x-map)
+                 ("C-x M-:"  . consult-complex-command) ;; orig. repeat-complex-command
+                 ("C-x b"    . consult-buffer) ;; orig. switch-to-buffer
+                 ("C-x 4 b"  . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+                 ("C-x 5 b"  . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
 
-       #+begin_src emacs-lisp
+                 ;; --------------------------------------------------------------------
+                 ;; Custom M-# bindings for fast register access
+                 ("M-#"      . consult-register-load)
+                 ("M-'"      . consult-register-store) ;; orig. abbrev-prefix-mark (unrelated)
+                 ("C-M-#"    . consult-register)
 
-         (use-package prescient
-           :ensure
-           :delight
-           :custom
-           (prescient-history-length 500)
-           (prescient-save-file "~/.emacs.d/prescient-items")
-           (prescient-filter-method '(literal regexp))
+                 ;; Other custom bindings
+                 ("M-y"      . consult-yank-pop) ;; orig. yank-pop
+                 ("<help> a" . consult-apropos)  ;; orig. apropos-command
 
-           :config
-           (prescient-persist-mode 1))
+                 ;; --------------------------------------------------------------------
+                 ;; M-g bindings (goto-map)
+                 ("M-g e"    . consult-compile-error)
+                 ("M-g f"    . consult-flymake) ;; Alternative: consult-flycheck
+                 ("M-g g"    . consult-goto-line) ;; orig. goto-line
+                 ("M-g M-g"  . consult-goto-line) ;; orig. goto-line
+                 ("M-g o"    . consult-outline) ;; Alternative: consult-org-heading
+                 ("M-g m"    . consult-mark)
+                 ("M-g k"    . consult-global-mark)
+                 ("M-g i"    . consult-imenu)
+                 ("M-g I"    . consult-project-imenu)
 
-         (use-package ivy-prescient
-           :ensure
-           :delight
-           :after (prescient counsel)
+                 ;; --------------------------------------------------------------------
+                 ;; M-s bindings (search-map)
+                 ("M-s f"    . consult-find)
+                 ("M-s L"    . consult-locate)
+                 ("M-s g"    . consult-ripgrep)
+                 ("M-s l"    . consult-line)
+                 ("M-s m"    . consult-multi-occur)
+                 ("M-s k"    . consult-keep-lines)
+                 ("M-s u"    . consult-focus-lines)
 
-           :custom
-           (ivy-prescient-sort-commands '(:not counsel-grep
-                                               counsel-rg
-                                               counsel-switch-buffer
-                                               ivy-switch-buffer
-                                               swiper
-                                               swiper-multi))
-           (ivy-prescient-retain-classic-highlighting t)
-           (ivy-prescient-enable-filtering nil)
-           (ivy-prescient-enable-sorting t)
-  
-           :config
-           (ivy-prescient-mode 1))
+                 ;; --------------------------------------------------------------------
+                 ;; Isearch integration
+                 ("M-s e"    . consult-isearch)
+                 :map isearch-mode-map
+                 ("M-e"      . consult-isearch) ;; orig. isearch-edit-string
+                 ("M-s e"    . consult-isearch) ;; orig. isearch-edit-string
+                 ("M-s l"    . consult-line)) ;; needed by consult-line to detect isearch
+          )
 
-       #+end_src
+        ;; -----------------------------------------------------------------------------
+        ;; orderless provides an orderless completion style that divides the
+        ;; pattern into space-separated components, and matches candidates
+        ;; that match all of the components in any order. Each component can
+        ;; match in any one of several ways: literally, as a regexp, as an
+        ;; initialism, in the flex style, or as multiple word prefixes. By
+        ;; default, regexp and literal matches are enabled.
+        (use-package orderless
+          :ensure t
+          :init
+          (setq completion-styles '(orderless)
+                completion-category-defaults nil
+                completion-category-overrides '((file (styles . (partial-completion))))))
 
-**** Configuration for Counsel
+        (use-package selectrum
+          :ensure t
+          :functions (anupamk:utils/minibuffer-kill-backwards)
 
-     + =counsel= enhances capabilities of Emacs for navigating the
-       file-system ofcourse exploits Ivy for doing so.
+          :config
+          ;; ---------------------------------------------------------------------------
+          ;;  borrowed from:
+          ;;  https://github.com/raxod502/selectrum/issues/498#issuecomment-803283608 
+          (defun anupamk:utils/minibuffer-kill-backwards (arg)
+            "when minibuffer is completing a file-name, delete upto 
+        parent directory, otherwise delete a word"
 
-       #+begin_src emacs-lisp
-         (use-package counsel
-           :ensure
-           :delight
-           :after ivy
-           :config
-           (setq counsel-yank-pop-preselect-last t)
-           (setq counsel-rg-base-command
-                 "rg -SHn --no-heading --color never --no-follow --hidden %s")
-           (setq counsel-find-file-occur-cmd; TODO Simplify this
-                 "ls -a | grep -i -E '%s' | tr '\\n' '\\0' | xargs -0 ls -d --group-directories-first")
-
-           (defun prot/counsel-fzf-rg-files (&optional input dir)
-             "Run `fzf' in tandem with `ripgrep' to find files in the
-         present directory.  If invoked from inside a version-controlled
-         repository, then the corresponding root is used instead."
-             (interactive)
-             (let* ((process-environment
-                     (cons (concat "FZF_DEFAULT_COMMAND=rg -Sn --color never --files --no-follow --hidden")
-                           process-environment))
-                    (vc (vc-root-dir)))
-               (if dir
-                   (counsel-fzf input dir)
-                 (if (eq vc nil)
-                     (counsel-fzf input default-directory)
-                   (counsel-fzf input vc)))))
-
-           (defun prot/counsel-fzf-dir (arg)
-             "Specify root directory for `counsel-fzf'."
-             (prot/counsel-fzf-rg-files ivy-text
-                                        (read-directory-name
-                                         (concat (car (split-string counsel-fzf-cmd))
-                                                 " in directory: "))))
-
-           (defun prot/counsel-rg-dir (arg)
-             "Specify root directory for `counsel-rg'."
-             (let ((current-prefix-arg '(4)))
-               (counsel-rg ivy-text nil "")))
-
-           ;; Pass functions as appropriate Ivy actions (accessed via M-o)
-           (ivy-add-actions
-            'counsel-fzf
-            '(("r" prot/counsel-fzf-dir "change root directory")
-              ("g" prot/counsel-rg-dir "use ripgrep in root directory")))
-
-           (ivy-add-actions
-            'counsel-rg
-            '(("r" prot/counsel-rg-dir "change root directory")
-              ("z" prot/counsel-fzf-dir "find file with fzf in root directory")))
-
-           (ivy-add-actions
-            'counsel-find-file
-            '(("g" prot/counsel-rg-dir "use ripgrep in root directory")
-              ("z" prot/counsel-fzf-dir "find file with fzf in root directory")))
-
-           ;; Remove commands that only work with key bindings
-           (put 'counsel-find-symbol 'no-counsel-M-x t)
-           :bind (("M-x"     . counsel-M-x)
-                  ("C-x C-f" . counsel-find-file)
-                  ("M-f"     . counsel-find-file)
-                  ("M-F"     . find-file-other-window)
-                  ("C-x b"   . ivy-switch-buffer)
-                  ("C-x B"   . counsel-switch-buffer-other-window)
-                  ("C-x d"   . counsel-dired)
-                  ("M-D"     . dired-other-window)
-                  ("C-x C-r" . counsel-recentf)
-                  ("C-h f"   . counsel-describe-function)
-                  ("C-h v"   . counsel-describe-variable)
-                  ("C-c C-r" . counsel-rg)
-                  ("M-s l"   . counsel-find-library)
-                  ("M-s z"   . prot/counsel-fzf-rg-files)
-                  :map ivy-minibuffer-map
-                  ("C-r"     . counsel-minibuffer-history)
-                  ("C-SPC"   . ivy-restrict-to-matches)))
+            (interactive "p")
+            (if minibuffer-completing-file-name
+                (if (string-match-p "/." (minibuffer-contents))
+                    (zap-up-to-char (- arg) ?/)
+                  (delete-minibuffer-contents))
+              (backward-kill-word arg)))
 
 
-       #+end_src
+          :bind (("C-M-r" . selectrum-repeat)
+                 :map selectrum-minibuffer-map
+                 ("C-r" . selectrum-select-from-history)
+                 ("C-n" . selectrum-next-candidate)
+                 ("C-p" . selectrum-previous-candidate)
+                 :map minibuffer-local-map
+                 ("M-h" . backward-kill-word))
+          :custom
+          (selectrum-fix-minibuffer-height t)
+          (selectrum-num-candidates-displayed 13)
+          (selectrum-refine-candidates-function #'orderless-filter)
+          (selectrum-highlight-candidates-function #'orderless-highlight-matches)
 
-**** Swiper commands and settings
-     
-     + =swiper= is the search tool powered by Ivy.
+          :init
+          (selectrum-mode 1))
 
-       #+begin_src emacs-lisp
+        ;; -----------------------------------------------------------------------------
+        ;; prescient : is a library which sorts and filters lists of
+        ;; candidates, such as appear when you use a package like Ivy or
+        ;; Company. Extension packages such as ivy-prescient.el and
+        ;; company-prescient.el adapt the library for usage with various
+        ;; frameworks.
+        ;;
+        ;; As compared to other packages which accomplish similar tasks,
+        ;; including IDO, Ivy, Helm, Smex, Flx, Historian, and
+        ;; Company-Statistics, prescient.el aims to be simpler, more
+        ;; predictable, and faster.
+        (use-package prescient
+          :ensure t
 
-         (use-package swiper
-           :ensure
-           :delight
-           :after ivy
-           :config
-           (setq swiper-action-recenter t)
-           (setq swiper-goto-start-of-match t)
-           (setq swiper-include-line-number-in-search t)
-           :bind (("C-S-s" . swiper)
-                  ("M-s s" . swiper-multi)
-                  ("M-s w" . swiper-thing-at-point)))
+          :custom
+          (prescient-history-length 500)
+          (prescient-save-file "~/.emacs.d/prescient-items")
+          (prescient-filter-method '(literal regexp))
 
-       #+end_src
+          :config
+          (prescient-persist-mode 1)
+          )
 
-**** Enable wgrep
+        ;; -----------------------------------------------------------------------------
+        ;; integrate prescient with selectrum
+        (use-package selectrum-prescient
+          :ensure t
+          :after selectrum
 
-     With =wgrep= we can edit the results of grep invokation and save
-     changes to affected buffers. Quite useful !
+          :config
+          (prescient-persist-mode t)
+          (selectrum-prescient-mode t)
+          (setq selectrum-prescient-enable-filtering nil)
+          )
 
-     #+begin_src emacs-lisp
+        ;; -----------------------------------------------------------------------------
+        ;; marginalia provides marks or annotations placed at the margin of
+        ;; the minibuffer for completion candidates.
+        (use-package marginalia
+          :ensure t
+          :after selectrum
 
-       (use-package wgrep
-         :ensure
-         :config
-         (setq wgrep-auto-save-buffer t)
-         (setq wgrep-change-readonly-file t))
+          :init
+          (marginalia-mode))
 
-     #+end_src
+      #+end_src
 
+** Enable wgrep
 
-**** Enable ripgrep
+   With =wgrep= we can edit the results of grep invokation and save
+   changes to affected buffers. Quite useful !
 
-     This is the emacs interface to ripgrep.
+   #+begin_src emacs-lisp
 
-     #+begin_src emacs-lisp
+     (use-package wgrep
+       :ensure
+       :config
+       (setq wgrep-auto-save-buffer t)
+       (setq wgrep-change-readonly-file t))
 
-       (use-package rg
-         :ensure
-         :after wgrep
-         :config
-
-         (setq rg-group-result t)
-         (setq rg-hide-command t)
-         (setq rg-show-columns nil)
-         (setq rg-show-header t)
-         (setq rg-custom-type-aliases nil)
-         (setq rg-default-alias-fallback "all")
-
-         (rg-define-search prot/rg-vc-or-dir
-           "RipGrep in project root or present directory."
-           :query ask
-           :format regexp
-           :files "everything"
-           :dir (let ((vc (vc-root-dir)))
-                  (if vc
-                      vc                         ; search root project dir
-                    default-directory))          ; or from the current dir
-           :confirm prefix
-           :flags ("--hidden -g !.git"))
-
-         (rg-define-search prot/rg-ref-in-dir
-           "RipGrep for thing at point in present directory."
-           :query point
-           :format regexp
-           :files "everything"
-           :dir default-directory
-           :confirm prefix
-           :flags ("--hidden -g !.git"))
-
-         (defun prot/rg-save-search-as-name ()
-           "Save `rg' buffer, naming it after the current search query.
-
-       This function is meant to be mapped to a key in `rg-mode-map'."
-           (interactive)
-           (let ((pattern (car rg-pattern-history)))
-             (rg-save-search-as-name (concat "«" pattern "»"))))
-
-         :bind (("M-s g" . prot/rg-vc-or-dir)
-                ("M-s r" . prot/rg-ref-in-dir)
-                :map rg-mode-map
-                ("s" . prot/rg-save-search-as-name)
-                ("C-n" . next-line)
-                ("C-p" . previous-line)
-                ("M-n" . rg-next-file)
-                ("M-p" . rg-prev-file)))
-
-     #+end_src
+   #+end_src
 
 
 ** Isearch configuration
@@ -1013,6 +965,7 @@
        (setq isearch-allow-scroll 'unlimited))
 
    #+end_src
+
 
 * Directory management
 ** Perliminary dired configuration
@@ -1529,7 +1482,7 @@
 
        (setq bookmark-save-flag 1)
 
-       :bind  (("C-c b m" . anupamk:bookmark/quick-save-bookmark)))
+       :bind  (("C-c s b" . anupamk:bookmark/quick-save-bookmark)))
 
    #+end_src
    
