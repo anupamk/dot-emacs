@@ -1611,9 +1611,19 @@
                        (message "Failed to open file: %s" path))))
              vterm-eval-cmds)
 
+
        ;; ---------------------------------------------------------------------------
-       ;; quick-n-dirty new vterm instances
-       (global-set-key (kbd "C-c C-<return>") (lambda() (interactive) (vterm)))
+       ;; create sequentially numbered vterm instances.
+       (defun anupamk:utils/create-numbered-vterm-instance ()
+         "create sequentially numbered vterm instances"
+         (interactive)
+         (if (not (boundp 'term-instance))
+             (defvar term-instance 0 "terminal instance"))
+         (setq term-instance (+ 1 term-instance))
+         (command-execute 'vterm)
+         (rename-buffer (format "*term-%03d*" term-instance)))
+
+       (global-set-key (kbd "C-c C-<return>") #'anupamk:utils/create-numbered-vterm-instance)
 
        :hook
        (vterm-mode-hook . anupamk/set-vterm-font)
