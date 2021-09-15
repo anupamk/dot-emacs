@@ -35,7 +35,7 @@
   (setq use-package-expand-minimally nil)
   (setq use-package-enable-imenu-support t)
   (setq use-package-compute-statistics nil)
-  
+
   ;; ---------------------------------------------------------------------------
   ;; write hooks using their real name instead of a shorter version:
   ;; after-init ==> `after-init-hook'.
@@ -72,4 +72,3 @@
 ;; bootstrap is over, continue loading the real configuration
 (require 'org)
 (org-babel-load-file (expand-file-name "~/.emacs.d/emacs-init.org") t)
-
