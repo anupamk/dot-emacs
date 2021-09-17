@@ -252,7 +252,9 @@
                 anupamk:utils/toggle-line-numbers
                 anupamk:utils/auto-fill-comments
                 anupamk:utils/dired-open-all-marked-files
-                anupamk:utils/revert-all-buffers)
+                anupamk:utils/revert-all-buffers
+                anupamk:utils/unbold-all-faces
+                anupamk:utils/create-numbered-vterm-instance)
 
     :config
 
@@ -388,7 +390,7 @@
     ;; ignoring all errors. useful for those cases when you change git
     ;; branches and want to have the same set of buffers to be around in
     ;; the new branch as well.
-    (defun anupamk:utils/revert-all-buffers-no-confirm ()
+    (defun anupamk:utils/revert-all-buffers ()
       "revert all file buffers without any confirmation. buffers visiting files
   that are not readable (including those that do no longer exist) are ignored.
   other errors while reverting a buffer are reported only as messages."
@@ -400,7 +402,29 @@
             (with-current-buffer buf
               (with-demoted-errors "Error: %S" (revert-buffer t t)))))))
 
+
+    ;; ---------------------------------------------------------------------------
+    ;; bold faces are quite annoying. remove them all...
+    (defun anupamk:utils/unbold-all-faces ()
+      "unbold all faces in emacs"
+      (interactive)
+      (mapc (lambda (face)
+              (when (eq (face-attribute face :weight) 'bold)
+                (set-face-attribute face nil :weight 'normal)))
+            (face-list)))
+
+    ;; ---------------------------------------------------------------------------
+    ;; create sequentially numbered vterm instances.
+    (defun anupamk:utils/create-numbered-vterm-instance ()
+      "create sequentially numbered vterm instances"
+      (interactive)
+      (if (not (boundp 'term-instance))
+          (defvar term-instance 0 "terminal instance"))
+      (setq term-instance (+ 1 term-instance))
+      (command-execute 'vterm)
+      (rename-buffer (format "*term-%03d*" term-instance)))
     )
+
 #+end_src
 
 * Interface and interactions
@@ -435,7 +459,16 @@
                  (set-face-attribute face nil :weight 'normal)))
              (face-list)))
 
-        :hook (after-init-hook . anupamk:utils/unbold-all-faces))
+        ;; for the compilation buffer, reduce the font size, we can always
+        ;; increase it if required.
+        (defun setup-compilation-buffer-font()
+          (interactive)
+          (setq buffer-face-mode-face '(:family "PragmataPro Mono" :height 90))
+          (buffer-face-mode))
+
+        :hook
+        (emacs-startup-hook . anupamk:utils/unbold-all-faces)
+        (compilation-mode-hook . setup-compilation-buffer-font))
 
     #+end_src
 
@@ -480,7 +513,6 @@
                (lambda(current-frame)
                      (with-selected-frame current-frame
                        (anupamk:utils/unbold-all-faces)))))
-
 
  #+end_src
 
@@ -1635,18 +1667,6 @@
                          (select-window window)
                        (message "Failed to open file: %s" path))))
              vterm-eval-cmds)
-
-
-       ;; ---------------------------------------------------------------------------
-       ;; create sequentially numbered vterm instances.
-       (defun anupamk:utils/create-numbered-vterm-instance ()
-         "create sequentially numbered vterm instances"
-         (interactive)
-         (if (not (boundp 'term-instance))
-             (defvar term-instance 0 "terminal instance"))
-         (setq term-instance (+ 1 term-instance))
-         (command-execute 'vterm)
-         (rename-buffer (format "*term-%03d*" term-instance)))
 
        (global-set-key (kbd "C-c C-<return>") #'anupamk:utils/create-numbered-vterm-instance)
 
