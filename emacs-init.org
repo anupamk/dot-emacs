@@ -772,214 +772,156 @@
 
       #+begin_src emacs-lisp
 
-        ;; -----------------------------------------------------------------------------
-        ;; consult provides various practical commands based on the Emacs
-        ;; completion function completing-read, which allows to quickly select
-        ;; an item from a list of candidates with completion.
-        (use-package consult
-          :ensure t
+                ;; -----------------------------------------------------------------------------
+                ;; consult provides various practical commands based on the Emacs
+                ;; completion function completing-read, which allows to quickly select
+                ;; an item from a list of candidates with completion.
+                (use-package consult
+                  :ensure t
 
-          ;; ===========================================================================
-          ;; init configuration is always executed
-          :init
+                  ;; ---------------------------------------------------------------------------
+                  ;; init configuration is always executed
+                  :init
 
-          ;; ---------------------------------------------------------------------------
-          ;; configure register formatting, which improves registe preview for
-          ;; `consult-register', `consult-register-load',
-          ;; `consult-register-store' and the emacs builtins.
-          (setq register-preview-delay 0
-                register-preview-function #'consult-register-format)
+                  ;; ---------------------------------------------------------------------------
+                  ;; configure other variables and modes here, after lazily loading
+                  ;; the package
+                  :config
 
-          ;; ---------------------------------------------------------------------------
-          ;; tweak register preview window. this adds thin lines, sorting and
-          ;; hides the mode line of the window
-          (advice-add #'register-preview :override #'consult-register-window)
+                  ;; ---------------------------------------------------------------------------
+                  ;; show absolute line-numbers when narrowing is active
+                  (setq consult-line-numbers-widen t)
 
-          ;; ===========================================================================
-          ;; configure other variables and modes here, after lazily loading
-          ;; the package
-          :config
+                  ;; ---------------------------------------------------------------------------
+                  ;; setup the project root for `project.el'
+                  (setq consult-project-root-function
+                        (lambda ()
+                          (when-let (project (project-current))
+                            (car (project-roots project)))))
 
-          ;; ---------------------------------------------------------------------------
-          ;; show absolute line-numbers when narrowing is active
-          (setq consult-line-numbers-widen t)
+                  ;; ---------------------------------------------------------------------------
+                  ;; replace bindings
+                  :bind (("C-x M-:"    . consult-complex-command)
+                           ("C-x b"    . consult-buffer)
+                           ("C-x C-b"  . consult-buffer)
+                           ("C-c b"    . project-find-file)
+                           ("C-c B"    . bookmark-set)
+                           ("C-c h"    . consult-history)
+                           ("C-c i"    . consult-imenu)
+                           ("C-c I"    . consult-project-imenu)
+                           ("C-c k"    . consult-ripgrep)
+                           ("C-c K"    . consult-git-grep)
+                           ("C-c l"    . consult-locate)
+                           ("C-c m"    . consult-mode-command)
+                           ("C-c s"    . consult-line)
+                           ("C-x r x"  . consult-register)
+                           ("C-x r b"  . consult-bookmark)
+                           ("M-g b"    . consult-bookmark)
+                           ("M-g m"    . consult-mark)
+                           ("M-g e"    . consult-error)
+                           ("M-s m"    . consult-multi-occur)
+                           ("M-s o"    . consult-outline)
+                           ("M-y"      . consult-yank-pop)
+                           ("C-s"      . isearch-forward)
+                           ("C-S-s"    . consult-line)
+                           ("<help> a" . consult-apropos))
+                  )
 
-          ;; ---------------------------------------------------------------------------
-          ;; configure the narrowing key.
-          (setq consult-narrow-key ">")
-
-          ;; ---------------------------------------------------------------------------
-          ;; some consult commands support live previews, f.e., when we scroll
-          ;; through items of `consult-line', the buffer will scroll to the
-          ;; corresponding position.
-          ;;
-          ;; by default automatic preview is on. a better approach is to
-          ;; disable automatic preview where file loading is involved.
-          (consult-customize
-           consult-ripgrep consult-git-grep consult-grep
-           consult-bookmark consult-recent-file consult-xref
-           consult--source-file consult--source-project-file consult--source-bookmark
-           :preview-key (kbd "M-."))
-
-          ;; ---------------------------------------------------------------------------
-          ;; setup the project root for `project.el'
-          (setq consult-project-root-function
-                (lambda ()
-                  (when-let (project (project-current))
-                    (car (project-roots project)))))
-
-          ;; ===========================================================================
-          ;; replace bindings
-          :bind (
-                 ;; --------------------------------------------------------------------
-                 ;; C-c bindings (mode-specific-map)
-                 ("C-c h"    . consult-history)
-                 ("C-c m"    . consult-mode-command)
-                 ("C-c b"    . consult-bookmark)
-                 ("C-c k"    . consult-kmacro)
-
-                 ;; --------------------------------------------------------------------
-                 ;; C-x bindings (ctl-x-map)
-                 ("C-x M-:"  . consult-complex-command) ;; orig. repeat-complex-command
-                 ("C-x b"    . consult-buffer) ;; orig. switch-to-buffer
-                 ("C-x 4 b"  . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
-                 ("C-x 5 b"  . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
-
-                 ;; --------------------------------------------------------------------
-                 ;; Custom M-# bindings for fast register access
-                 ("M-#"      . consult-register-load)
-                 ("M-'"      . consult-register-store) ;; orig. abbrev-prefix-mark (unrelated)
-                 ("C-M-#"    . consult-register)
-
-                 ;; Other custom bindings
-                 ("M-y"      . consult-yank-pop) ;; orig. yank-pop
-                 ("<help> a" . consult-apropos)  ;; orig. apropos-command
-
-                 ;; --------------------------------------------------------------------
-                 ;; M-g bindings (goto-map)
-                 ("M-g e"    . consult-compile-error)
-                 ("M-g f"    . consult-flymake) ;; Alternative: consult-flycheck
-                 ("M-g g"    . consult-goto-line) ;; orig. goto-line
-                 ("M-g M-g"  . consult-goto-line) ;; orig. goto-line
-                 ("M-g o"    . consult-outline) ;; Alternative: consult-org-heading
-                 ("M-g m"    . consult-mark)
-                 ("M-g k"    . consult-global-mark)
-                 ("M-g i"    . consult-imenu)
-                 ("M-g I"    . consult-project-imenu)
-
-                 ;; --------------------------------------------------------------------
-                 ;; M-s bindings (search-map)
-                 ("M-s f"    . consult-find)
-                 ("M-s L"    . consult-locate)
-                 ("M-s g"    . consult-ripgrep)
-                 ("M-s l"    . consult-line)
-                 ("M-s m"    . consult-multi-occur)
-                 ("M-s k"    . consult-keep-lines)
-                 ("M-s u"    . consult-focus-lines)
-
-                 ;; --------------------------------------------------------------------
-                 ;; Isearch integration
-                 ("M-s e"    . consult-isearch)
-                 :map isearch-mode-map
-                 ("M-e"      . consult-isearch) ;; orig. isearch-edit-string
-                 ("M-s e"    . consult-isearch) ;; orig. isearch-edit-string
-                 ("M-s l"    . consult-line)) ;; needed by consult-line to detect isearch
-          )
-
-        ;; -----------------------------------------------------------------------------
-        ;; orderless provides an orderless completion style that divides the
-        ;; pattern into space-separated components, and matches candidates
-        ;; that match all of the components in any order. Each component can
-        ;; match in any one of several ways: literally, as a regexp, as an
-        ;; initialism, in the flex style, or as multiple word prefixes. By
-        ;; default, regexp and literal matches are enabled.
-        (use-package orderless
-          :ensure t
-          :init
-          (setq completion-styles '(orderless)
-                completion-category-defaults nil
-                completion-category-overrides '((file (styles . (partial-completion))))))
-
-        (use-package selectrum
-          :ensure t
-          :functions (anupamk:utils/minibuffer-kill-backwards)
-
-          :config
-          ;; ---------------------------------------------------------------------------
-          ;;  borrowed from:
-          ;;  https://github.com/raxod502/selectrum/issues/498#issuecomment-803283608
-          (defun anupamk:utils/minibuffer-kill-backwards (arg)
-            "when minibuffer is completing a file-name, delete upto
-        parent directory, otherwise delete a word"
-
-            (interactive "p")
-            (if minibuffer-completing-file-name
-                (if (string-match-p "/." (minibuffer-contents))
-                    (zap-up-to-char (- arg) ?/)
-                  (delete-minibuffer-contents))
-              (backward-kill-word arg)))
+                ;; -----------------------------------------------------------------------------
+                ;; orderless provides an orderless completion style that divides the
+                ;; pattern into space-separated components, and matches candidates
+                ;; that match all of the components in any order. Each component can
+                ;; match in any one of several ways: literally, as a regexp, as an
+                ;; initialism, in the flex style, or as multiple word prefixes. By
+                ;; default, regexp and literal matches are enabled.
+                (use-package orderless
+                  :ensure t
+                  :init
+                  (setq completion-styles '(orderless)
+                        completion-category-defaults nil
+                        completion-category-overrides '((file (styles . (partial-completion))))))
 
 
-          :bind (("C-M-r" . selectrum-repeat)
-                 :map selectrum-minibuffer-map
-                 ("C-r" . selectrum-select-from-history)
-                 ("C-n" . selectrum-next-candidate)
-                 ("C-p" . selectrum-previous-candidate)
-                 :map minibuffer-local-map
-                 ("M-h" . backward-kill-word))
-          :custom
-          (selectrum-fix-minibuffer-height t)
-          (selectrum-num-candidates-displayed 13)
-          (selectrum-refine-candidates-function #'orderless-filter)
-          (selectrum-highlight-candidates-function #'orderless-highlight-matches)
+                ;; -----------------------------------------------------------------------------
+                ;; vertico provides a performant and minimalistic vertical completion
+                ;; UI, which is based on the default completion system. By reusing the
+                ;; built-in facilities system, Vertico achieves full compatibility
+                ;; with built-in Emacs completion commands and completion
+                ;; tables. Vertico only provides the completion UI but aims to be
+                ;; flexible and extensible.
+                (use-package vertico
+                  :ensure t
 
-          :init
-          (selectrum-mode 1))
+                  :config
+                  ;; ---------------------------------------------------------------------------
+                  ;;  borrowed from:
+                  ;;  https://github.com/raxod502/selectrum/issues/498#issuecomment-803283608
+                  (defun anupamk:utils/minibuffer-kill-backwards (arg)
+                    "when minibuffer is completing a file-name, delete upto
+                parent directory, otherwise delete a word"
+                    (interactive "p")
+                    (if minibuffer-completing-file-name
+                        (if (string-match-p "/." (minibuffer-contents))
+                            (zap-up-to-char (- arg) ?/)
+                          (delete-minibuffer-contents))
+                      (backward-kill-word arg)))
 
-        ;; -----------------------------------------------------------------------------
-        ;; prescient : is a library which sorts and filters lists of
-        ;; candidates, such as appear when you use a package like Ivy or
-        ;; Company. Extension packages such as ivy-prescient.el and
-        ;; company-prescient.el adapt the library for usage with various
-        ;; frameworks.
-        ;;
-        ;; As compared to other packages which accomplish similar tasks,
-        ;; including IDO, Ivy, Helm, Smex, Flx, Historian, and
-        ;; Company-Statistics, prescient.el aims to be simpler, more
-        ;; predictable, and faster.
-        (use-package prescient
-          :ensure t
+                  :custom
+                  (vertico-cycle t)
 
-          :custom
-          (prescient-history-length 500)
-          (prescient-save-file "~/.emacs.d/prescient-items")
-          (prescient-filter-method '(literal regexp))
+                  :custom-face
+                  (vertico-current ((t (:background "#383838"))))
 
-          :config
-          (prescient-persist-mode 1)
-          )
+                  :bind (:map vertico-map
+                              ("C-n" . vertico-next)
+                              ("C-p" . vertico-previous)
+                              ("C-q" . vertico-exit)
+                              :map minibuffer-local-map
+                              ("M-h" . anupamk:utils/minibuffer-kill-backwards))
 
-        ;; -----------------------------------------------------------------------------
-        ;; integrate prescient with selectrum
-        (use-package selectrum-prescient
-          :ensure t
-          :after selectrum
+                  :init
+                  (vertico-mode)
 
-          :config
-          (prescient-persist-mode t)
-          (selectrum-prescient-mode t)
-          (setq selectrum-prescient-enable-filtering nil)
-          )
+                  )
 
-        ;; -----------------------------------------------------------------------------
-        ;; marginalia provides marks or annotations placed at the margin of
-        ;; the minibuffer for completion candidates.
-        (use-package marginalia
-          :ensure t
-          :after selectrum
+                ;; -----------------------------------------------------------------------------
+                ;; marginalia provides marks or annotations placed at the margin of
+                ;; the minibuffer for completion candidates.
+                (use-package marginalia
+                  :ensure t
+                  :after vertico
 
-          :init
-          (marginalia-mode))
+                  :custom
+                  ((marginalia-align-offset 1)
+                   (marginalia-margin-threshold 200)
+                   (marginalia-separator-threshold 120)
+                   (marginalia-truncate-width 100)
+                   (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil)))
+
+                  :init
+                  (marginalia-mode))
+
+
+                ;; -----------------------------------------------------------------------------
+                ;; this package provides a "contextual" menu proividing actions for
+                ;; various objects (files, buffers, etc. etc.).
+                (use-package embark
+                  :bind (("C-S-a" . embark-act)
+                         :map minibuffer-local-map
+                         ("C-d" . embark-act))
+                  :config
+
+                  ;; Show Embark actions via which-key
+                  (setq embark-action-indicator
+                        (lambda (map)
+                          (which-key--show-keymap "Embark" map nil nil 'no-paging)
+                          #'which-key--hide-popup-ignore-command)
+                        embark-become-indicator embark-action-indicator))
+
+                (use-package embark-consult
+                    :ensure t
+                    :after (embark consult)
+                    :hook (embark-collect-mode . embark-consult-preview-minor-mode))
 
       #+end_src
 
