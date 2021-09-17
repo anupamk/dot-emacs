@@ -1,6 +1,8 @@
-#+TITLE: My Emacs Configuration
+#+TITLE: GNU Emacs Configuration
 #+AUTHOR: Anupam Kapoor
 #+EMAIL: anupam.kapoor@gmail.com
+#+PROPERTY: header-args :tangle yes
+# ----------------------------  ^^^ tangle all code blocks.
 
 * Base Settings
 ** Disable gooey
@@ -442,10 +444,10 @@
         :config
 
         ;; ---------------------------------------------------------------------------
-        ;; host specific font configuration
+        ;; host specific font (size) configuration
         (let ((anupamk/buffer-font-height (cond ((anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com") 120)
                                                 ((anupamk:utils/host-name-is "aws-devel-01") 120)
-                                                (t 122))))
+                                                (t 80))))
 
           (set-face-attribute 'default nil :font "Go Mono" :height anupamk/buffer-font-height))
 
@@ -667,7 +669,7 @@
 
      ;; -------------------------------------------------------------------------
      ;; create a new scratch buffer
-     (global-set-key (kbd "C-c n") #'anupamk:utils/create-new-scratch-buffer)
+     (global-set-key (kbd "C-c s") #'anupamk:utils/create-new-scratch-buffer)
 
      ;; -------------------------------------------------------------------------
      ;; rename current buffer
@@ -692,7 +694,7 @@
 
      ;; ---------------------------------------------------------------------------
      ;; create a new-frame
-     (global-set-key (kbd "C-c N") #'make-frame)
+     (global-set-key (kbd "C-c C-n") #'make-frame)
 
      ;; ---------------------------------------------------------------------------
      ;; define some keybindings via the `C-x t` prefix, for toggling
@@ -705,7 +707,7 @@
                 ("l" . anupamk:utils/toggle-line-numbers)
                 ("f" . hs-toggle-hiding)
                 ("t" . text-mode)
-                ("R" . anupamk:edit-file-with-sudo))
+                ("R" . anupamk:tramp/edit-file-with-sudo))
      )
 
  #+end_src
@@ -962,7 +964,6 @@
        (setq isearch-allow-scroll 'unlimited))
 
    #+end_src
-
 
 * Directory management
 ** Perliminary dired configuration
@@ -1445,7 +1446,7 @@
 
        ;; ---------------------------------------------------------------------------
        ;; edit currently open file as root
-       (defun anupamk:edit-file-with-sudo (&optional fname)
+       (defun anupamk:tramp/edit-file-with-sudo (&optional fname)
          "Take the file currently being edited, and open it as root with `sudo'."
          (interactive "P")
          (if (or fname (not buffer-file-name))
@@ -1479,7 +1480,7 @@
 
        (setq bookmark-save-flag 1)
 
-       :bind  (("C-c s b" . anupamk:bookmark/quick-save-bookmark)))
+       :bind  (("C-c q s b" . anupamk:bookmark/quick-save-bookmark)))
 
    #+end_src
 
@@ -1575,7 +1576,7 @@
        (defun anupamk/set-vterm-font ()
          "custom font in the vterm buffer"
          (interactive)
-         (set (make-local-variable 'buffer-face-mode-face) '(:family "PragmataPro Mono" :height 110))
+         (set (make-local-variable 'buffer-face-mode-face) '(:family "PragmataPro Mono" :height 90))
          (buffer-face-mode))
 
        ;; ---------------------------------------------------------------------------
