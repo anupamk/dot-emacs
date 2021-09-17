@@ -251,7 +251,8 @@
                 anupamk:utils/toggle-invisibles
                 anupamk:utils/toggle-line-numbers
                 anupamk:utils/auto-fill-comments
-                anupamk:utils/dired-open-all-marked-files)
+                anupamk:utils/dired-open-all-marked-files
+                anupamk:utils/revert-all-buffers)
 
     :config
 
@@ -382,6 +383,23 @@
       (interactive)
       (mapc 'find-file (dired-get-marked-files)))
 
+    ;; ---------------------------------------------------------------------------
+    ;; revert all buffers that are open without any confirmation, and
+    ;; ignoring all errors. useful for those cases when you change git
+    ;; branches and want to have the same set of buffers to be around in
+    ;; the new branch as well.
+    (defun anupamk:utils/revert-all-buffers-no-confirm ()
+      "revert all file buffers without any confirmation. buffers visiting files
+  that are not readable (including those that do no longer exist) are ignored.
+  other errors while reverting a buffer are reported only as messages."
+      (interactive)
+      (let (file)
+        (dolist (buf  (buffer-list))
+          (setq file  (buffer-file-name buf))
+          (when (and file  (file-readable-p file))
+            (with-current-buffer buf
+              (with-demoted-errors "Error: %S" (revert-buffer t t)))))))
+
     )
 #+end_src
 
@@ -402,7 +420,7 @@
         ;; ---------------------------------------------------------------------------
         ;; host specific font configuration
         (let ((anupamk/buffer-font-height (cond ((anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com") 120)
-                                                ((anupamk:utils/host-name-is "aws-devel-01") 132)
+                                                ((anupamk:utils/host-name-is "aws-devel-01") 120)
                                                 (t 122))))
 
           (set-face-attribute 'default nil :font "Go Mono" :height anupamk/buffer-font-height))
@@ -411,6 +429,7 @@
         ;; bold faces are quite annoying. remove them all
         (defun anupamk:utils/unbold-all-faces ()
           "unbold all faces in emacs"
+          (interactive)
           (mapc (lambda (face)
                (when (eq (face-attribute face :weight) 'bold)
                  (set-face-attribute face nil :weight 'normal)))
