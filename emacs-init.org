@@ -1643,6 +1643,45 @@
 
    #+end_src
 
+** Org Roam
+
+   + Org-Roam is a system note-taking which can be linked together
+     creating a =network knowledge base=
+
+   + It is inspired by a program called =roam= and a note taking
+     strategy called =Zettlekasten=, also called a =second brain=.
+
+     #+begin_src emacs-lisp
+
+       ;; -----------------------------------------------------------------------------
+       (use-package org-roam
+         :ensure t
+
+         :init
+
+         ;; ---------------------------------------------------------------------------
+         ;; don't display the annoying warning message about upgrading
+         ;; org-roam to v2. because it needs to be defined _before_ package
+         ;; is loaded, we do this in the `init' section of the config.
+         (setq org-roam-v2-ack t)
+
+         :custom
+         (org-roam-directory "~/source-code/roam-notes")
+         (org-roam-completion-everywhere t)
+
+         :bind (("C-c n l" . org-roam-buffer-toggle)
+                ("C-c n f" . org-roam-node-find)
+                ("C-c n i" . org-roam-node-insert)
+
+                :map org-mode-map
+                ("C-M-i" . completion-at-point))
+
+         :config
+         (org-roam-setup))
+
+     #+end_src
+
+
 * Language settings
 
 This section is all about configurations and packages that deal with
@@ -2233,34 +2272,43 @@ programming language enhancements
 
     #+begin_src emacs-lisp
 
-      (use-package org
-        :ensure
-        :functions (anupamk/do-org-mode-setup)
+            (use-package org
+              :ensure
+              :functions (anupamk/do-org-mode-setup)
 
-        :config
-        (defun anupamk/do-org-mode-setup ()
-          "run these commands every time an org-mode buffer starts up"
+              :config
+              (defun anupamk/do-org-mode-setup ()
+                "run these commands every time an org-mode buffer starts up"
 
-          ;; -------------------------------------------------------------------------
-          ;; indent text according to outline structure
-          (org-indent-mode)
+                ;; -------------------------------------------------------------------------
+                ;; indent text according to outline structure
+                (org-indent-mode)
 
-          ;; -------------------------------------------------------------------------
-          ;; code-blocks within org-mode
-          (setq org-src-window-setup 'current-window)
-          (setq org-src-fontify-natively t)
-          (setq org-src-preserve-indentation t)
-          (setq org-src-tab-acts-natively t)
-          (setq org-confirm-babel-evaluate nil)
-          (setq org-edit-src-content-indentation 0)
+                ;; -------------------------------------------------------------------------
+                ;; code-blocks within org-mode
+                (setq org-src-window-setup 'current-window)
+                (setq org-src-fontify-natively t)
+                (setq org-src-preserve-indentation t)
+                (setq org-src-tab-acts-natively t)
+                (setq org-confirm-babel-evaluate nil)
+                (setq org-edit-src-content-indentation 0)
 
-          ;; -------------------------------------------------------------------------
-          ;; when `visual-line-mode' is enabled, word-wrap is turned on, and
-          ;; simple editing commands are redefined to act on visual lines, not
-          ;; logical lines.
-          (visual-line-mode 1))
+                ;; -------------------------------------------------------------------------
+                ;; fontify natively
+                (setq org-src-fontify-natively t)
 
-        :hook (org-mode . anupamk/do-org-mode-setup))
+                ;; -------------------------------------------------------------------------
+                ;; fancy html5 generation
+                (setq org-html-html5-fancy t)
+                (setq org-html-doctype "html5")
+
+                ;; -------------------------------------------------------------------------
+                ;; when `visual-line-mode' is enabled, word-wrap is turned on, and
+                ;; simple editing commands are redefined to act on visual lines, not
+                ;; logical lines.
+                (visual-line-mode 1))
+
+              :hook (org-mode . anupamk/do-org-mode-setup))
 
     #+end_src
 
