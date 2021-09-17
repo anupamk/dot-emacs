@@ -69,6 +69,22 @@
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 
 ;; -----------------------------------------------------------------------------
+;; if native compilation is available, automatically generate compiled
+;; files when Emacs loads a new .el file. this *will* freeze Emacs for
+;; a while until it's done.
+(if (and (fboundp 'native-comp-available-p)
+         (native-comp-available-p))
+    (progn
+      (message "Native compilation is available")
+
+      ;; -----------------------------------------------------------------------
+      ;; automatically generate compiled files when Emacs loads a new .elc
+      ;; file, it *will* freeze Emacs for a while until it's done.
+      (setq comp-deferred-compilation t)))
+
+;; -----------------------------------------------------------------------------
 ;; bootstrap is over, continue loading the real configuration
 (require 'org)
-(org-babel-load-file (expand-file-name "~/.emacs.d/emacs-init.org") t)
+(org-babel-tangle-file (expand-file-name "~/.emacs.d/emacs-init.org"))
+(byte-compile-file (expand-file-name "~/.emacs.d/emacs-init.el"))
+(load-file (expand-file-name "~/.emacs.d/emacs-init.el"))
