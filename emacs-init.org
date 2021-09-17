@@ -1985,7 +1985,7 @@ programming language enhancements
           ;; how we build c/c++ sources are almost fixed
           ;;     -fdiagnostics-color=never ==> no ansii colorized output
           (defvar qc-cmd-prefix:c   "gcc -fdiagnostics-color=never -std=c99 -g -O2 -Wall -o obj/")
-          (defvar qc-cmd-prefix:cpp "g++ -fdiagnostics-color=never -std=c++17 -g -O2 -Wall -o obj/")
+          (defvar qc-cmd-prefix:cpp "g++ -fdiagnostics-color=never -std=c++20 -g -O2 -Wall -o obj/")
 
           ;; first setup the appropriate compilation command based on buffer
           ;; major-mode
