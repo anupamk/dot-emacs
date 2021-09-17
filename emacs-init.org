@@ -2196,6 +2196,31 @@ programming language enhancements
    #+end_src
 
 ** Shell Scripting
+** Lua Programming
+
+   + [[https://www.lua.org/][Lua]] is a powerful, efficient, embeddable scripting language. It
+     supports procedural programming, object-oriented programming,
+     functional programming, data-driven programming, and data
+     description.
+
+   + It is particularly unique in it's use of simple procedural syntax
+     and powerful data description constructs (based on associatve
+     arrays). Lua is dynamically typed and the bytecode interpreter
+     runs a register based VM.
+
+   + It is an /excellent/ choice for configuration management for
+     programs as opposed to things like JSON/XML/YAML etc. etc.
+
+     #+begin_src emacs-lisp
+
+       ;; -----------------------------------------------------------------------------
+       ;; lets just go with the basics here. will add things as and when required.
+       (use-package lua-mode
+         :ensure t
+         )
+
+     #+end_src
+
 ** Org Mode
 *** Preliminaries
 
