@@ -153,8 +153,8 @@
                                       (message "terminate this emacs session with \'M-x kill-emacs\'")))
 
     ;; -------------------------------------------------------------------------
-    ;; disable full 'yes' or 'no'
-    (defalias 'yes-or-no-p 'y-or-n-p)
+    ;; disable full 'yes' or 'no' (from emacs-28 onwards)
+    (setq use-short-answers t)
 
     ;; -------------------------------------------------------------------------
     ;; prefer utf-8 encoding
@@ -457,9 +457,9 @@
           "unbold all faces in emacs"
           (interactive)
           (mapc (lambda (face)
-               (when (eq (face-attribute face :weight) 'bold)
-                 (set-face-attribute face nil :weight 'normal)))
-             (face-list)))
+                  (when (eq (face-attribute face :weight) 'bold)
+                    (set-face-attribute face nil :weight 'normal)))
+                (face-list)))
 
         ;; for the compilation buffer, reduce the font size, we can always
         ;; increase it if required.
@@ -513,8 +513,8 @@
      ;; remove bold fonts from all frames...
      (add-hook 'after-make-frame-functions
                (lambda(current-frame)
-                     (with-selected-frame current-frame
-                       (anupamk:utils/unbold-all-faces)))))
+                 (with-selected-frame current-frame
+                   (anupamk:utils/unbold-all-faces)))))
 
  #+end_src
 
@@ -774,156 +774,156 @@
 
       #+begin_src emacs-lisp
 
-                ;; -----------------------------------------------------------------------------
-                ;; consult provides various practical commands based on the Emacs
-                ;; completion function completing-read, which allows to quickly select
-                ;; an item from a list of candidates with completion.
-                (use-package consult
-                  :ensure t
+        ;; -----------------------------------------------------------------------------
+        ;; consult provides various practical commands based on the Emacs
+        ;; completion function completing-read, which allows to quickly select
+        ;; an item from a list of candidates with completion.
+        (use-package consult
+          :ensure t
 
-                  ;; ---------------------------------------------------------------------------
-                  ;; init configuration is always executed
-                  :init
+          ;; ---------------------------------------------------------------------------
+          ;; init configuration is always executed
+          :init
 
-                  ;; ---------------------------------------------------------------------------
-                  ;; configure other variables and modes here, after lazily loading
-                  ;; the package
-                  :config
+          ;; ---------------------------------------------------------------------------
+          ;; configure other variables and modes here, after lazily loading
+          ;; the package
+          :config
 
-                  ;; ---------------------------------------------------------------------------
-                  ;; show absolute line-numbers when narrowing is active
-                  (setq consult-line-numbers-widen t)
+          ;; ---------------------------------------------------------------------------
+          ;; show absolute line-numbers when narrowing is active
+          (setq consult-line-numbers-widen t)
 
-                  ;; ---------------------------------------------------------------------------
-                  ;; setup the project root for `project.el'
-                  (setq consult-project-root-function
-                        (lambda ()
-                          (when-let (project (project-current))
-                            (car (project-roots project)))))
+          ;; ---------------------------------------------------------------------------
+          ;; setup the project root for `project.el'
+          (setq consult-project-root-function
+                (lambda ()
+                  (when-let (project (project-current))
+                    (car (project-roots project)))))
 
-                  ;; ---------------------------------------------------------------------------
-                  ;; replace bindings
-                  :bind (("C-x M-:"    . consult-complex-command)
-                           ("C-x b"    . consult-buffer)
-                           ("C-x C-b"  . consult-buffer)
-                           ("C-c b"    . project-find-file)
-                           ("C-c B"    . bookmark-set)
-                           ("C-c h"    . consult-history)
-                           ("C-c i"    . consult-imenu)
-                           ("C-c I"    . consult-project-imenu)
-                           ("C-c k"    . consult-ripgrep)
-                           ("C-c K"    . consult-git-grep)
-                           ("C-c l"    . consult-locate)
-                           ("C-c m"    . consult-mode-command)
-                           ("C-c s"    . consult-line)
-                           ("C-x r x"  . consult-register)
-                           ("C-x r b"  . consult-bookmark)
-                           ("M-g b"    . consult-bookmark)
-                           ("M-g m"    . consult-mark)
-                           ("M-g e"    . consult-error)
-                           ("M-s m"    . consult-multi-occur)
-                           ("M-s o"    . consult-outline)
-                           ("M-y"      . consult-yank-pop)
-                           ("C-s"      . isearch-forward)
-                           ("C-S-s"    . consult-line)
-                           ("<help> a" . consult-apropos))
-                  )
+          ;; ---------------------------------------------------------------------------
+          ;; replace bindings
+          :bind (("C-x M-:"    . consult-complex-command)
+                 ("C-x b"    . consult-buffer)
+                 ("C-x C-b"  . consult-buffer)
+                 ("C-c b"    . project-find-file)
+                 ("C-c B"    . bookmark-set)
+                 ("C-c h"    . consult-history)
+                 ("C-c i"    . consult-imenu)
+                 ("C-c I"    . consult-project-imenu)
+                 ("C-c k"    . consult-ripgrep)
+                 ("C-c K"    . consult-git-grep)
+                 ("C-c l"    . consult-locate)
+                 ("C-c m"    . consult-mode-command)
+                 ("C-c s"    . consult-line)
+                 ("C-x r x"  . consult-register)
+                 ("C-x r b"  . consult-bookmark)
+                 ("M-g b"    . consult-bookmark)
+                 ("M-g m"    . consult-mark)
+                 ("M-g e"    . consult-error)
+                 ("M-s m"    . consult-multi-occur)
+                 ("M-s o"    . consult-outline)
+                 ("M-y"      . consult-yank-pop)
+                 ("C-s"      . isearch-forward)
+                 ("C-S-s"    . consult-line)
+                 ("<help> a" . consult-apropos))
+          )
 
-                ;; -----------------------------------------------------------------------------
-                ;; orderless provides an orderless completion style that divides the
-                ;; pattern into space-separated components, and matches candidates
-                ;; that match all of the components in any order. Each component can
-                ;; match in any one of several ways: literally, as a regexp, as an
-                ;; initialism, in the flex style, or as multiple word prefixes. By
-                ;; default, regexp and literal matches are enabled.
-                (use-package orderless
-                  :ensure t
-                  :init
-                  (setq completion-styles '(orderless)
-                        completion-category-defaults nil
-                        completion-category-overrides '((file (styles . (partial-completion))))))
-
-
-                ;; -----------------------------------------------------------------------------
-                ;; vertico provides a performant and minimalistic vertical completion
-                ;; UI, which is based on the default completion system. By reusing the
-                ;; built-in facilities system, Vertico achieves full compatibility
-                ;; with built-in Emacs completion commands and completion
-                ;; tables. Vertico only provides the completion UI but aims to be
-                ;; flexible and extensible.
-                (use-package vertico
-                  :ensure t
-
-                  :config
-                  ;; ---------------------------------------------------------------------------
-                  ;;  borrowed from:
-                  ;;  https://github.com/raxod502/selectrum/issues/498#issuecomment-803283608
-                  (defun anupamk:utils/minibuffer-kill-backwards (arg)
-                    "when minibuffer is completing a file-name, delete upto
-                parent directory, otherwise delete a word"
-                    (interactive "p")
-                    (if minibuffer-completing-file-name
-                        (if (string-match-p "/." (minibuffer-contents))
-                            (zap-up-to-char (- arg) ?/)
-                          (delete-minibuffer-contents))
-                      (backward-kill-word arg)))
-
-                  :custom
-                  (vertico-cycle t)
-
-                  :custom-face
-                  (vertico-current ((t (:background "#383838"))))
-
-                  :bind (:map vertico-map
-                              ("C-n" . vertico-next)
-                              ("C-p" . vertico-previous)
-                              ("C-q" . vertico-exit)
-                              :map minibuffer-local-map
-                              ("M-h" . anupamk:utils/minibuffer-kill-backwards))
-
-                  :init
-                  (vertico-mode)
-
-                  )
-
-                ;; -----------------------------------------------------------------------------
-                ;; marginalia provides marks or annotations placed at the margin of
-                ;; the minibuffer for completion candidates.
-                (use-package marginalia
-                  :ensure t
-                  :after vertico
-
-                  :custom
-                  ((marginalia-align-offset 1)
-                   (marginalia-margin-threshold 200)
-                   (marginalia-separator-threshold 120)
-                   (marginalia-truncate-width 100)
-                   (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil)))
-
-                  :init
-                  (marginalia-mode))
+        ;; -----------------------------------------------------------------------------
+        ;; orderless provides an orderless completion style that divides the
+        ;; pattern into space-separated components, and matches candidates
+        ;; that match all of the components in any order. Each component can
+        ;; match in any one of several ways: literally, as a regexp, as an
+        ;; initialism, in the flex style, or as multiple word prefixes. By
+        ;; default, regexp and literal matches are enabled.
+        (use-package orderless
+          :ensure t
+          :init
+          (setq completion-styles '(orderless)
+                completion-category-defaults nil
+                completion-category-overrides '((file (styles . (partial-completion))))))
 
 
-                ;; -----------------------------------------------------------------------------
-                ;; this package provides a "contextual" menu proividing actions for
-                ;; various objects (files, buffers, etc. etc.).
-                (use-package embark
-                  :bind (("C-S-a" . embark-act)
-                         :map minibuffer-local-map
-                         ("C-d" . embark-act))
-                  :config
+        ;; -----------------------------------------------------------------------------
+        ;; vertico provides a performant and minimalistic vertical completion
+        ;; UI, which is based on the default completion system. By reusing the
+        ;; built-in facilities system, Vertico achieves full compatibility
+        ;; with built-in Emacs completion commands and completion
+        ;; tables. Vertico only provides the completion UI but aims to be
+        ;; flexible and extensible.
+        (use-package vertico
+          :ensure t
 
-                  ;; Show Embark actions via which-key
-                  (setq embark-action-indicator
-                        (lambda (map)
-                          (which-key--show-keymap "Embark" map nil nil 'no-paging)
-                          #'which-key--hide-popup-ignore-command)
-                        embark-become-indicator embark-action-indicator))
+          :config
+          ;; ---------------------------------------------------------------------------
+          ;;  borrowed from:
+          ;;  https://github.com/raxod502/selectrum/issues/498#issuecomment-803283608
+          (defun anupamk:utils/minibuffer-kill-backwards (arg)
+            "when minibuffer is completing a file-name, delete upto
+        parent directory, otherwise delete a word"
+            (interactive "p")
+            (if minibuffer-completing-file-name
+                (if (string-match-p "/." (minibuffer-contents))
+                    (zap-up-to-char (- arg) ?/)
+                  (delete-minibuffer-contents))
+              (backward-kill-word arg)))
 
-                (use-package embark-consult
-                    :ensure t
-                    :after (embark consult)
-                    :hook (embark-collect-mode . embark-consult-preview-minor-mode))
+          :custom
+          (vertico-cycle t)
+
+          :custom-face
+          (vertico-current ((t (:background "#383838"))))
+
+          :bind (:map vertico-map
+                      ("C-n" . vertico-next)
+                      ("C-p" . vertico-previous)
+                      ("C-q" . vertico-exit)
+                      :map minibuffer-local-map
+                      ("M-h" . anupamk:utils/minibuffer-kill-backwards))
+
+          :init
+          (vertico-mode)
+
+          )
+
+        ;; -----------------------------------------------------------------------------
+        ;; marginalia provides marks or annotations placed at the margin of
+        ;; the minibuffer for completion candidates.
+        (use-package marginalia
+          :ensure t
+          :after vertico
+
+          :custom
+          ((marginalia-align-offset 1)
+           (marginalia-margin-threshold 200)
+           (marginalia-separator-threshold 120)
+           (marginalia-truncate-width 100)
+           (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil)))
+
+          :init
+          (marginalia-mode))
+
+
+        ;; -----------------------------------------------------------------------------
+        ;; this package provides a "contextual" menu proividing actions for
+        ;; various objects (files, buffers, etc. etc.).
+        (use-package embark
+          :bind (("C-S-a" . embark-act)
+                 :map minibuffer-local-map
+                 ("C-d" . embark-act))
+          :config
+
+          ;; Show Embark actions via which-key
+          (setq embark-action-indicator
+                (lambda (map)
+                  (which-key--show-keymap "Embark" map nil nil 'no-paging)
+                  #'which-key--hide-popup-ignore-command)
+                embark-become-indicator embark-action-indicator))
+
+        (use-package embark-consult
+          :ensure t
+          :after (embark consult)
+          :hook (embark-collect-mode . embark-consult-preview-minor-mode))
 
       #+end_src
 
@@ -1015,7 +1015,7 @@
        :after dired
        :config
        (setq find-ls-option ;; applies to `find-name-dired'
-        '("-ls" . "-AFhlv --group-directories-first"))
+             '("-ls" . "-AFhlv --group-directories-first"))
        (setq find-name-arg "-iname"))
 
    #+end_src
@@ -1699,6 +1699,10 @@ programming language enhancements
 
        (use-package project
          :ensure nil
+
+         :functions (anupamk:project-utils/locate-project-root
+                     anupamk:project-utils/do-locate-project-root)
+
          :bind (("C-c p f" . project-find-file)
                 ("C-c p r" . project-find-regexp))
 
@@ -1767,6 +1771,7 @@ programming language enhancements
     #+begin_src emacs-lisp
 
       (use-package protobuf-mode
+        :disabled t
         :ensure)
 
     #+end_src
@@ -1775,27 +1780,27 @@ programming language enhancements
 
     #+begin_src emacs-lisp
 
-      (use-package deadgrep
-        :ensure
+      ;; (use-package deadgrep
+      ;;   :ensure
 
-        :functions (anupamk:deadgrep/get-repo-root-dir)
+      ;;   :functions (anupamk:deadgrep/get-repo-root-dir)
 
-        :config
+      ;;   :config
 
-        ;; ---------------------------------------------------------------------------
-        ;; find the fully-qualified name of the root repository
-        (defun anupamk:deadgrep/get-repo-root-dir ()
-          "return the name of the root tarana repository"
-          (let ((tw-repo-root (getenv "TWAK_REPO_NAME")))
-            (concat "/twbuild/anupam.kapoor/source-code/tw-repos/"
-                    tw-repo-root
-                    "/tarana3/cpu/applications/src/")))
+      ;;   ;; ---------------------------------------------------------------------------
+      ;;   ;; find the fully-qualified name of the root repository
+      ;;   (defun anupamk:deadgrep/get-repo-root-dir ()
+      ;;     "return the name of the root tarana repository"
+      ;;     (let ((tw-repo-root (getenv "TWAK_REPO_NAME")))
+      ;;       (concat "/twbuild/anupam.kapoor/source-code/tw-repos/"
+      ;;               tw-repo-root
+      ;;               "/tarana3/cpu/applications/src/")))
 
-        (when (or (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com")
-                  (anupamk:utils/host-name-is "aws-devel-01"))
-          (setq deadgrep-project-root-function #'anupamk:deadgrep/get-repo-root-dir)))
+      ;;   (when (or (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com")
+      ;;             (anupamk:utils/host-name-is "aws-devel-01"))
+      ;;     (setq deadgrep-project-root-function #'anupamk:deadgrep/get-repo-root-dir)))
 
-      (global-set-key (kbd "C-M-g")  #'deadgrep)
+      ;; (global-set-key (kbd "C-M-g")  #'deadgrep)
 
     #+end_src
 
@@ -1867,13 +1872,13 @@ programming language enhancements
                  ;; 128 results are enough for anyone
                  "--limit-results=128"
 
-                ;; enable cross file renaming
-                "--cross-file-rename"
+                 ;; enable cross file renaming
+                 "--cross-file-rename"
 
-                ;; detailed completion i.e. One completion item for each
-                ;; semantically distinct completion, with full type
-                ;; information
-                "--completion-style=detailed"
+                 ;; detailed completion i.e. One completion item for each
+                 ;; semantically distinct completion, with full type
+                 ;; information
+                 "--completion-style=detailed"
 
                  ;; info level logging
                  "--log=error")
@@ -1953,7 +1958,7 @@ programming language enhancements
             (progn  (message (concat "unable to find: '"
                                      search-fname "' within: '"
                                      search-root-dir "', running quick-compile"))
-              (compile (anupamk:cc-utils/quick-compile-cmdstr)))))
+                    (compile (anupamk:cc-utils/quick-compile-cmdstr)))))
 
 
         ;; ---------------------------------------------------------------------------
@@ -2272,43 +2277,43 @@ programming language enhancements
 
     #+begin_src emacs-lisp
 
-            (use-package org
-              :ensure
-              :functions (anupamk/do-org-mode-setup)
+      (use-package org
+        :ensure
+        :functions (anupamk/do-org-mode-setup)
 
-              :config
-              (defun anupamk/do-org-mode-setup ()
-                "run these commands every time an org-mode buffer starts up"
+        :config
+        (defun anupamk/do-org-mode-setup ()
+          "run these commands every time an org-mode buffer starts up"
 
-                ;; -------------------------------------------------------------------------
-                ;; indent text according to outline structure
-                (org-indent-mode)
+          ;; -------------------------------------------------------------------------
+          ;; indent text according to outline structure
+          (org-indent-mode)
 
-                ;; -------------------------------------------------------------------------
-                ;; code-blocks within org-mode
-                (setq org-src-window-setup 'current-window)
-                (setq org-src-fontify-natively t)
-                (setq org-src-preserve-indentation t)
-                (setq org-src-tab-acts-natively t)
-                (setq org-confirm-babel-evaluate nil)
-                (setq org-edit-src-content-indentation 0)
+          ;; -------------------------------------------------------------------------
+          ;; code-blocks within org-mode
+          (setq org-src-window-setup 'current-window)
+          (setq org-src-fontify-natively t)
+          (setq org-src-preserve-indentation t)
+          (setq org-src-tab-acts-natively t)
+          (setq org-confirm-babel-evaluate nil)
+          (setq org-edit-src-content-indentation 0)
 
-                ;; -------------------------------------------------------------------------
-                ;; fontify natively
-                (setq org-src-fontify-natively t)
+          ;; -------------------------------------------------------------------------
+          ;; fontify natively
+          (setq org-src-fontify-natively t)
 
-                ;; -------------------------------------------------------------------------
-                ;; fancy html5 generation
-                (setq org-html-html5-fancy t)
-                (setq org-html-doctype "html5")
+          ;; -------------------------------------------------------------------------
+          ;; fancy html5 generation
+          (setq org-html-html5-fancy t)
+          (setq org-html-doctype "html5")
 
-                ;; -------------------------------------------------------------------------
-                ;; when `visual-line-mode' is enabled, word-wrap is turned on, and
-                ;; simple editing commands are redefined to act on visual lines, not
-                ;; logical lines.
-                (visual-line-mode 1))
+          ;; -------------------------------------------------------------------------
+          ;; when `visual-line-mode' is enabled, word-wrap is turned on, and
+          ;; simple editing commands are redefined to act on visual lines, not
+          ;; logical lines.
+          (visual-line-mode 1))
 
-              :hook (org-mode . anupamk/do-org-mode-setup))
+        :hook (org-mode . anupamk/do-org-mode-setup))
 
     #+end_src
 
