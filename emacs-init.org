@@ -443,13 +443,22 @@
       (use-package emacs
         :config
 
+        (defconst anupamk:font/default-font-name "Pragmata Pro Mono"
+          "the default font that we use everywhere")
+
         ;; ---------------------------------------------------------------------------
-        ;; host specific font (size) configuration
+        ;; host specific absolute font-heights
         (let ((anupamk/buffer-font-height (cond ((anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com") 120)
                                                 ((anupamk:utils/host-name-is "aws-devel-01") 120)
-                                                (t 80))))
+                                                (t 95))))
 
-          (set-face-attribute 'default nil :font "Go Mono" :height anupamk/buffer-font-height))
+          ;; -------------------------------------------------------------------------
+          ;; notice that we have absolute point size only for the default
+          ;; face. heights of fixed-pitch and variable-pitch are _relative_
+          ;; to that (see, set-face-attribute documentation for more info)
+          (set-face-attribute 'default nil        :family anupamk:font/default-font-name :height anupamk/buffer-font-height)
+          (set-face-attribute 'fixed-pitch nil    :family anupamk:font/default-font-name :height 1.0)
+          (set-face-attribute 'variable-pitch nil :family anupamk:font/default-font-name :height 1.0))
 
         ;; ---------------------------------------------------------------------------
         ;; bold faces are quite annoying. remove them all
@@ -465,7 +474,7 @@
         ;; increase it if required.
         (defun setup-compilation-buffer-font()
           (interactive)
-          (setq buffer-face-mode-face '(:family "PragmataPro Mono" :height 90))
+          (setq buffer-face-mode-face '(:family anupamk:font/default-font-name :height 90))
           (buffer-face-mode))
 
         :hook
@@ -1544,10 +1553,8 @@
    #+begin_src emacs-lisp
 
      (use-package vterm
-       :disabled
        :ensure t
        :custom
-
        ;; ---------------------------------------------------------------------------
        ;; ignore bold text properties
        (vterm-disable-bold t)
@@ -1576,8 +1583,8 @@
        (defun anupamk/set-vterm-font ()
          "custom font in the vterm buffer"
          (interactive)
-         (set (make-local-variable 'buffer-face-mode-face) '(:family "PragmataPro Mono" :height 90))
-         (buffer-face-mode))
+         (set (make-local-variable 'buffer-face-mode-face) '(:family "Go Mono" :height 80))
+         (buffer-face-mode t))
 
        ;; ---------------------------------------------------------------------------
        ;; ensure that <C-backspace> should kill the previous word
