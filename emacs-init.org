@@ -1688,6 +1688,43 @@
 
      #+end_src
 
+** Dumb-Jump
+
+   + Dumb Jump is an Emacs "jump to definition" package for large
+     number of programming languages that favors "it just works ™",
+     with a minimal (or as close to zero as possible) configuration.
+
+   + As opposed to other canonical packages, there are no stored
+     indexes f.e. TAGS, cscope.db, .cache (clangd etc) etc, or
+     persistent background processes.
+
+   + In the current configuration, we resort to using =ripgrep= to
+     find potential definitions of symbols.
+
+   #+begin_src emacs-lisp
+
+     (use-package dumb-jump
+       :ensure
+
+       :config
+       (setq dumb-jump-force-searcher 'rg)
+
+       ;; ---------------------------------------------------------------------------
+       ;; remove TAGS based xref lookup, we don't use that here anymore.
+       (setq xref-backend-functions (remq 'etags--xref-backend xref-backend-functions))
+
+       ;; ---------------------------------------------------------------------------
+       ;; append `dumb-jump' as a list of xref-backend functions.
+       ;; concertely this configuration uses `dumb-jump' when language
+       ;; specific xref don't return anything pertinent.
+       ;;
+       ;; to *always* use `dumb-jump' use this configuration :
+       ;;   (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate)
+       (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate t)
+
+       )
+
+   #+end_src
 
 * Language settings
 
