@@ -474,7 +474,7 @@
         ;; increase it if required.
         (defun setup-compilation-buffer-font()
           (interactive)
-          (setq buffer-face-mode-face '(:family anupamk:font/default-font-name :height 90))
+          (setq buffer-face-mode-face '(:family "Go Mono" :height 80))
           (buffer-face-mode))
 
         :hook
@@ -1726,6 +1726,118 @@
 
    #+end_src
 
+** RipGrep
+
+   + RipGrep is a wrapper over the ripgrep command line tool, and it
+     provides a superb interface to the formidable =ripgrep= tool.
+
+   + It allows us to interactively create searches, performing
+     automatic searches based on editing context, refining and
+     modifying search results, specifying custom query commands
+     etc. etc.
+
+   #+begin_src emacs-lisp
+
+     (use-package rg
+       :ensure
+       :after wgrep
+
+       :custom
+
+       ;; ---------------------------------------------------------------------------
+       ;; group matches in same file together
+       (rg-group-result t)
+
+       ;; ---------------------------------------------------------------------------
+       ;; hide most of rg command line when non nil
+       (rg-hide-command t)
+
+       ;; ---------------------------------------------------------------------------
+       ;; show the columns of matches in the output buffer
+       (rg-show-columns nil)
+
+       ;; ---------------------------------------------------------------------------
+       ;; show headers in the result
+       (rg-show-header t)
+
+       ;; ---------------------------------------------------------------------------
+       ;; file aliases added to the 'rg' built-in aliases
+       (rg-custom-type-aliases nil)
+
+       ;; ---------------------------------------------------------------------------
+       ;; default file alias to use when no alias can be determined
+       (rg-default-alias-fallback "all")
+
+       :config
+
+       ;; ---------------------------------------------------------------------------
+       ;; ripgrep in project root
+       (rg-define-search anupamk:ripgrep-search/rg-vc-or-dir
+                         "ripgrep in project-root or $pwd"
+                         :query ask
+                         :format regexp
+                         :files "everything"
+
+                         ;; ---------------------------------------------------------
+                         ;; smart setting will trigger an analyze of the
+                         ;; search string and if it’s all lower case, the
+                         ;; search will be case insensitive, otherwise it
+                         ;; will be case sensitive
+                         :rg-ignore-case smart
+
+                         ;; ---------------------------------------------------------
+                         ;; select a root-search directory. project-root or
+                         ;; current directory
+                         :dir (let ((vc (vc-root-dir)))
+                                (if vc
+                                    vc
+                                  default-directory))
+
+                         ;; ---------------------------------------------------------
+                         ;; specifies if the final search command line can
+                         ;; be modified and confirmed by the user.
+                         :confirm prefix
+                         :flags ("--hidden -g !.git"))
+
+       ;; ---------------------------------------------------------------------------
+       ;; ripgrep for symbol at point in $PWD
+       (rg-define-search anupamk:ripgrep-search/rg-ref-in-pwd
+                         "ripgrep for symbol at point in $pwd"
+                         :query ask
+                         :format regexp
+                         :files "everything"
+
+                         ;; ---------------------------------------------------------
+                         ;; smart setting will trigger an analyze of the
+                         ;; search string and if it’s all lower case, the
+                         ;; search will be case insensitive, otherwise it
+                         ;; will be case sensitive
+                         :rg-ignore-case smart
+
+                         :dir default-directory
+                         :confirm prefix
+                         :flags ("--hidden -g !.git"))
+
+       (defun anupamk:ripgrep-search/save-search-as-name ()
+         "Save `rg' buffer, naming it after the current search query.
+          This function is meant to be mapped to a key in `rg-mode-map'."
+         (interactive)
+         (let ((pattern (car rg-pattern-history)))
+           (rg-save-search-as-name (concat "≪" pattern "≫"))))
+
+       :bind (("M-s r" . anupamk:ripgrep-search/rg-vc-or-dir)
+              ("M-s d" . anupamk:ripgrep-search/rg-ref-in-pwd)
+
+              :map rg-mode-map
+              ("s"   . anupamk:ripgrep-search/save-search-as-name)
+              ("C-n" . next-line)
+              ("C-p" . previous-line)
+              ("M-n" . rg-next-file)
+              ("M-p" . rg-prev-file))
+       )
+
+   #+end_src
+
 * Language settings
 
 This section is all about configurations and packages that deal with
@@ -1817,34 +1929,6 @@ programming language enhancements
       (use-package protobuf-mode
         :disabled t
         :ensure)
-
-    #+end_src
-
-*** Deadgrep for easy searching
-
-    #+begin_src emacs-lisp
-
-      ;; (use-package deadgrep
-      ;;   :ensure
-
-      ;;   :functions (anupamk:deadgrep/get-repo-root-dir)
-
-      ;;   :config
-
-      ;;   ;; ---------------------------------------------------------------------------
-      ;;   ;; find the fully-qualified name of the root repository
-      ;;   (defun anupamk:deadgrep/get-repo-root-dir ()
-      ;;     "return the name of the root tarana repository"
-      ;;     (let ((tw-repo-root (getenv "TWAK_REPO_NAME")))
-      ;;       (concat "/twbuild/anupam.kapoor/source-code/tw-repos/"
-      ;;               tw-repo-root
-      ;;               "/tarana3/cpu/applications/src/")))
-
-      ;;   (when (or (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com")
-      ;;             (anupamk:utils/host-name-is "aws-devel-01"))
-      ;;     (setq deadgrep-project-root-function #'anupamk:deadgrep/get-repo-root-dir)))
-
-      ;; (global-set-key (kbd "C-M-g")  #'deadgrep)
 
     #+end_src
 
