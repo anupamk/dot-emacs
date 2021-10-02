@@ -425,6 +425,20 @@
       (setq term-instance (+ 1 term-instance))
       (command-execute 'vterm)
       (rename-buffer (format "*term-%03d*" term-instance)))
+
+    ;; ---------------------------------------------------------------------------
+    ;; saved kbd-macro to lineup next comment seperator in a c++
+    ;; source. this will ensure that the line
+    ;;     '/// ----'
+    ;; extends to the last terminating column in the source
+    ;; file. normally, as new blocks are introduced || removed
+    ;; etc. comment seperators don't terminate at the right column.
+    ;;
+    ;; for running this on the whole file, do this:
+    ;;    C-u <some-large-number> anupamk:utils/lineup-c++-comment-seperator
+    (fset 'anupamk:utils/lineup-c++-comment-seperator
+      (kmacro-lambda-form [?\C-s ?/ ?/ ?/ ?\C-a ?\C-s ?/ ?/ ?/ ?  ?- ?- ?- ?\C-a ?\C-k ?\M-\; ?\C-c ?e down ?\C-a ?\C-a] 0 "%d"))
+
     )
 
 #+end_src
