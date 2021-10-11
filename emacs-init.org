@@ -1852,6 +1852,90 @@
 
    #+end_src
 
+* Window Management
+
+  + The association list in =display-buffer-alist= describes the
+    rule-set for controlling the display of windows within an Emacs
+    frame.
+
+  + The general idea is to display buffers of a specific group or type
+    in a specific location for a smoother aka low-friction end-to-end
+    experience.
+
+    #+begin_src emacs-lisp
+
+      (use-package window
+        :custom
+        (display-buffer-alist
+         '(;; left-side window
+
+           ;; ------------------------------------------------------------------------
+           ;; right-side window
+           ("\\*\\(Help\\|Faces\\|Colors\\).*"
+            (display-buffer-in-side-window)
+            (window-width . 0.25)
+            (side . right)
+            (slot . 0)
+            (window-parameters . ((mode-line-format . (" "
+                                                       mode-line-buffer-identification)))))
+
+           ;; ------------------------------------------------------------------------
+           ;; magit needs more space
+           ("\\.*magit.*"
+            (display-buffer-in-side-window)
+            (window-width . 0.30)
+            (side . right)
+            (slot . 0)
+            (window-parameters . ((mode-line-format . (" "
+                                                       mode-line-buffer-identification)))))
+
+           ;; ------------------------------------------------------------------------
+           ;; top-side window
+
+           ;; ------------------------------------------------------------------------
+           ;; bottom-side window
+           ("\\*\\(compilation\\|rg\\).*"
+            (display-buffer-in-side-window)
+            (window-width . 0.20)
+            (dedicated . t)
+            (side . bottom)
+            (slot . 0)
+            (window-parameters . ((mode-line-format . (" "
+                                                       mode-line-buffer-identification)))))
+           ))
+
+        (window-combination-resize t)
+        (even-window-sizes 'height-only)
+        (window-sides-vertical nil)
+
+        :hook
+        ((help-mode . visual-line-mode)
+         (custom-mode . visual-line-mode))
+        )
+
+      (use-package emacs
+        :functions (anupamk:window-utils/display-buffer-at-bottom)
+
+        :config
+
+        ;; ---------------------------------------------------------------------------
+        ;; move current buffer to bottom of the frame.
+        (defun anupamk:window-utils/display-buffer-at-bottom ()
+          "move current buffer to the bottom of the frame. this is useful to take a
+            buffer out of a side window."
+          (interactive)
+          (let ((buffer (current-buffer)))
+            (with-current-buffer buffer
+              (delete-window)
+              (display-buffer-at-bottom buffer `((window-parameters . ((mode-line-format . (" "
+                                                                                            mode-line-buffer-identification)))))))))
+
+        :bind
+        (("C-c b" . anupamk:window-utils/display-buffer-at-bottom))
+
+        )
+    #+end_src
+
 * Language settings
 
 This section is all about configurations and packages that deal with
@@ -2300,8 +2384,8 @@ programming language enhancements
         (when (or (anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com")
                   (anupamk:utils/host-name-is "aws-devel-01"))
           (global-set-key (kbd "C-<f2>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.b10.1xx")))
-          (global-set-key (kbd "C-<f3>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.p10.xx")))
-          (global-set-key (kbd "C-<f4>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.r10.xxx")))
+          (global-set-key (kbd "C-<f3>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.r10.xxx")))
+          (global-set-key (kbd "C-<f4>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.p10.xx")))
           (global-set-key (kbd "C-<f5>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.h10.1xx")))
           (global-set-key (kbd "C-<f6>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.h10.2xx")))
           ))
