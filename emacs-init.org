@@ -2491,7 +2491,48 @@ programming language enhancements
 
      #+end_src
 
+** Elisp Programming
+
+   + Some useful packages for programming in elisp
+
+     #+begin_src emacs-lisp
+
+       ;; -----------------------------------------------------------------------------
+       ;; structured and fast editing of s-expressions
+       (use-package paredit
+         :ensure t)
+
+       ;; -----------------------------------------------------------------------------
+       ;; different colors for parenthesis at different levels making it
+       ;; easier to spot errors etc.
+       (use-package rainbow-delimiters
+         :ensure t)
+
+       ;; -----------------------------------------------------------------------------
+       ;; company provides completion for elisp statements f.e. functions,
+       ;; variables etc.
+       (use-package company
+         :ensure t)
+
+
+       (use-package emacs
+         :functions (anupamk:utils/setup-elisp-programming-environment)
+
+         :config
+         (defun anupamk:utils/setup-elisp-programming-environment ()
+           "setup various things required for elisp programming"
+           (paredit-mode t)
+           (rainbow-delimiters-mode t)
+           (show-paren-mode 1))
+
+         :hook
+         (emacs-lisp-mode-hook . anupamk:utils/setup-elisp-programming-environment)
+         (lisp-interaction-mode . anupamk:utils/setup-elisp-programming-environment))
+
+     #+end_src
+
 ** Org Mode
+
 *** Preliminaries
 
     + While editing code blocks in org-mode buffers, we want =<tab>=
