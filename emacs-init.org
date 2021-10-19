@@ -1852,6 +1852,19 @@
 
    #+end_src
 
+** Trying out packages
+
+   + =try= is quite handy, as it allows you to try a package out
+     without installing it.
+
+   #+begin_src emacs-lisp
+
+     (use-package try
+       :ensure t
+       )
+
+   #+end_src
+
 * Window Management
 
   + The association list in =display-buffer-alist= describes the
