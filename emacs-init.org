@@ -1131,6 +1131,54 @@
    #+end_src
 
 * Applications and utilties
+** Browser customization
+
+   + I don't really care too much about a particular browser, but I
+     generally want to stay within Emacs as much as possible for all
+     browsing related activities.
+
+     Towards this end, I tend to use a mixture of browsers f.e. EWW
+     for cases when JS etc. is not really a requirement, Chromium
+     and it's ilk (f.e. Brave, Vivaldi etc.) for work, and firefox
+     otherwise.
+
+     #+begin_src emacs-lisp
+
+       (use-package emacs
+         :custom
+
+         (browse-url-handlers
+          '(
+            ("news\\.ycombinator\\.com" . browse-url-chromium)
+
+            ;; ------------------------------------------------------------------------
+            ;; 'low-intensity' mode
+            ("en\\.wiktionary\\.org"    . eww-browse-url)
+
+            ;; ------------------------------------------------------------------------
+            ;; use firefox for everything else
+            ("."                        . browse-url-firefox)
+            )))
+
+     #+end_src
+
+   + Launching searches from within Emacs is quite handy. Set that up
+     as well via =google-this= pacakge. The =C-x g= keychord performs
+     a google search on the currently selected region, or exprssion
+     under point.
+
+     #+begin_src emacs-lisp
+
+       (use-package google-this
+         :ensure t
+         :custom
+         (global-set-key (kbd "C-x g") 'google-this-mode-submap)
+
+         :config
+         (google-this-mode 1))
+
+     #+end_src
+
 ** Which key
 
    =which-key= is a minor mode for Emacs that displays the key
