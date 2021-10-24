@@ -833,7 +833,7 @@
 
           ;; ---------------------------------------------------------------------------
           ;; replace bindings
-          :bind (("C-x M-:"    . consult-complex-command)
+          :bind (("C-x M-:"  . consult-complex-command)
                  ("C-x b"    . consult-buffer)
                  ("C-x C-b"  . consult-buffer)
                  ("C-c b"    . project-find-file)
@@ -2340,6 +2340,11 @@ programming language enhancements
 
 
         (defun anupamk:cc/common-mode-hook ()
+
+          ;; -------------------------------------------------------------------------
+          ;; highlight parenthesis
+          (highlight-parentheses-mode t)
+
           ;; -------------------------------------------------------------------------
           ;; '_' is not a modifier anymore
           (modify-syntax-entry ?_ "w")
@@ -2563,14 +2568,9 @@ programming language enhancements
      #+begin_src emacs-lisp
 
        ;; -----------------------------------------------------------------------------
-       ;; structured and fast editing of s-expressions
-       (use-package paredit
-         :ensure t)
-
-       ;; -----------------------------------------------------------------------------
-       ;; different colors for parenthesis at different levels making it
-       ;; easier to spot errors etc.
-       (use-package rainbow-delimiters
+       ;; highlight parenthesis dynamically sorrounding the point based on
+       ;; nesting level.
+       (use-package highlight-parentheses
          :ensure t)
 
        ;; -----------------------------------------------------------------------------
@@ -2579,16 +2579,14 @@ programming language enhancements
        (use-package company
          :ensure t)
 
-
        (use-package emacs
          :functions (anupamk:utils/setup-elisp-programming-environment)
 
          :config
          (defun anupamk:utils/setup-elisp-programming-environment ()
            "setup various things required for elisp programming"
-           (paredit-mode t)
-           (rainbow-delimiters-mode t)
-           (show-paren-mode 1))
+           (highlight-parentheses-mode t)
+           )
 
          :hook
          (emacs-lisp-mode-hook . anupamk:utils/setup-elisp-programming-environment)
