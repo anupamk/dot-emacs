@@ -1930,6 +1930,17 @@
 
     #+begin_src emacs-lisp
 
+      ;; -----------------------------------------------------------------------------
+      ;; winner mode for capturing + restoring window configuration
+      ;; automatically
+      (use-package winner
+        :ensure
+        :config
+        (winner-mode t))
+
+      ;; -----------------------------------------------------------------------------
+      ;; override, display-buffer-alist to better manage appearance of popup
+      ;; windows in an emacs-frame.
       (use-package window
         :custom
         (display-buffer-alist
