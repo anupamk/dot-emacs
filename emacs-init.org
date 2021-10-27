@@ -794,6 +794,106 @@
 
    #+end_src
 
+* History & State
+
+  This section contains configuration for packages that record state
+  of various Emacs tools f.e. minibuffer history, list of
+  recently-visited files, window configuration etc.
+
+** Record various types of history
+*** Recentf (recent files and directories)
+
+    #+begin_src emacs-lisp
+
+      (use-package recentf
+        :ensure
+
+        :config
+
+        ;; ---------------------------------------------------------------------------
+        ;; 300 files ought to be enough for anybody
+        (setq recentf-max-saved-items 300)
+
+        ;; ---------------------------------------------------------------------------
+        ;; don't show labels for keys that can be used to open nth files
+        (setq recentf-show-file-shortcuts-flag nil)
+
+        :hook
+        ((after-init . recentf-mode))
+
+        )
+
+    #+end_src
+*** Window configuration
+
+    #+begin_src emacs-lisp
+
+      ;; -----------------------------------------------------------------------------
+      ;; winner mode for capturing + restoring window configuration
+      ;; automatically
+      (use-package winner
+        :ensure
+        :config
+        (winner-mode t))
+
+    #+end_src
+
+*** Minibuffer
+
+    + Not sure why saving history is not default. Let's enable that,
+      and few more things that make sense f.e. search, kill, regexp-search etc.
+
+    #+begin_src emacs-lisp
+
+      (use-package savehist
+        :config
+        (setq savehist-file "~/.emacs.d/savehist")
+        (setq history-length 10000)
+        (setq history-delete-duplicates t)
+        (setq savehist-save-minibuffer-history t)
+
+        ;; ---------------------------------------------------------------------------
+        ;; nice to have
+        (setq savehist-additional-variables '(kill-ring
+                                              search-ring
+                                              regexp-search-ring))
+        (savehist-mode 1))
+
+    #+end_src
+*** Point
+
+    Where is the point at ?
+
+    #+begin_src emacs-lisp
+
+      (use-package saveplace
+        :config
+        (setq save-place-file "~/.emacs.d/saveplace")
+        (save-place-mode 1))
+
+    #+end_src
+*** Desktop state
+    Use =desktop+= for saving and restoring desktop state.
+
+    #+begin_src emacs-lisp
+
+      (use-package desktop+
+        :ensure
+
+        :config
+        ;; ---------------------------------------------------------------------------
+        ;; from : https://stackoverflow.com/questions/18612742/emacs-desktop-save-mode-error
+        (setq desktop-restore-forces-onscreen nil)
+
+        ;; not much to do except that we use desktop+-create-auto and
+        ;; desktop+-load-auto for automatically generating desktop-names
+        ;; while saving and restoring desktop sessions
+        )
+
+    #+end_src
+
+
+
 * Selection candidates and search methods
 ** Completion framework
 
@@ -971,7 +1071,6 @@
        (setq wgrep-change-readonly-file t))
 
    #+end_src
-
 
 ** Isearch configuration
 
@@ -1226,119 +1325,6 @@
 
    #+end_src
 
-** Record history
-*** Recent files and directories
-
-    #+begin_src emacs-lisp
-
-      (use-package recentf
-        :functions (rjs/recentf-rename-directory
-                    rjs/recentf-rename-file
-                    rjs/recentf-rename-notify
-                    contrib/recentf-add-dired-directory)
-
-        :config
-        (setq recentf-save-file "~/.emacs.d/recentf")
-        (setq recentf-max-menu-items 10)
-        (setq recentf-max-saved-items 200)
-        (setq recentf-show-file-shortcuts-flag nil)
-
-        ;; rename entries in recentf when moving files in dired
-        (defun rjs/recentf-rename-directory (oldname newname)
-          ;; oldname, newname and all entries of recentf-list should already
-          ;; be absolute and normalised so I think this can just test whether
-          ;; oldname is a prefix of the element.
-          (setq recentf-list
-                (mapcar (lambda (name)
-                          (if (string-prefix-p oldname name)
-                              (concat newname (substring name (length oldname)))
-                            name))
-                        recentf-list))
-          (recentf-cleanup))
-
-        (defun rjs/recentf-rename-file (oldname newname)
-          (setq recentf-list
-                (mapcar (lambda (name)
-                          (if (string-equal name oldname)
-                              newname
-                            oldname))
-                        recentf-list))
-          (recentf-cleanup))
-
-        (defun rjs/recentf-rename-notify (oldname newname &rest args)
-          (if (file-directory-p newname)
-              (rjs/recentf-rename-directory oldname newname)
-            (rjs/recentf-rename-file oldname newname)))
-
-        (advice-add 'dired-rename-file :after #'rjs/recentf-rename-notify)
-
-        (defun contrib/recentf-add-dired-directory ()
-          "Include Dired buffers in the `recentf' list.  Particularly
-      useful when combined with a completion framework's ability to
-      display virtual buffers."
-          (when (and (stringp dired-directory)
-                     (equal "" (file-name-nondirectory dired-directory)))
-            (recentf-add-file dired-directory)))
-
-        :hook ((after-init . recentf-mode)
-               (dired-mode . contrib/recentf-add-dired-directory)))
-
-    #+end_src
-
-*** Minibuffer
-
-    + Not sure why saving history is not default. Let's enable that,
-      and few more things that make sense f.e. search, kill, regexp-search etc.
-
-    #+begin_src emacs-lisp
-
-      (use-package savehist
-        :config
-        (setq savehist-file "~/.emacs.d/savehist")
-        (setq history-length 10000)
-        (setq history-delete-duplicates t)
-        (setq savehist-save-minibuffer-history t)
-
-        ;; ---------------------------------------------------------------------------
-        ;; nice to have
-        (setq savehist-additional-variables '(kill-ring
-                                              search-ring
-                                              regexp-search-ring))
-        (savehist-mode 1))
-
-    #+end_src
-
-*** Point
-
-    Where is the point at ?
-
-    #+begin_src emacs-lisp
-
-      (use-package saveplace
-        :config
-        (setq save-place-file "~/.emacs.d/saveplace")
-        (save-place-mode 1))
-
-    #+end_src
-*** Desktop state
-    Use =desktop+= for saving and restoring desktop state.
-
-    #+begin_src emacs-lisp
-
-      (use-package desktop+
-        :ensure
-
-        :config
-        ;; ---------------------------------------------------------------------------
-        ;; from : https://stackoverflow.com/questions/18612742/emacs-desktop-save-mode-error
-        (setq desktop-restore-forces-onscreen nil)
-
-        ;; not much to do except that we use desktop+-create-auto and
-        ;; desktop+-load-auto for automatically generating desktop-names
-        ;; while saving and restoring desktop sessions
-        )
-
-    #+end_src
 ** Dynamic word completion
 
    #+begin_src emacs-lisp
@@ -1929,14 +1915,6 @@
     experience.
 
     #+begin_src emacs-lisp
-
-      ;; -----------------------------------------------------------------------------
-      ;; winner mode for capturing + restoring window configuration
-      ;; automatically
-      (use-package winner
-        :ensure
-        :config
-        (winner-mode t))
 
       ;; -----------------------------------------------------------------------------
       ;; override, display-buffer-alist to better manage appearance of popup
