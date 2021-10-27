@@ -2232,6 +2232,8 @@ programming language enhancements
         :functions (anupamk:cc-utils/compile-eventually
                     anupamk:cc-utils/compile-eventually-with-make
                     anupamk:cc-utils/compile-eventually-with-bazel
+                    anupamk:cc-utils/verify-with-bazel
+                    anupamk:cc-utils/build-everything-with-bazel
                     anupamk:cc-utils/quick-compile-cmdstr
                     anupamk:cc-utils/clang-fmt-and-recenter)
         :config
@@ -2267,6 +2269,22 @@ programming language enhancements
           (interactive)
           (let ((bazel-compile-cmdstr (concat "set -e ; time t3 build --gen-compile-commands -c " target " | cut -c26-")))
             (anupamk:cc-utils/compile-eventually "bazel_build_defs" bazel-compile-cmdstr)))
+
+        ;; ---------------------------------------------------------------------------
+        ;; test with bazel
+        (defun anupamk:cc-utils/verify-with-bazel ()
+          "test with bazel"
+          (interactive)
+          (let ((bazel-test-cmdstr (concat "t3 verify | cut -c26-")))
+            (anupamk:cc-utils/compile-eventually "bazel_build_defs" bazel-test-cmdstr)))
+
+        ;; ---------------------------------------------------------------------------
+        ;; test with bazel
+        (defun anupamk:cc-utils/build-everything-with-bazel ()
+          "test with bazel"
+          (interactive)
+          (let ((bazel-test-cmdstr (concat "t3 build | cut -c26-")))
+            (anupamk:cc-utils/compile-eventually "bazel_build_defs" bazel-test-cmdstr)))
 
         ;; ---------------------------------------------------------------------
         ;; quickly compile single source c/c++ programs. it produces final
@@ -2459,6 +2477,8 @@ programming language enhancements
           (global-set-key (kbd "C-<f4>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.p10.xx")))
           (global-set-key (kbd "C-<f5>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.h10.1xx")))
           (global-set-key (kbd "C-<f6>") (lambda() (interactive) (anupamk:cc-utils/compile-eventually-with-bazel "cap.a3.h10.2xx")))
+          (global-set-key (kbd "C-<f8>") (lambda() (interactive) (anupamk:cc-utils/verify-with-bazel)))
+          (global-set-key (kbd "C-<f12>") (lambda() (interactive) (anupamk:cc-utils/build-everything-with-bazel)))
           ))
 
     #+end_src
