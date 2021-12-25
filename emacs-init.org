@@ -944,6 +944,11 @@
                     (car (project-roots project)))))
 
           ;; ---------------------------------------------------------------------------
+          ;; use plocate as the locate backend, ignoring case, and limiting to
+          ;; 100 results
+          (setq consult-locate-args "plocate --ignore-case --limit 100")
+
+          ;; ---------------------------------------------------------------------------
           ;; replace bindings
           :bind (("C-x M-:"  . consult-complex-command)
                  ("C-x b"    . consult-buffer)
@@ -1048,19 +1053,30 @@
 
         ;; -----------------------------------------------------------------------------
         ;; this package provides a "contextual" menu proividing actions for
-        ;; various objects (files, buffers, etc. etc.).
+        ;; various objects (files, buffers, etc. etc.)
+        ;;
+        ;; see this https://karthinks.com/software/fifteen-ways-to-use-embark/
+        ;; for more information on how best to use begin scratching what this
+        ;; wonderful package can do.
         (use-package embark
           :bind (("C-S-a" . embark-act)
                  :map minibuffer-local-map
                  ("C-d" . embark-act))
           :config
 
+          ;; ---------------------------------------------------------------------------
           ;; Show Embark actions via which-key
           (setq embark-action-indicator
                 (lambda (map)
                   (which-key--show-keymap "Embark" map nil nil 'no-paging)
                   #'which-key--hide-popup-ignore-command)
-                embark-become-indicator embark-action-indicator))
+                embark-become-indicator embark-action-indicator)
+
+          ;; ---------------------------------------------------------------------------
+          ;; add the "R" key (to edit file with sudo) in embark file-actions map
+          (define-key embark-file-map (kbd "R") 'anupamk:utils/edit-file-with-sudo)
+
+          )
 
         (use-package embark-consult
           :ensure t
