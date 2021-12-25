@@ -2435,7 +2435,11 @@ programming language enhancements
           ;; here), the hook's buffer-local value is modified rather than
           ;; the global value. thereby, effectively making the hook
           ;; buffer-local.
-          (add-hook 'before-save-hook #'clang-format-buffer nil t))
+          (add-hook 'before-save-hook (lambda()
+                                        (when (locate-dominating-file "." ".clang-format")
+                                          (clang-format-buffer)) nil)
+                    nil
+                    t))
 
         (defun anupamk:cc/c++-mode-hook ()
           (anupamk:cc/common-mode-hook)
@@ -2446,6 +2450,11 @@ programming language enhancements
           (anupamk:cc/common-mode-hook))
 
         :config
+
+        (define-key c-mode-map (kbd "RET")     #'newline-and-indent)
+        (define-key c-mode-map (kbd "C-<ret>") #'recompile)
+
+
         ;; ---------------------------------------------------------------------------
         ;; one true style
         (add-to-list 'c-default-style '(c-mode . "k&r"))
@@ -2470,8 +2479,6 @@ programming language enhancements
 
       (use-package emacs
         :config
-        (define-key c-mode-map (kbd "RET")     #'newline-and-indent)
-        (define-key c-mode-map (kbd "C-<ret>") #'recompile)
 
         ;; ---------------------------------------------------------------------------
         ;; host specific bindings: just update the global-map rather than
