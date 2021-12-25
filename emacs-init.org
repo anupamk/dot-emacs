@@ -904,8 +904,6 @@
 
     #+end_src
 
-
-
 * Selection candidates and search methods
 ** Completion framework
 
@@ -1390,6 +1388,7 @@
 
 
    #+end_src
+
 ** Auto revert
 
    #+begin_src emacs-lisp
@@ -1399,6 +1398,7 @@
        (global-auto-revert-mode 1))
 
    #+end_src
+
 ** Version control
 *** Magit
 
@@ -1427,6 +1427,7 @@
                 ("C-h B" . magit-blame)))
 
     #+end_src
+
 *** Magit filenotify and git-timemachine setup
 
     #+begin_src emacs-lisp
@@ -1915,19 +1916,6 @@
               ("C-p" . previous-line)
               ("M-n" . rg-next-file)
               ("M-p" . rg-prev-file))
-       )
-
-   #+end_src
-
-** Trying out packages
-
-   + =try= is quite handy, as it allows you to try a package out
-     without installing it.
-
-   #+begin_src emacs-lisp
-
-     (use-package try
-       :ensure t
        )
 
    #+end_src
@@ -2468,8 +2456,6 @@ programming language enhancements
         :hook
         (c-mode-hook   . anupamk:cc/c-mode-hook)
         (c++-mode-hook . anupamk:cc/c++-mode-hook))
-
-
 
     #+end_src
 
