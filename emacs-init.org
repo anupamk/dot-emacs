@@ -2624,6 +2624,54 @@ programming language enhancements
 
      #+end_src
 
+** Common Lisp
+
+   + S.L.I.M.E + SBCL what else is there ?
+
+     #+begin_src emacs-lisp
+
+       (use-package slime
+         :ensure t
+
+         :functions (anupamk:utils/setup-slime-programming-environment)
+
+         :config
+         (setq inferior-lisp-program "sbcl")
+
+         (defun anupamk:utils/setup-slime-programming-environment ()
+           "setup s.l.i.m.e environment for common-lisp programming"
+           (highlight-parentheses-mode t)
+           (slime-autodoc-mode t)
+           )
+
+         :hook
+         (slime-mode-hook . anupamk:utils/setup-slime-programming-environment)
+         )
+
+     #+end_src
+
+** Scheme
+
+   #+begin_src emacs-lisp
+
+     (use-package racket-mode
+       :ensure t
+
+       :config
+       (setq racket-program "/usr/sbin/racket")
+
+       (defun anupamk:utils/setup-racket-programming-environment ()
+         "setup racket environment for scheme programming"
+         (highlight-parentheses-mode t)
+         (racket-xp-mode)
+         (define-key racket-mode-map (kbd "<f5>") 'racket-run))
+
+       :hook
+       (racket-mode-hook . anupamk:utils/setup-racket-programming-environment)
+       )
+
+   #+end_src
+
 ** Org Mode
 
 *** Preliminaries
