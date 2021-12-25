@@ -51,8 +51,8 @@
 
   (use-package emacs
     :init
-    (unless (and (fboundp 'server-running-p)
-                 (server-running-p))
+    (require 'server)
+    (unless (server-running-p)
       (server-start)))
 
 #+end_src
