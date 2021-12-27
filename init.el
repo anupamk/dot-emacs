@@ -88,28 +88,28 @@
 
 ;; -----------------------------------------------------------------------------
 ;; byte-compile emacs-init.el generated from emacs-init.org
-(defun anupamk-build-emacs-config()
+(defun anupamk/build-emacs-config()
   "Generate `emacs-init.el' from `emacs-init.org'.
 This function is added to the `kill-emacs-hook' and it generates a new
 `emacs-init.el' from `emacs-init.org' when Emacs session is terminated. This
 reduces the session startup time"
   (interactive)
   (when (file-exists-p "~/.emacs.d/emacs-init.org")
-    (org-babel-tangle-file "~/.emacs.d/emacs-init.org" "~/.emacs.d/emacs-init.el")
-    (byte-compile-file "~/.emacs.d/emacs-init.el")))
+    (byte-compile-file (car (org-babel-tangle-file "~/.emacs.d/emacs-init.org" "~/.emacs.d/emacs-init.el")))))
 
-(add-hook 'kill-emacs-hook #'anupamk-build-emacs-config)
+(add-hook 'kill-emacs-hook #'anupamk/build-emacs-config)
 
 ;; -----------------------------------------------------------------------------
 ;; load the emacs-init.org or byte-compiled version of it produced
 ;; from running `anupamk-build-emacs-config'
-(defun anupamk-load-emacs-config()
+(defun anupamk/load-emacs-config()
   (interactive)
   (if (file-exists-p "~/.emacs.d/emacs-init.elc")
       (load-file "~/.emacs.d/emacs-init.elc")
     (when (file-exists-p "~/.emacs.d/emacs-init.org")
-      (org-babel-load-file "~/.emacs.d/emacs-init.org"))))
+      (progn (anupamk/build-emacs-config)
+             (anupamk/load-emacs-config)))))
 
 ;; -----------------------------------------------------------------------------
 ;; load the config
-(anupamk-load-emacs-config)
+(anupamk/load-emacs-config)
