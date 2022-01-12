@@ -24,7 +24,7 @@
 
     ;; ---------------------------------------------------------------------------
     ;; i need some space man
-    (setq-default line-spacing 0.15)
+    (setq-default line-spacing 0.1)
 
     (setq use-file-dialog nil)
     (setq use-dialog-box t)
@@ -1986,34 +1986,70 @@
       (use-package window
         :custom
         (display-buffer-alist
-         '(;; left-side window
+         '(
+           ;; ------------------------------------------------------------------
+           ;; left-side window configuration
 
            ;; ------------------------------------------------------------------------
-           ;; right-side window
-           ("\\*\\(Help\\|Faces\\|Colors\\).*"
+           ;; right-side window configuration
+
+           ;; ------------------------------------------------------------------------
+           ;; magit and related windows
+           ("\\magit.*"
             (display-buffer-in-side-window)
-            (window-width . 0.25)
+            (window-width . 0.50)
+            (side . right)
+            (slot . 0)
+            (window-parameters . ((mode-line-format . (" "
+                                                       mode-line-buffer-identification)))))
+
+           ("\\*\\(Help\\|Faces\\|Colors\\|Apropos\\).*"
+            (display-buffer-in-side-window)
+            (window-width . 0.40)
             (side . right)
             (slot . 0)
             (window-parameters . ((mode-line-format . (" "
                                                        mode-line-buffer-identification)))))
 
            ;; ------------------------------------------------------------------------
-           ;; magit needs more space
-           ("\\.*magit.*"
+           ;; top-side window configuration
+
+           ;; ------------------------------------------------------------------------
+           ;; bottom-side window configuration
+
+           ;; ------------------------------------------------------------------
+           ;; magit stash
+           ("\\*~stash.*"
+            (display-buffer-in-side-window)
+            (window-width . 0.50)
+            (side . bottom)
+            (slot . 0)
+            (window-parameters . ((mode-line-format . (" "
+                                                       mode-line-buffer-identification)))))
+
+           ;; ------------------------------------------------------------------
+           ;; code searches via ripgrep, xref etc.
+           ("\\*\\(rg\\|xref\\).*"
+            (display-buffer-in-side-window)
+            (window-width . 0.50)
+            (side . bottom)
+            (slot . 0)
+            (window-parameters . ((mode-line-format . (" "
+                                                       mode-line-buffer-identification)))))
+
+           ;; ------------------------------------------------------------------------
+           ;; bottom-side window (right of `rg' ∵ 'slot == 1')
+           ("\\*compilation*"
             (display-buffer-in-side-window)
             (window-width . 0.30)
-            (side . right)
-            (slot . 0)
+            (side . bottom)
+            (slot . 1)
             (window-parameters . ((mode-line-format . (" "
                                                        mode-line-buffer-identification)))))
 
-           ;; ------------------------------------------------------------------------
-           ;; top-side window
-
-           ;; ------------------------------------------------------------------------
-           ;; bottom-side window
-           ("\\*\\(compilation\\|rg\\).*"
+           ;; ------------------------------------------------------------------
+           ;; this is the Emacs byte compilation
+           ("\\*\\(Compile-Log\\).*"
             (display-buffer-in-side-window)
             (window-width . 0.20)
             (dedicated . t)
