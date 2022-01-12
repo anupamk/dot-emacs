@@ -565,7 +565,7 @@
       (use-package emacs
         :config
 
-        (defconst anupamk:font/default-font-name "M+ 1mn Regular"
+        (defconst anupamk:font/default-font-name "Pragmata Pro Mono"
           "the default font that we use everywhere")
 
 
@@ -573,7 +573,7 @@
         ;; host specific absolute font-heights
         (let ((anupamk/buffer-font-height (cond ((anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com") 120)
                                                 ((anupamk:utils/host-name-is "aws-devel-01") 120)
-                                                (t 100))))
+                                                (t 95))))
 
           ;; -------------------------------------------------------------------------
           ;; notice that we have absolute point size only for the default
@@ -597,7 +597,7 @@
         ;; increase it if required.
         (defun setup-compilation-buffer-font()
           (interactive)
-          (setq buffer-face-mode-face '(:family "Go Mono" :height 80))
+          (setq buffer-face-mode-face '(:family "Pragmata Pro Mono" :height 110))
           (buffer-face-mode))
 
         :hook
