@@ -989,7 +989,7 @@
           (setq consult-project-root-function
                 (lambda ()
                   (when-let (project (project-current))
-                    (car (project-roots project)))))
+                    (project-root project))))
 
           ;; ---------------------------------------------------------------------------
           ;; use plocate as the locate backend, ignoring case, and limiting to
@@ -1129,7 +1129,7 @@
         (use-package embark-consult
           :ensure t
           :after (embark consult)
-          :hook (embark-collect-mode . embark-consult-preview-minor-mode))
+          :hook (embark-collect-mode . consult-preview-at-point-mode))
 
       #+end_src
 
@@ -1814,7 +1814,7 @@
                 ("C-M-i" . completion-at-point))
 
          :config
-         (org-roam-setup))
+         (org-roam-db-autosync-enable))
 
      #+end_src
 
@@ -2239,7 +2239,7 @@ programming language enhancements
          ;; ---------------------------------------------------------------------------
          ;; disable annoying, _distracting_, over-the-top features that serve
          ;; no useful purpose at all (imnsho)
-         (setq eglot-ignored-server-capabilites
+         (setq eglot-ignored-server-capabilities
                '(:documentHighlightProvider    ; highlight symbols automatically
                  :documentSymbolProvider       ; list symbols in a buffer
                  :hoverProvider                ; documentation on hover
