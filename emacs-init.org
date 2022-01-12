@@ -616,7 +616,6 @@
  #+begin_src emacs-lisp
 
    (use-package zenburn-theme
-     :disabled
      :config
 
      :custom-face
@@ -631,40 +630,6 @@
 
  #+end_src
 
-**** Modus Operandi
-
-    + Let's try Modus Operandi as well.
-
-#+begin_src emacs-lisp
-
-  (use-package emacs
-
-    :config
-    (require 'modus-themes)
-
-    ;; ---------------------------------------------------------------------------
-    ;; override colors
-    (setq modus-themes-operandi-color-overrides '((bg-main     . "#bebebe")
-                                                  (bg-dim      . "#faf6ef")
-                                                  (bg-alt      . "#f7efe5")
-                                                  (bg-active   . "#e8dfd1")
-                                                  (bg-hl-line  . "#a9a9a9")
-                                                  (bg-inactive . "#f6ece5")))
-
-    (setq modus-themes-italic-constructs nil
-          modus-themes-bold-constructs nil
-          modus-themes-syntax '(faint green-strings gray-comments alt-syntax)
-          modus-themes-region '(bg-only no-extend))
-
-    ;; Load the theme files before enabling a theme
-    (modus-themes-load-themes)
-
-    ;; Load the theme of your choice:
-    (modus-themes-load-operandi)
-    )
-
-#+end_src
-
 *** Frame Configuration
 
     + All frames have a golden cursor sans vertical or horizontal
@@ -675,8 +640,7 @@
    (use-package emacs
      :init
      :config
-     (setq default-frame-alist '((cursor-color               . "black")
-                                 (mouse-color                . "black")
+     (setq default-frame-alist '((cursor-color               . "gold")
                                  (vertical-scroll-bars       . nil)
                                  (horizontal-scroll-bar-mode . nil)
                                  ))
@@ -1103,7 +1067,7 @@
           (vertico-cycle t)
 
           :custom-face
-          (vertico-current ((t (:background "#a9a9a9"))))
+          (vertico-current ((t (:background "#383838"))))
 
           :bind (:map vertico-map
                       ("C-n" . vertico-next)
