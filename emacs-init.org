@@ -83,6 +83,101 @@
 
 #+end_src
 
+** Global Keys
+
+ + Years of Emacs use has resulted in some good, and some not so good
+   keybindings. These are all defined here.
+
+ + Moreover the elaborate thing that you see is mostly stolen from
+   [[https://shallowsky.com/blog/linux/editors/emacs-global-key-bindings.html][here]], and it exists because documentation for =bind-keys=
+   seem to suggest that it is now obsolete.
+
+  #+begin_src emacs-lisp
+
+    (use-package emacs
+      :init
+
+      ;; ---------------------------------------------------------------------------
+      ;; define a new keymap and add bindings to it
+      (defvar anupamk/global-keymap (make-sparse-keymap) "keymap for anupamk/minor-keymap-mode")
+
+      (define-minor-mode anupamk/minor-keymap-mode
+        "override major mode keys with my keys"
+        :init-value t
+        :keymap anupamk/global-keymap)
+
+      (define-globalized-minor-mode anupamk/global-keymap-mode anupamk/minor-keymap-mode anupamk/minor-keymap-mode)
+
+      ;; ---------------------------------------------------------------------------
+      ;; keymaps in 'emulation-mode-map-alists' take precedence
+      (add-to-list 'emulation-mode-map-alists `((anupamk/minor-keymap-mode . ,anupamk/global-keymap-mode)))
+
+      ;; ---------------------------------------------------------------------------
+      ;; ofcourse we don't want these to be active in the minibuffer.
+      (defun anupamk/utils:minibuffer-setup-hook ()
+        (anupamk/minor-keymap-mode nil))
+      (add-hook 'minibuffer-setup-hook 'anupamk/utils:minibuffer-setup-hook)
+
+      ;; ---------------------------------------------------------------------------
+      ;; assign various keys to the 'anupamk/global-keymap' here ↓
+
+      ;; -------------------------------------------------------------------------
+      ;; <meta-g g> : goes to a specific line
+      (define-key anupamk/global-keymap (kbd "M-g g") #'goto-line)
+
+      ;; -------------------------------------------------------------------------
+      ;; recenter current line
+      (define-key anupamk/global-keymap (kbd "C-c r") #'recenter)
+
+      ;; -------------------------------------------------------------------------
+      ;; jump to begining / end of buffer
+      (define-key anupamk/global-keymap (kbd "C-c <end>")  #'end-of-buffer)
+      (define-key anupamk/global-keymap (kbd "C-c <home>") #'beginning-of-buffer)
+
+      ;; -------------------------------------------------------------------------
+      ;; create a new scratch buffer
+      (define-key anupamk/global-keymap (kbd "C-c s") #'anupamk:utils/create-new-scratch-buffer)
+
+      ;; -------------------------------------------------------------------------
+      ;; rename current buffer
+      (define-key anupamk/global-keymap (kbd "C-c C-x C-r") #'anupamk:utils/rename-current-buffer-file)
+
+      ;; -------------------------------------------------------------------------
+      ;; vi style parenthesis matching
+      (define-key anupamk/global-keymap (kbd "%") #'anupamk:utils/vi-match-paren)
+
+      ;; -------------------------------------------------------------------------
+      ;; regex search always
+      (define-key anupamk/global-keymap [remap isearch-forward]  #'isearch-forward-regexp)
+      (define-key anupamk/global-keymap [remap isearch-backward] #'isearch-backward-regexp)
+
+      ;; -------------------------------------------------------------------------
+      ;; visual demarcation in code
+      (define-key anupamk/global-keymap (kbd "C-c e") #'anupamk:utils/fill-to-end)
+
+      ;; ------------------------------------------------------------------------
+      ;; <esc> to quit from a command
+      (define-key anupamk/global-keymap (kbd "<escape>") #'keyboard-escape-quit)
+
+      ;; ---------------------------------------------------------------------------
+      ;; create + destroy frames
+      (define-key anupamk/global-keymap (kbd "C-c C-n") #'make-frame)
+      (define-key anupamk/global-keymap (kbd "C-c C-w") #'delete-frame)
+
+      ;; -------------------------------------------------------------------------
+      ;; prevent accidental emacs-kill
+      (define-key anupamk/global-keymap (kbd "C-x C-c") (lambda()
+                                                          (interactive)
+                                                          (message "terminate this emacs session with \'M-x kill-emacs\'")))
+
+      ;; -----------------------------------------------------------------------
+      ;; created numbered vterm instance
+      (define-key anupamk/global-keymap (kbd "C-c C-<return>") #'anupamk:utils/create-numbered-vterm-instance)
+
+      )
+
+#+end_src
+
 ** Unannoy
 
 + Saner defaults make the whole thing so much better
@@ -145,12 +240,6 @@
     ;; -------------------------------------------------------------------------
     ;; get rid of the insert key
     (define-key global-map [(insert)] nil)
-
-    ;; -------------------------------------------------------------------------
-    ;; prevent accidental emacs-kill
-    (global-set-key (kbd "C-x C-c") (lambda()
-                                      (interactive)
-                                      (message "terminate this emacs session with \'M-x kill-emacs\'")))
 
     ;; -------------------------------------------------------------------------
     ;; disable full 'yes' or 'no' (from emacs-28 onwards)
@@ -724,8 +813,6 @@
 
 * Keyboard configuration
 ** Global keys
- + Years of Emacs use has resulted in some good, and some not so good
-   keybindings. These are all defined here.
 
  + In Emacs Lisp, if =foo= is a symbol, then ='foo= and =#'foo= are
    completely equivalent. The latter form (with =#'=) is preferred when
@@ -736,48 +823,6 @@
 
    (use-package emacs
      :config
-
-     ;; -------------------------------------------------------------------------
-     ;; <meta-g> : goes to a specific line
-     (global-set-key (kbd "C-c g") #'goto-line)
-
-     ;; -------------------------------------------------------------------------
-     ;; recenter current line
-     (global-set-key (kbd "C-c r") #'recenter)
-
-     ;; -------------------------------------------------------------------------
-     ;; jump to begining / end of buffer
-     (global-set-key (kbd "C-c <end>")  #'end-of-buffer)
-     (global-set-key (kbd "C-c <home>") #'beginning-of-buffer)
-
-     ;; -------------------------------------------------------------------------
-     ;; create a new scratch buffer
-     (global-set-key (kbd "C-c s") #'anupamk:utils/create-new-scratch-buffer)
-
-     ;; -------------------------------------------------------------------------
-     ;; rename current buffer
-     (global-set-key (kbd "C-c C-x C-r") #'anupamk:utils/rename-current-buffer-file)
-
-     ;; -------------------------------------------------------------------------
-     ;; vi style parenthesis matching
-     (global-set-key (kbd "%") #'anupamk:utils/vi-match-paren)
-
-     ;; -------------------------------------------------------------------------
-     ;; regex search always
-     (global-set-key [remap isearch-forward]  #'isearch-forward-regexp)
-     (global-set-key [remap isearch-backward] #'isearch-backward-regexp)
-
-     ;; -------------------------------------------------------------------------
-     ;; visual demarcation in code
-     (global-set-key (kbd "C-c e") #'anupamk:utils/fill-to-end)
-
-     ;; ------------------------------------------------------------------------
-     ;; <esc> to quit from a command
-     (global-set-key (kbd "<escape>") #'keyboard-escape-quit)
-
-     ;; ---------------------------------------------------------------------------
-     ;; create a new-frame
-     (global-set-key (kbd "C-c C-n") #'make-frame)
 
      ;; ---------------------------------------------------------------------------
      ;; define some keybindings via the `C-x t` prefix, for toggling
@@ -1740,8 +1785,6 @@
                          (select-window window)
                        (message "Failed to open file: %s" path))))
              vterm-eval-cmds)
-
-       (global-set-key (kbd "C-c C-<return>") #'anupamk:utils/create-numbered-vterm-instance)
 
        :hook
        (vterm-mode-hook . anupamk/set-vterm-font)
