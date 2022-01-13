@@ -1927,7 +1927,7 @@
                          ;; specifies if the final search command line can
                          ;; be modified and confirmed by the user.
                          :confirm prefix
-                         :flags ("--hidden -g !.git"))
+                         :flags ("--no-hidden -g '!*.patch' -g '!*.patch.*' -g '!*.savehist'"))
 
        ;; ---------------------------------------------------------------------------
        ;; ripgrep for symbol at point in $PWD
@@ -1946,7 +1946,7 @@
 
                          :dir default-directory
                          :confirm prefix
-                         :flags ("--hidden -g !.git"))
+                         :flags ("--no-hidden -g '!*.patch' -g '!*.patch.*' -g '!*.savehist'"))
 
        (defun anupamk:ripgrep-search/save-search-as-name ()
          "Save `rg' buffer, naming it after the current search query.
