@@ -87,15 +87,60 @@
 (require 'org)
 
 ;; -----------------------------------------------------------------------------
+;; return true when modification-time attribute of fname is older than 'time'
+(defun anupamk/file-is-older-than-time-p (fname time)
+  "Return 't' when modification-time attribute of 'FNAME' is older than
+'TIME', 'nil' otherwise.
+
+'TIME' is expected to be in the same format as output from (current-time)"
+  (let* ((time-sec (time-convert time 'integer))
+         (filemod-time-sec (time-convert (file-attribute-modification-time (file-attributes fname)) 'integer)))
+    (< filemod-time-sec time-sec)))
+
+;; -----------------------------------------------------------------------------
+;; return true when modification-time attribute of fname is older than 'time'
+(defun anupamk/file-is-older-than-time-p (fname time)
+  "Return 't' when modification-time attribute of 'FNAME' is older than
+'TIME', 'nil' otherwise.
+
+'TIME' is expected to be in the same format as output from (current-time)"
+  (let* ((time-sec (time-convert time 'integer))
+         (filemod-time-sec (time-convert (file-attribute-modification-time (file-attributes fname)) 'integer)))
+    (message (format "'%s' modification-time: '%d', compare-time: '%d'"
+                     fname
+                     filemod-time-sec
+                     time-sec))
+    (< filemod-time-sec time-sec)))
+
+;; -----------------------------------------------------------------------------
+;; return 'true' when modification-time attribute of 'fname-1' is
+;; older than 'fname-2'
+(defun anupamk/file-is-older-than-file-p (fname-1 fname-2)
+  "Return 't' when modification-time attribute of 'FNAME-1' is older than
+modification-time attribute of 'FNAME-2', 'nil' otherwise."
+  (when (and (file-exists-p fname-1)
+             (file-exists-p fname-2))
+    (anupamk/file-is-older-than-time-p fname-1
+                                       (file-attribute-modification-time (file-attributes fname-2)))))
+
+;; -----------------------------------------------------------------------------
 ;; byte-compile emacs-init.el generated from emacs-init.org
 (defun anupamk/build-emacs-config()
   "Generate `emacs-init.el' from `emacs-init.org'.
-This function is added to the `kill-emacs-hook' and it generates a new
-`emacs-init.el' from `emacs-init.org' when Emacs session is terminated. This
-reduces the session startup time"
+
+This function is added to the `kill-emacs-hook' and, if required, it generates a
+new `emacs-init.elc' from `emacs-init.org' when Emacs session is terminated."
   (interactive)
-  (when (file-exists-p "~/.emacs.d/emacs-init.org")
-    (byte-compile-file (car (org-babel-tangle-file "~/.emacs.d/emacs-init.org" "~/.emacs.d/emacs-init.el")))))
+
+  (let* ((emacs-init-org-fname "~/.emacs.d/emacs-init.org")
+         (emacs-init-el-fname (concat (file-name-sans-extension emacs-init-org-fname) ".el"))
+         (emacs-init-elc-fname (concat (file-name-sans-extension emacs-init-org-fname) ".elc")))
+
+    (if (or (not (file-exists-p emacs-init-el-fname))
+            (not (file-exists-p emacs-init-elc-fname))
+            (anupamk/file-is-older-than-file-p emacs-init-el-fname emacs-init-org-fname))
+        (byte-compile-file (car (org-babel-tangle-file emacs-init-org-fname emacs-init-el-fname)))
+      (message (format "'%s' is current, nothing to do !!!" emacs-init-el-fname)))))
 
 (add-hook 'kill-emacs-hook #'anupamk/build-emacs-config)
 
