@@ -12,6 +12,11 @@ emacs-init.el
 emacs-init.html
 
 # ------------------------------------------------------------------------------
+# org-roam.db is also ignored because actual 'knowledge-base' is
+# stored in the 'org-roam-directory'
+org-roam.db
+
+# ------------------------------------------------------------------------------
 # ignore elpa/* this is fetched everytime we initialize the configuration
 elpa/*
 
