@@ -1648,6 +1648,7 @@
    #+begin_src emacs-lisp
 
      (use-package emacs
+       :disabled
        :init
        (require 'pulse)
 
