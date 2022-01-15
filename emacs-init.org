@@ -40,6 +40,24 @@
            ("C-h h"   . nil)))
 
 #+end_src
+** Whitspaces
+
++ Highlight trailing space-like characters f.e. tabs, empty lines,
+  trailing spaces etc.
+
+  #+begin_src emacs-lisp
+
+    (use-package whitespace
+      :ensure
+      :hook
+      (prog-mode . whitespace-mode)
+      (text-mode . whitespace-mode)
+      :custom
+      (whitespace-style '(face empty indentation::space tab trailing)))
+
+  #+end_src
+
+**  Make Emacs Snappier Again
 
 ** Start Server
 
