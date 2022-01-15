@@ -390,8 +390,7 @@
 
   (use-package emacs
 
-    :functions (anupamk:utils/change-cursor-style
-                anupamk:utils/insert-current-date
+    :functions (anupamk:utils/insert-current-date
                 anupamk:utils/rename-current-buffer-file
                 anupamk:utils/create-new-scratch-buffer
                 anupamk:utils/host-name-is
@@ -408,17 +407,6 @@
                 anupamk:utils/edit-file-with-sudo)
 
     :config
-
-    ;; ---------------------------------------------------------------------------
-    ;; change the cursor style
-    (defun anupamk:utils/change-cursor-style (cursor-type)
-      "Set the cursor type of the selected frame to CURSOR-TYPE.
-       When called interactively, prompt for the type to use.
-       To get the frame's current cursor type, use `frame-parameters'."
-      (interactive)
-      (list (intern (completing-read "Cursor type: "
-                                     (mapcar 'list '("box" "hollow" "bar" "hbar" nil)))))
-      (modify-frame-parameters (selected-frame) (list (cons 'cursor-type cursor-type))))
 
     ;; ---------------------------------------------------------------------------
     ;; insert current date
