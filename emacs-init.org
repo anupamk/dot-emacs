@@ -216,6 +216,10 @@
   (use-package emacs
     :config
 
+    ;; ---------------------------------------------------------------------------
+    ;; disable startup screen
+    (setq-default inhibit-startup-screen t)
+
     ;; -------------------------------------------------------------------------
     ;; dont show the startup screen
     (setf inhibit-startup-message t)
@@ -287,10 +291,6 @@
     (setq default-process-coding-system '(utf-8-unix . utf-8-unix))
 
     ;; -------------------------------------------------------------------------
-    ;; additional space to put between lines when displaying a buffer
-    (setq-default line-spacing -1)
-
-    ;; -------------------------------------------------------------------------
     ;; no tabs in sources
     (setq-default indent-tabs-mode nil)
 
@@ -319,6 +319,36 @@
     ;; max number of bytes to read from a process in a single chunk. 4m
     ;; is reasonable for lsp based c/c++ programming...
     (setq read-process-output-max (* 4 1024 1024))
+
+    ;; ---------------------------------------------------------------------------
+    ;; focus on help windows when opened
+    (setq-default help-window-select t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; avoid recentering when scrolling far
+    (setq-default scroll-conservatively 101)
+
+    ;; ---------------------------------------------------------------------------
+    ;; add a margin when scrolling vertically
+    (setq-default scroll-margin 2)
+
+    ;; ---------------------------------------------------------------------------
+    ;; resize window proportionally
+    (setq-default window-combination-resize t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; when non-nil left and right side windows occupy full height. when
+    ;; 'nil' top and bottom-side windows occupy full frame width
+    (setq-default window-sides-vertical nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; iterate through CamelCase words
+    (global-subword-mode t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; enable downcase-region and upcase-region
+    (put 'downcase-region 'disabled nil)
+    (put 'upcase-region 'disabled nil)
 
     )
 
@@ -698,6 +728,15 @@
    (use-package fringe
      :config
      (fringe-mode '(6 . 0))
+
+     ;; ---------------------------------------------------------------------------
+     ;; customize line continuation indicator bitmaps (with muted colors)
+     (define-fringe-bitmap 'left-curly-arrow [16 48 112 240 240 112 48 16])
+     (set-fringe-bitmap-face 'left-curly-arrow 'shadow)
+
+     (define-fringe-bitmap 'right-curly-arrow [8 12 14 15 15 14 12 8])
+     (set-fringe-bitmap-face 'right-curly-arrow 'shadow)
+
      (setq-default fringes-outside-margins nil)
      (setq-default indicate-buffer-boundaries nil)
      (setq-default indicate-empty-lines nil)
@@ -2089,9 +2128,7 @@
                                                        mode-line-buffer-identification)))))
            ))
 
-        (window-combination-resize t)
         (even-window-sizes 'height-only)
-        (window-sides-vertical nil)
 
         :hook
         ((help-mode . visual-line-mode)
@@ -2590,7 +2627,6 @@ programming language enhancements
         (when  (or (anupamk:utils/host-name-is "virat")
                    (anupamk:utils/host-name-is "fatcat"))
           (global-set-key (kbd "C-<return>") #'anupamk:cc-utils/compile-eventually-with-make))
-
 
         ;; ---------------------------------------------------------------------------
         ;; use bazel un-usually :)
