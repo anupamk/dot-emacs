@@ -59,6 +59,17 @@
 
 **  Make Emacs Snappier Again
 
++ Garbage collect on focus-out
+
+  #+begin_src emacs-lisp
+
+    (add-function :after after-focus-change-function
+      (defun anupamk:utils/garbage-collect-maybe ()
+        (unless (frame-focus-state)
+          (garbage-collect))))
+
+  #+end_src
+
 ** Start Server
 
    + Start the emacs-server if not already running. New frames can
