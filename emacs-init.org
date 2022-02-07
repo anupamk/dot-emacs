@@ -342,10 +342,6 @@
     (setq-default window-sides-vertical nil)
 
     ;; ---------------------------------------------------------------------------
-    ;; iterate through CamelCase words
-    (global-subword-mode t)
-
-    ;; ---------------------------------------------------------------------------
     ;; enable downcase-region and upcase-region
     (put 'downcase-region 'disabled nil)
     (put 'upcase-region 'disabled nil)
