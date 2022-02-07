@@ -659,6 +659,7 @@
  #+begin_src emacs-lisp
 
    (use-package zenburn-theme
+     :ensure t
      :config
 
      :custom-face
