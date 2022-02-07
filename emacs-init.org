@@ -1160,9 +1160,11 @@
         ;; for more information on how best to use begin scratching what this
         ;; wonderful package can do.
         (use-package embark
-          :bind (("C-S-a" . embark-act)
-                 :map minibuffer-local-map
-                 ("C-d" . embark-act))
+          :bind
+          (("C-."   . embark-act)
+           ("M-."   . embark-dwim)
+           ("C-h B" . embark-bindings))
+
           :config
 
           ;; ---------------------------------------------------------------------------
