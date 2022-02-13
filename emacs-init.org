@@ -347,6 +347,11 @@
     (put 'downcase-region 'disabled nil)
     (put 'upcase-region 'disabled nil)
 
+    ;; ---------------------------------------------------------------------------
+    ;; enable recursive minibuffers (launch command that use the
+    ;; minibuffer while already inside a minibuffer)
+    (setq enable-recursive-minibuffers t)
+
     )
 
 #+end_src
