@@ -1,3 +1,4 @@
+# -*- indent-tabs-mode: nil; lexical-binding: t; -*-
 #+TITLE: GNU Emacs Configuration
 #+AUTHOR: Anupam Kapoor
 #+EMAIL: anupam.kapoor@gmail.com

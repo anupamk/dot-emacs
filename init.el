@@ -80,7 +80,33 @@
       ;; -----------------------------------------------------------------------
       ;; automatically generate compiled files when Emacs loads a new .elc
       ;; file, it *will* freeze Emacs for a while until it's done.
-      (setq comp-deferred-compilation t)))
+      (setq comp-deferred-compilation t)
+
+      ;; -----------------------------------------------------------------------
+      ;; whether to query user about killing async compilations on
+      ;; exit.
+      ;;    when non-nil => emacs asks for confirmation (and kill
+      ;;    async-compilations if any are running)
+      ;;
+      ;;    when nil => emacs will silently kill those
+      ;;    async-compilations iff `confirm-kill-processes' is
+      ;;    non-nil
+      (setq native-comp-async-query-on-exit t)
+
+      ;; -----------------------------------------------------------------------
+      ;; default number of subprocesses used for
+      ;; async-native-compilation, when '0' ==> use half number of cpu
+      ;; execution units.
+      (setq native-comp-async-jobs-number 0)
+
+      ;; -----------------------------------------------------------------------
+      ;; Whether to report warnings and errors from asynchronous
+      ;; native compilation.
+      (setq native-comp-async-report-warnings-errors nil)
+
+      ;; -----------------------------------------------------------------------
+      ;; when non-nil => native compile packages on installation.
+      (setq package-native-compile t)))
 
 ;; -----------------------------------------------------------------------------
 ;; bootstrap is over, continue loading the real configuration
@@ -131,16 +157,14 @@ modification-time attribute of 'FNAME-2', 'nil' otherwise."
 This function is added to the `kill-emacs-hook' and, if required, it generates a
 new `emacs-init.elc' from `emacs-init.org' when Emacs session is terminated."
   (interactive)
-
   (let* ((emacs-init-org-fname "~/.emacs.d/emacs-init.org")
-         (emacs-init-el-fname (concat (file-name-sans-extension emacs-init-org-fname) ".el"))
-         (emacs-init-elc-fname (concat (file-name-sans-extension emacs-init-org-fname) ".elc")))
+         (emacs-init-el-fname (concat (file-name-sans-extension emacs-init-org-fname) ".el")))
 
-    (if (or (not (file-exists-p emacs-init-el-fname))
-            (not (file-exists-p emacs-init-elc-fname))
-            (anupamk/file-is-older-than-file-p emacs-init-el-fname emacs-init-org-fname))
-        (byte-compile-file (car (org-babel-tangle-file emacs-init-org-fname emacs-init-el-fname)))
-      (message (format "'%s' is current, nothing to do !!!" emacs-init-el-fname)))))
+    (when (or (not (file-exists-p emacs-init-el-fname))
+              (anupamk/file-is-older-than-file-p emacs-init-el-fname emacs-init-org-fname))
+      (org-babel-tangle-file emacs-init-org-fname emacs-init-el-fname)
+      (byte-compile-file emacs-init-el-fname))
+    (message (format "'%s' is current, nothing to do !!!" emacs-init-el-fname))))
 
 (add-hook 'kill-emacs-hook #'anupamk/build-emacs-config)
 
@@ -149,8 +173,8 @@ new `emacs-init.elc' from `emacs-init.org' when Emacs session is terminated."
 ;; from running `anupamk-build-emacs-config'
 (defun anupamk/load-emacs-config()
   (interactive)
-  (if (file-exists-p "~/.emacs.d/emacs-init.elc")
-      (load-file "~/.emacs.d/emacs-init.elc")
+  (if (file-exists-p "~/.emacs.d/emacs-init.el")
+      (load-file "~/.emacs.d/emacs-init.el")
     (when (file-exists-p "~/.emacs.d/emacs-init.org")
       (progn (anupamk/build-emacs-config)
              (anupamk/load-emacs-config)))))
