@@ -58,8 +58,7 @@
 
   #+end_src
 
-**  Make Emacs Snappier Again
-
+** Make Emacs Snappier Again
 + Garbage collect on focus-out
 
   #+begin_src emacs-lisp
@@ -1877,7 +1876,7 @@
 
    #+end_src
 
-** Hide-Show For Code Folding
+** Hide-Show for code folding
 
    + Code folding enables hiding and showing blocks of text in
      different buffers. Built in =hideshow= mode, makes this quite
