@@ -1440,7 +1440,7 @@
      Towards this end, I tend to use a mixture of browsers f.e. EWW
      for cases when JS etc. is not really a requirement, Chromium
      and it's ilk (f.e. Brave, Vivaldi etc.) for work, and firefox
-     otherwise.
+     when I am feeling adventurous.
 
      #+begin_src emacs-lisp
 
@@ -1449,15 +1449,13 @@
 
          (browse-url-handlers
           '(
-            ("news\\.ycombinator\\.com" . browse-url-chromium)
-
             ;; ------------------------------------------------------------------------
             ;; 'low-intensity' mode
             ("en\\.wiktionary\\.org"    . eww-browse-url)
 
             ;; ------------------------------------------------------------------------
-            ;; use firefox for everything else
-            ("."                        . browse-url-firefox)
+            ;; use chromium for everything else
+            ("."                        . browse-url-chromium)
             )))
 
      #+end_src
