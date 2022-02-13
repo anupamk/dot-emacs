@@ -2087,6 +2087,50 @@
 
    #+end_src
 
+** Spelling correction
++ I am using [[https://github.com/redguardtoo/wucuo][wucuo]] for spell checking.
+
+  #+begin_src emacs-lisp
+
+    (use-package wucuo
+      :ensure t
+
+      :custom
+      ;; ---------------------------------------------------------------------------
+      ;; just spell check the documentation regions and comments in
+      ;; code. spell checking other regions seems kind of wasteful.
+      ;;
+      ;; would be _really_ cool to have this configured on a per
+      ;; major-mode basis.
+      (wucuo-font-faces-to-check '(font-lock-doc-face font-lock-comment-face))
+
+      :init
+      ;; -------------------------------------------------------------------------
+      ;; spell checking via `aspell'
+      (setq ispell-program-name "aspell")
+      (setq ispell-extra-args '("--sug-mode=ultra" "--lang=en_US" "--run-together" "--run-together-limit=16"))
+
+      ;; -------------------------------------------------------------------------
+      ;; disable spell checking in some major-modes
+      (setq wucuo-spell-check-buffer-predicate
+            (lambda ()
+              (not (memq major-mode '(dired-mode
+                                      log-edit-mode
+                                      compilation-mode
+                                      help-mode
+                                      profiler-report-mode
+                                      speedbar-mode
+                                      gud-mode
+                                      calc-mode
+                                      Info-mode)))))
+
+      :hook
+      (prog-mode . wucuo-start)
+      (text-mode . wucuo-start)
+      )
+
+  #+end_src
+
 * Window Management
 
   + The association list in =display-buffer-alist= describes the
