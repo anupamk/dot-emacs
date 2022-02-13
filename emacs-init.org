@@ -204,6 +204,10 @@
       ;; created numbered vterm instance
       (define-key anupamk/global-keymap (kbd "C-c C-<return>") #'anupamk:utils/create-numbered-vterm-instance)
 
+      ;; ---------------------------------------------------------------------------
+      ;; affe find files
+      (define-key anupamk/global-keymap (kbd "C-c C-l") #'affe-find)
+
       )
 
 #+end_src
@@ -1014,12 +1018,57 @@
     #+end_src
 
 * Selection candidates and search methods
-** Completion framework
++ IMHO, optimal way of using Emacs is via searching and narrowing
+  selection candidates.
 
+** Completion framework
 *** Consult+Orderless+Vertico+Marginalia
 
-    + IMHO, optimal way of using Emacs is via searching and narrowing
-      selection candidates.
+    + Marginalia provides marks or annotations placed at the margin of
+      the minibuffer for completion candidates.
+
+      #+begin_src emacs-lisp
+
+        ;; -----------------------------------------------------------------------------
+        ;; marginalia provides marks or annotations placed at the margin of
+        ;; the minibuffer for completion candidates.
+        (use-package marginalia
+          :ensure t
+          :after vertico
+
+          :custom
+          ((marginalia-align-offset 1)
+           (marginalia-margin-threshold 200)
+           (marginalia-separator-threshold 120)
+           (marginalia-truncate-width 100)
+           (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil)))
+
+          :init
+          (marginalia-mode))
+
+      #+end_src
+
+    + Orderless
+
+      #+begin_src emacs-lisp
+
+        ;; -----------------------------------------------------------------------------
+        ;; orderless provides an orderless completion style that divides the
+        ;; pattern into space-separated components, and matches candidates
+        ;; that match all of the components in any order. Each component can
+        ;; match in any one of several ways: literally, as a regexp, as an
+        ;; initialism, in the flex style, or as multiple word prefixes. By
+        ;; default, regexp and literal matches are enabled.
+        (use-package orderless
+          :ensure t
+          :init
+          (setq completion-styles '(orderless)
+                completion-category-defaults nil
+                completion-category-overrides '((file (styles . (partial-completion))))))
+
+      #+end_src
+
+    + Consult
 
       #+begin_src emacs-lisp
 
@@ -1081,22 +1130,24 @@
                  ("C-s"      . isearch-forward)
                  ("C-S-s"    . consult-line)
                  ("<help> a" . consult-apropos))
+
+          :custom ((register-preview-delay 0)
+                   (register-preview-function #'consult-register-format)
+                   ;; use consult to select xref locations with preview
+                   (xref-show-xrefs-function #'consult-xref)
+                   (xref-show-definitions-function #'consult-xref)
+                   (consult-narrow-key "<")
+                   (consult-project-root #'project-roots)
+                   (consult-find-args "find .")
+                   (consult-grep-args "grep --null --line-buffered --ignore-case -RIn"))
+
           )
 
-        ;; -----------------------------------------------------------------------------
-        ;; orderless provides an orderless completion style that divides the
-        ;; pattern into space-separated components, and matches candidates
-        ;; that match all of the components in any order. Each component can
-        ;; match in any one of several ways: literally, as a regexp, as an
-        ;; initialism, in the flex style, or as multiple word prefixes. By
-        ;; default, regexp and literal matches are enabled.
-        (use-package orderless
-          :ensure t
-          :init
-          (setq completion-styles '(orderless)
-                completion-category-defaults nil
-                completion-category-overrides '((file (styles . (partial-completion))))))
+        #+end_src
 
+    + Vertico
+
+      #+begin_src emacs-lisp
 
         ;; -----------------------------------------------------------------------------
         ;; vertico provides a performant and minimalistic vertical completion
@@ -1140,57 +1191,64 @@
 
           )
 
-        ;; -----------------------------------------------------------------------------
-        ;; marginalia provides marks or annotations placed at the margin of
-        ;; the minibuffer for completion candidates.
-        (use-package marginalia
-          :ensure t
-          :after vertico
+      #+end_src
 
-          :custom
-          ((marginalia-align-offset 1)
-           (marginalia-margin-threshold 200)
-           (marginalia-separator-threshold 120)
-           (marginalia-truncate-width 100)
-           (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil)))
+    + Embark
 
-          :init
-          (marginalia-mode))
+     #+begin_src emacs-lisp
 
+       ;; -----------------------------------------------------------------------------
+       ;; this package provides a "contextual" menu proividing actions for
+       ;; various objects (files, buffers, etc. etc.)
+       ;;
+       ;; see this https://karthinks.com/software/fifteen-ways-to-use-embark/
+       ;; for more information on how best to use begin scratching what this
+       ;; wonderful package can do.
+       (use-package embark
+         :ensure t
+         :bind
+         (("C-." . embark-act)
+          :map minibuffer-local-completion-map
+          ("M-t" . embark-act)
+          ("M-h" . embark-become)
+          :map minibuffer-local-map
+          ("M-t" . embark-act)
+          ("M-h" . embark-become))
 
-        ;; -----------------------------------------------------------------------------
-        ;; this package provides a "contextual" menu proividing actions for
-        ;; various objects (files, buffers, etc. etc.)
-        ;;
-        ;; see this https://karthinks.com/software/fifteen-ways-to-use-embark/
-        ;; for more information on how best to use begin scratching what this
-        ;; wonderful package can do.
-        (use-package embark
-          :bind
-          (("C-."   . embark-act)
-           ("M-."   . embark-dwim)
-           ("C-h B" . embark-bindings))
+         :config
 
-          :config
+         ;; ---------------------------------------------------------------------------
+         ;; Show Embark actions via which-key
+         (setq embark-action-indicator
+               (lambda (map)
+                 (which-key--show-keymap "Embark" map nil nil 'no-paging)
+                 #'which-key--hide-popup-ignore-command)
+               embark-become-indicator embark-action-indicator)
 
-          ;; ---------------------------------------------------------------------------
-          ;; Show Embark actions via which-key
-          (setq embark-action-indicator
-                (lambda (map)
-                  (which-key--show-keymap "Embark" map nil nil 'no-paging)
-                  #'which-key--hide-popup-ignore-command)
-                embark-become-indicator embark-action-indicator)
+         ;; ---------------------------------------------------------------------------
+         ;; add the "R" key (to edit file with sudo) in embark file-actions map
+         (define-key embark-file-map (kbd "R") 'anupamk:utils/edit-file-with-sudo)
 
-          ;; ---------------------------------------------------------------------------
-          ;; add the "R" key (to edit file with sudo) in embark file-actions map
-          (define-key embark-file-map (kbd "R") 'anupamk:utils/edit-file-with-sudo)
+         )
 
-          )
+       ;; -----------------------------------------------------------------------------
+       ;; embark consult
+       (use-package embark-consult
+         :ensure t
+         :after (embark consult)
+         :hook (embark-collect-mode . consult-preview-at-point-mode))
 
-        (use-package embark-consult
-          :ensure t
-          :after (embark consult)
-          :hook (embark-collect-mode . consult-preview-at-point-mode))
+     #+end_src
+
+    + Affe
+
+      #+begin_src emacs-lisp
+
+      (use-package affe
+        :ensure t
+        :after orderless
+        :custom ((affe-regexp-function #'orderless-pattern-compiler)
+                 (affe-highlight-function #'orderless-highlight-matches)))
 
       #+end_src
 
