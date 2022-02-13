@@ -1803,9 +1803,20 @@
          (buffer-face-mode t))
 
        ;; ---------------------------------------------------------------------------
+       ;; open a terminal in the current project
+       (defun anupamk/spawn-vterm-in-project ()
+         "Spawn a vterm in the current project."
+         (interactive)
+         (let* ((project-current (project-current))
+                (default-directory (if project-current
+                                       (project-root project-current)
+                                     default-directory)))
+           (vterm)))
+
+       ;; ---------------------------------------------------------------------------
        ;; ensure that <C-backspace> should kill the previous word
        (define-key vterm-mode-map (kbd "<C-backspace>")
-         (lambda () (interactive) (vterm-send-key (kbd "C-w"))))
+                   (lambda () (interactive) (vterm-send-key (kbd "C-w"))))
 
        ;; ---------------------------------------------------------------------------
        ;; make counsel use correction function to yank in vterm buffers
