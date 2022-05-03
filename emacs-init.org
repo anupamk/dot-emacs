@@ -2434,6 +2434,9 @@ programming language enhancements
                  ;; information
                  "--completion-style=detailed"
 
+                 ;; pre-compiled-header support
+                 "--pch-storage=memory"
+
                  ;; info level logging
                  "--log=error")
 
@@ -2442,7 +2445,6 @@ programming language enhancements
          :config
          ;; ---------------------------------------------------------------------------
          ;; dont care about using eglot anywhere else...
-         (setq eglot-server-programs nil)
          (add-to-list 'eglot-server-programs (cons (list 'c++-mode 'c-mode) anupamk:eglot/clangd-exec-cmdstr))
 
          ;; ---------------------------------------------------------------------------
