@@ -2730,6 +2730,34 @@ programming language enhancements
 
     #+end_src
 
+** Java Programming
+
+   + pretty vanilla configuration
+
+     #+begin_src emacs-lisp
+
+       (use-package emacs
+         :config
+         (defun anupamk:java-mode-hook()
+           "setup java mode"
+           (interactive)
+
+           ;; -------------------------------------------------------------------------
+           ;; basic settings
+           (setq c-basic-offset 4)
+           (setq tab-width 4)
+           (setq indent-tabs-mode nil)
+
+           ;; -------------------------------------------------------------------------
+           ;; comments
+           (setq comment-start "///")
+           (setq comment-end ""))
+
+         :hook
+         (java-mode-hook . anupamk:java-mode-hook))
+
+     #+end_src
+
 ** Python Programming
 
    + =elpy= strives to give IDE like features for programming in
