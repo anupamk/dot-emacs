@@ -620,7 +620,6 @@
         (defconst anupamk:font/default-font-name "Pragmata Pro Mono"
           "the default font that we use everywhere")
 
-
         ;; ---------------------------------------------------------------------------
         ;; host specific absolute font-heights
         (let ((anupamk/buffer-font-height (cond ((anupamk:utils/host-name-is "pnq-dev-01.pnq.taranawireless.com") 120)
@@ -649,7 +648,7 @@
         ;; increase it if required.
         (defun setup-compilation-buffer-font()
           (interactive)
-          (setq buffer-face-mode-face '(:family "Pragmata Pro Mono" :height 110))
+          (setq buffer-face-mode-face '(:family "Pragmata Pro Mono" :height 90))
           (buffer-face-mode))
 
         :hook
@@ -680,6 +679,22 @@
      (load-theme 'zenburn :no-confirm)
 
      )
+
+ #+end_src
+
+    + Syntax highlighting should be, imnsho, kept to a minimum.
+
+ #+begin_src emacs-lisp
+
+   (use-package font-lock
+     :custom-face
+     (font-lock-keyword-face ((t (:foreground nil))))
+     (font-lock-type-face ((t (:foreground nil))))
+     (font-lock-variable-name-face ((t (:foreground nil))))
+     (font-lock-constant-face ((t (:foreground nil))))
+     (font-lock-doc-face ((t (:foreground nil :inherit 'font-lock-comment-face))))
+     (font-lock-preprocessor-face ((t (:foreground nil))))
+     (font-lock-builtin-face ((t (:foreground nil)))))
 
  #+end_src
 
