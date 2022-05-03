@@ -977,7 +977,7 @@
 
     #+end_src
 
-*** Minibuffer
+*** Minibuffer history
 
     + Not sure why saving history is not default. Let's enable that,
       and few more things that make sense f.e. search, kill, regexp-search etc.
@@ -987,7 +987,7 @@
       (use-package savehist
         :config
         (setq savehist-file "~/.emacs.d/savehist")
-        (setq history-length 10000)
+        (setq history-length 100000)
         (setq history-delete-duplicates t)
         (setq savehist-save-minibuffer-history t)
 
@@ -1075,9 +1075,11 @@
         ;; default, regexp and literal matches are enabled.
         (use-package orderless
           :ensure t
-          :init
+          :config
           (setq completion-styles '(orderless)
                 completion-category-defaults nil
+                orderless-component-matching-styles '(orderless-regexp orderless-flex)
+                orderless-regexp-separator "[/\s_-]+"
                 completion-category-overrides '((file (styles . (partial-completion))))))
 
       #+end_src
