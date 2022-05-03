@@ -2124,6 +2124,25 @@
 
   #+end_src
 
+** Words and Their Meanings
++ Use define-word for this
+
+  #+begin_src emacs-lisp
+
+    (use-package define-word
+      :ensure t)
+
+  #+end_src
+
+  + Canonical dictionary
+
+    #+begin_src emacs-lisp
+
+      (use-package dictionary
+        :ensure t)
+
+    #+end_src
+
 * Window Management
 
   + The association list in =display-buffer-alist= describes the
