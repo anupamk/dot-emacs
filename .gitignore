@@ -41,3 +41,8 @@ places
 projects
 url/*
 eln-cache/*
+straight/*
+history
+save-point-place
+*custom.el
+session*

@@ -1,4 +1,4 @@
-;; -*- lexical-binding: t; no-byte-compile: t -*-
+;; -*- lexical-binding: t; -*-
 
 ;; -----------------------------------------------------------------------------
 ;; this is the bootstrap file which is loaded when emacs
@@ -8,44 +8,91 @@
 ;; -----------------------------------------------------------------------------
 
 ;; -----------------------------------------------------------------------------
-;; initialize + enable package-manager
-(require 'package)
+;; make startup faster.
+;;
+;; some background: the variable `file-name-handler-alist' specifies
+;; an alist of elements (regexp . handler) for file names handled
+;; specially. if a file name matches the regexp, all i/o on that file
+;; is done by calling the handler.
+;;
+;; during startup we don't care about these. once startup is
+;; over, we restore things back.
+(defvar startup/file-name-handler-alist file-name-handler-alist)
+(setq file-name-handler-alist nil)
 
+(defun startup/revert-file-name-handler-alist ()
+  "Revert file name handler alist."
+  (setq file-name-handler-alist startup/file-name-handler-alist))
+
+(add-hook 'emacs-startup-hook #'startup/revert-file-name-handler-alist)
+
+;; -----------------------------------------------------------------------------
+;; maximum number of bytes (4mb) to read from sub-process in a single
+;; chunk.
+(setq read-process-output-max (* 4 1024 1024))
+
+;; -----------------------------------------------------------------------------
+;; initialize + enable package-manager
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+
+;; -----------------------------------------------------------------------------
+;; some perf tweaks
+(setq read-process-output-max (* 4 1024 1024)) ; 4mb
+(setq process-adaptive-read-buffering nil)     ; performance
+
+;; -----------------------------------------------------------------------------
+;; install use-package, and configure it to use straight.el by default
+(straight-use-package 'use-package)
+
+(use-package straight
+  :custom
+
+  ;; ---------------------------------------------------------------------------
+  ;; by default, `use-package' uses package.el to install
+  ;; packages.
+  ;;
+  ;; however, we want to ensure that `use-package' uses straight.el by
+  ;; default for that.
+  (straight-use-package-by-default t)
+
+  ;; ---------------------------------------------------------------------------
+  ;; use the gnu-elpa mirror instead of the original, for reasons that
+  ;; are best appreciated by readong the 'GNU ELPA` section of
+  ;; straight.el
+  (straight-recipes-gnu-elpa-use-mirror t)
+
+  ;; ---------------------------------------------------------------------------
+  ;; is the package modified ?
+  (straight-check-for-modifications nil)
+  )
+
+;; -----------------------------------------------------------------------------
+;; but we still want to peruse the melpa archives via the canonical
+;; `package-list-packages', enable that.
+(require 'package)
 (setq package-archives '(("org"    . "http://orgmode.org/elpa/")
                          ("gnu"    . "http://elpa.gnu.org/packages/")
                          ("melpa"  . "http://melpa.org/packages/")
                          ))
 
-;; initialize the packages, avoiding re-initialization
-(unless (bound-and-true-p package--initialized)
-  (setq package-enable-at-startup t)
-  (package-initialize))
-
-;; make sure that `use-package' is available.
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
+;; -----------------------------------------------------------------------------
+;; load newer .elc or .el
+(setq load-prefer-newer t)
 
 ;; -----------------------------------------------------------------------------
-;; configure `use-package' prior to loading it.
-(eval-and-compile
-  (setq use-package-always-ensure nil)
-  (setq use-package-always-defer nil)
-  (setq use-package-always-demand nil)
-  (setq use-package-expand-minimally nil)
-  (setq use-package-enable-imenu-support t)
-  (setq use-package-compute-statistics nil)
-
-  ;; ---------------------------------------------------------------------------
-  ;; write hooks using their real name instead of a shorter version:
-  ;; after-init ==> `after-init-hook'.
-  ;;
-  ;; This is to empower help commands with their contextual awareness,
-  ;; such as `describe-symbol'.
-  (setq use-package-hook-name-suffix nil))
-
-(eval-when-compile
-  (require 'use-package))
+;; load the org-mode from elpa/melpa rather than the builtin
+(straight-use-package 'org)
 
 ;; -----------------------------------------------------------------------------
 ;; GCMH - the Garbage Collector Magic Hack
@@ -55,18 +102,14 @@
 ;; threshold is set. When idling, GC is immediately triggered and a
 ;; low threshold is set.
 (use-package gcmh
-  :ensure
-  :delight
   :init
   (setq gcmh-verbose             t
         gcmh-lows-cons-threshold (* 16 1024 1024)  ; 16mb
         gcmh-high-cons-threshold (* 128 1024 1024) ; 128mb
         gcmh-idle-delay          5)
   :config
-  (gcmh-mode 1))
-
-;; for my custom libraries
-(add-to-list 'load-path "~/.emacs.d/lisp/")
+  (gcmh-mode 1)
+  )
 
 ;; -----------------------------------------------------------------------------
 ;; if native compilation is available, automatically generate compiled
@@ -108,77 +151,23 @@
       ;; when non-nil => native compile packages on installation.
       (setq package-native-compile t)))
 
-;; -----------------------------------------------------------------------------
-;; bootstrap is over, continue loading the real configuration
-(require 'org)
+;; ------------------------------------------------------------------------------
+;; the main configuration is a 'literate configuration' in an org
+;; file.
+;;
+;; via the canonical usage of 'local variables' the elisp sources from
+;; the org file is tangled into emacs-init.el
+;;
+;; this file is then loaded here...
+(defvar main-config-fname "emacs-init.el"
+  "basename of main configuration file")
+
+(defvar main-config-el-filename
+  (concat user-emacs-directory main-config-fname)
+  "full pathname of main emacs configuration file")
+
+(when (file-readable-p main-config-el-filename)
+  (load-file main-config-el-filename))
 
 ;; -----------------------------------------------------------------------------
-;; return true when modification-time attribute of fname is older than 'time'
-(defun anupamk/file-is-older-than-time-p (fname time)
-  "Return 't' when modification-time attribute of 'FNAME' is older than
-'TIME', 'nil' otherwise.
-
-'TIME' is expected to be in the same format as output from (current-time)"
-  (let* ((time-sec (time-convert time 'integer))
-         (filemod-time-sec (time-convert (file-attribute-modification-time (file-attributes fname)) 'integer)))
-    (< filemod-time-sec time-sec)))
-
-;; -----------------------------------------------------------------------------
-;; return true when modification-time attribute of fname is older than 'time'
-(defun anupamk/file-is-older-than-time-p (fname time)
-  "Return 't' when modification-time attribute of 'FNAME' is older than
-'TIME', 'nil' otherwise.
-
-'TIME' is expected to be in the same format as output from (current-time)"
-  (let* ((time-sec (time-convert time 'integer))
-         (filemod-time-sec (time-convert (file-attribute-modification-time (file-attributes fname)) 'integer)))
-    (message (format "'%s' modification-time: '%d', compare-time: '%d'"
-                     fname
-                     filemod-time-sec
-                     time-sec))
-    (< filemod-time-sec time-sec)))
-
-;; -----------------------------------------------------------------------------
-;; return 'true' when modification-time attribute of 'fname-1' is
-;; older than 'fname-2'
-(defun anupamk/file-is-older-than-file-p (fname-1 fname-2)
-  "Return 't' when modification-time attribute of 'FNAME-1' is older than
-modification-time attribute of 'FNAME-2', 'nil' otherwise."
-  (when (and (file-exists-p fname-1)
-             (file-exists-p fname-2))
-    (anupamk/file-is-older-than-time-p fname-1
-                                       (file-attribute-modification-time (file-attributes fname-2)))))
-
-;; -----------------------------------------------------------------------------
-;; byte-compile emacs-init.el generated from emacs-init.org
-(defun anupamk/build-emacs-config()
-  "Generate `emacs-init.el' from `emacs-init.org'.
-
-This function is added to the `kill-emacs-hook' and, if required, it generates a
-new `emacs-init.elc' from `emacs-init.org' when Emacs session is terminated."
-  (interactive)
-  (let* ((emacs-init-org-fname "~/.emacs.d/emacs-init.org")
-         (emacs-init-el-fname (concat (file-name-sans-extension emacs-init-org-fname) ".el")))
-
-    (when (or (not (file-exists-p emacs-init-el-fname))
-              (anupamk/file-is-older-than-file-p emacs-init-el-fname emacs-init-org-fname))
-      (org-babel-tangle-file emacs-init-org-fname emacs-init-el-fname)
-      (byte-compile-file emacs-init-el-fname))
-    (message (format "'%s' is current, nothing to do !!!" emacs-init-el-fname))))
-
-(add-hook 'kill-emacs-hook #'anupamk/build-emacs-config)
-
-;; -----------------------------------------------------------------------------
-;; load the emacs-init.org or byte-compiled version of it produced
-;; from running `anupamk-build-emacs-config'
-(defun anupamk/load-emacs-config()
-  (interactive)
-  (if (file-exists-p "~/.emacs.d/emacs-init.el")
-      (load-file "~/.emacs.d/emacs-init.el")
-    (when (file-exists-p "~/.emacs.d/emacs-init.org")
-      (progn (anupamk/build-emacs-config)
-             (anupamk/load-emacs-config)))))
-
-;; -----------------------------------------------------------------------------
-;; load the config
-(anupamk/load-emacs-config)
+;; init.el ends here
