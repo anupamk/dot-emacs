@@ -1692,6 +1692,21 @@ currently entered incomplete command.
     (after-init . which-key-mode))
 
 #+end_src
+** Dynamic word completion
+I have /graduated/ from using =dabbrev-expand= to
+=hippie-expand=. It looks at the word before point and tries to expand
+it in various ways including expanding from a fixed list, expand from
+matching text found in the buffer or others.
+
+What does it have to do with hippies ? No idea.
+
+#+begin_src emacs-lisp
+
+(require 'hippie-exp)
+(global-set-key (kbd "M-/") #'hippie-expand)
+
+#+end_src
+
 ** Uniquify file names in buffers
 
 #+begin_src emacs-lisp
