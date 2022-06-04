@@ -1789,6 +1789,35 @@ What does it have to do with hippies ? No idea.
           ("C-h B" . magit-blame)))
 
 #+end_src
+
+*** Git Gutter in Emacs
+These are indicators in fringe that show uncomitted
+added/deleted/modified blocks in a buffer.
+
+#+begin_src emacs-lisp
+
+(use-package git-gutter)
+(use-package git-gutter-fringe)
+
+;; -----------------------------------------------------------------------------
+;; lets just set it up for all files in a git repository
+(global-git-gutter-mode t)
+
+;; -----------------------------------------------------------------------------
+;; setup the bitmap for appearance
+(define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
+(define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
+(define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom)
+
+;; -----------------------------------------------------------------------------
+;; interval (in seconds) for updating diff information.
+;;
+;; the default is '0' which results in updating the gutter only on
+;; file save.
+(setq git-gutter:update-interval 0.02)
+
+#+end_src
+
 ** Bookmark places in buffer
 
 #+begin_src emacs-lisp
