@@ -151,6 +151,11 @@
       ;; when non-nil => native compile packages on installation.
       (setq package-native-compile t)))
 
+;; -----------------------------------------------------------------------------
+;; to avoid confirmation requests, explicitly specify `safe-local-eval-forms'
+(setq enable-local-eval t)
+(setq safe-local-eval-forms '((add-hook 'after-save-hook (lambda ()(org-babel-tangle)) nil t)))
+
 ;; ------------------------------------------------------------------------------
 ;; the main configuration is a 'literate configuration' in an org
 ;; file.

@@ -64,6 +64,26 @@
 
     sets `straight-use-package-by-default' after loading straight.el
 
+  + =:hook=
+
+    This allows adding functions onto package hooks. When using the
+    =:hook= we must /remember/ to *omit* the =-hook= suffix, as this
+    is appended by default.
+
+    Thus for example, when adding some customizations for =cc-mode=
+    we need to do this
+
+    #+begin_src emacs-lisp :tangle no
+
+      (use-package cc-mode
+        :hook
+        (c-mode-common . exec-c-mode-common-hook-func))
+
+    #+end_src
+
+    Note that in the =:hook= section above, we have just used
+    =c-mode-common= and not =c-mode-common-hook= !
+
 ** Emacs Lisp
 + In Emacs Lisp, if =foo= is a symbol, then ='foo= and =#'foo= are
   completely equivalent. The latter form (with =#'=) is preferred when
@@ -153,37 +173,37 @@ any utility for me.
 
 #+begin_src emacs-lisp
 
-  (use-package emacs
+(use-package emacs
 
-    :init
-    ;; --------------------------------------------------------------------
-    ;; remove gui toolkit components that are of limited use for me
-    (blink-cursor-mode -1)
-    (menu-bar-mode -1)
-    (tool-bar-mode -1)
-    (scroll-bar-mode -1)
-    (horizontal-scroll-bar-mode -1)
+  :init
+  ;; ---------------------------------------------------------------------------
+  ;; remove gui toolkit components that are of limited use for me
+  (blink-cursor-mode -1)
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+  (horizontal-scroll-bar-mode -1)
 
-    ;; ---------------------------------------------------------------------------
-    ;; i need some space man
-    (setq-default line-spacing 0.1)
+  ;; ---------------------------------------------------------------------------
+  ;; i need some space man
+  (setq-default line-spacing 0.1)
 
-    ;; -------------------------------------------------------------------------
-    ;; if mouse commands use a file-dialog to ask for files
-    (setq use-file-dialog nil)
+  ;; ---------------------------------------------------------------------------
+  ;; if mouse commands use a file-dialog to ask for files
+  (setq use-file-dialog nil)
 
-    ;; -------------------------------------------------------------------------
-    ;; mouse commands use a dialogue box to ask questions
-    (setq use-dialog-box t)
+  ;; ---------------------------------------------------------------------------
+  ;; mouse commands use a dialogue box to ask questions
+  (setq use-dialog-box t)
 
-    ;; -------------------------------------------------------------------------
-    ;; which keys Emacs uses for alt modifier
-    (setq x-alt-keysym 'meta)
+  ;; ---------------------------------------------------------------------------
+  ;; which keys Emacs uses for alt modifier
+  (setq x-alt-keysym 'meta)
 
-    :bind
-    (("C-z"     . nil)
-     ("C-x C-z" . nil)
-     ("C-h h"   . nil)))
+  :bind
+  (("C-z"     . nil)
+   ("C-x C-z" . nil)
+   ("C-h h"   . nil)))
 
 #+end_src
 
@@ -210,9 +230,9 @@ trailing spaces etc.
   (use-package whitespace
     :delight
     :hook
-    (prog-mode        . whitespace-mode)
-    (text-mode        . whitespace-mode)
-    (before-save-hook . whitespace-cleanup)
+    (prog-mode   . whitespace-mode)
+    (text-mode   . whitespace-mode)
+    (before-save . whitespace-cleanup)
 
     :custom
     (whitespace-style '(face empty indentation::space tab trailing)))
@@ -246,26 +266,20 @@ sane behavior.
 
 #+begin_src emacs-lisp
 
-  (use-package emacs
+;; ---------------------------------------------------------------------------
+;; customizations in a separate place all together
+(defvar customization-fname "emacs-custom.el"
+  "personal customization locations")
 
-    :config
-    ;; -------------------------------------------------------------------------
-    ;; load customizations once initialization is complete
-    (defun anupamk:utils/load-customizations ()
-      (let ((customization-file anupamk/emacs-custom-fname))
-        (unless (file-exists-p customization-file)
-          (make-empty-file customization-file))
-        (load-file customization-file)))
+(setq custom-file (expand-file-name customization-fname user-emacs-directory))
 
-    ;; -------------------------------------------------------------------------
-    ;; customizations in a separate place all together
-    (defvar customization-fname "anupam-custom.el"
-      "personal customization locations")
+;; ---------------------------------------------------------------------------
+;; load customizations once initialization is complete
+(defun anupamk:utils/load-customizations ()
+  (when (file-exists-p custom-file)
+    (load-file custom-file)))
 
-    (setq custom-file (expand-file-name customization-fname user-emacs-directory))
-
-    :hook
-    (after-init-hook . anupamk/load-customizations))
+(add-hook 'after-init-hook #'anupamk:utils/load-customizations)
 
 #+end_src
 
@@ -277,7 +291,7 @@ much better.
 
   (use-package emacs
 
-    :config
+    :init
 
     ;; -------------------------------------------------------------------------
     ;; no scratchpad by default, we can always create one ourselves.
@@ -349,50 +363,61 @@ much better.
     ;; all themes are safe
     (setq custom-safe-themes t)
 
-    ;; ---------------------------------------------------------------------------
+    ;; -------------------------------------------------------------------------
     ;; write over selected text on input. just like other editors.
     (delete-selection-mode t)
 
-    ;; ---------------------------------------------------------------------------
+    ;; -------------------------------------------------------------------------
     ;; less noisy emacs-lisp compilation
     (setq byte-compile-warnings '(not free-vars unresolved noruntime lexical make-local))
     (setq native-comp-async-report-warnings-errors nil)
 
-    ;; ---------------------------------------------------------------------------
+    ;; -------------------------------------------------------------------------
     ;; max number of bytes to read from a process in a single chunk. 8m
     ;; is reasonable for lsp based c/c++ programming...
     (setq read-process-output-max (* 8 1024 1024))
 
-    ;; ---------------------------------------------------------------------------
+    ;; -------------------------------------------------------------------------
     ;; focus on help windows when opened
     (setq-default help-window-select t)
 
-    ;; ---------------------------------------------------------------------------
+    ;; -------------------------------------------------------------------------
     ;; avoid recentering when scrolling far
     (setq-default scroll-conservatively 101)
 
-    ;; ---------------------------------------------------------------------------
+    ;; -------------------------------------------------------------------------
     ;; add a margin when scrolling vertically
     (setq-default scroll-margin 2)
 
-    ;; ---------------------------------------------------------------------------
+    ;; -------------------------------------------------------------------------
     ;; resize window proportionally
     (setq-default window-combination-resize t)
 
-    ;; ---------------------------------------------------------------------------
+    ;; -------------------------------------------------------------------------
     ;; when non-nil left and right side windows occupy full height. when
     ;; 'nil' top and bottom-side windows occupy full frame width
     (setq-default window-sides-vertical nil)
 
-    ;; ---------------------------------------------------------------------------
+    ;; -------------------------------------------------------------------------
     ;; enable downcase-region and upcase-region
     (put 'downcase-region 'disabled nil)
     (put 'upcase-region 'disabled nil)
 
-    ;; ---------------------------------------------------------------------------
+    ;; -------------------------------------------------------------------------
     ;; enable recursive minibuffers (launch command that use the
     ;; minibuffer while already inside a minibuffer)
-    (setq enable-recursive-minibuffers t))
+    (setq enable-recursive-minibuffers t)
+
+    ;; -------------------------------------------------------------------------
+    ;; magit is the only vc frontend that i care about
+    (setf vc-handled-backends nil)
+
+    ;; -------------------------------------------------------------------------
+    ;; what to do if we follow a symbolic link to a file under version
+    ;; control. with `t', vc follows the link and visits the real file
+    ;; (telling about it in the echo area)
+    (setf vc-follow-symlinks t)
+    )
 
 #+end_src
 
@@ -471,189 +496,179 @@ Potential speedup of cursor operations
 
 * Utility Functions
 ** Commonly used utility functions
-The =use-package= framework allows declaring functions with the
-=:functions= stanza in package-definitions. Lets define a bunch of
-commonly used functions.
 
 #+begin_src emacs-lisp
 
-  ;; ---------------------------------------------------------------------------
-  ;; insert current date
-  (defun anupamk:utils/insert-current-date (iso)
-    " Insert the current date at point.
+;; -----------------------------------------------------------------------------
+;; insert current date
+(defun anupamk:utils/insert-current-date (iso)
+  " Insert the current date at point.
           When ISO is non-nil, insert the date in ISO 8601 format.
           Otherwise insert the date as Mar 04, 2014.
         "
-    (interactive "P")
-    (insert (format-time-string (if iso "%F" "%b %d, %Y"))))
+  (interactive "P")
+  (insert (format-time-string (if iso "%F" "%b %d, %Y"))))
 
-  ;; ---------------------------------------------------------------------------
-  ;; rename current buffer to the desired name. the current name is copied
-  ;; so you can just modify it, rather than typing it from scratch
-  (defun anupamk:utils/rename-current-buffer-file ()
-    "Renames current buffer and file it is visiting."
-    (interactive)
-    (let ((name (buffer-name))
-          (filename (buffer-file-name)))
-      (if (not (and filename (file-exists-p filename)))
-          (error "Buffer '%s' is not visiting a file!" name)
-        (let ((new-name (read-file-name "New name: " filename)))
-          (if (get-buffer new-name)
-              (error "A buffer named '%s' already exists!" new-name)
-            (rename-file filename new-name 1)
-            (rename-buffer new-name)
-            (set-visited-file-name new-name)
-            (set-buffer-modified-p nil)
-            (message "File '%s' successfully renamed to '%s'"
-                     name (file-name-nondirectory new-name)))))))
+;; -----------------------------------------------------------------------------
+;; rename current buffer to the desired name. the current name is copied
+;; so you can just modify it, rather than typing it from scratch
+(defun anupamk:utils/rename-current-buffer-file ()
+  "Renames current buffer and file it is visiting."
+  (interactive)
+  (let ((name (buffer-name))
+        (filename (buffer-file-name)))
+    (if (not (and filename (file-exists-p filename)))
+        (error "Buffer '%s' is not visiting a file!" name)
+      (let ((new-name (read-file-name "New name: " filename)))
+        (if (get-buffer new-name)
+            (error "A buffer named '%s' already exists!" new-name)
+          (rename-file filename new-name 1)
+          (rename-buffer new-name)
+          (set-visited-file-name new-name)
+          (set-buffer-modified-p nil)
+          (message "File '%s' successfully renamed to '%s'"
+                   name (file-name-nondirectory new-name)))))))
 
+;; -----------------------------------------------------------------------------
+;; shortcut to create scratch buffers.
+(defun anupamk:utils/create-new-scratch-buffer ()
+  "create a new scratch buffer to work in. (could be *scratch* - *scratch-X*)"
+  (interactive)
+  (let ((n 0)
+        bufname)
+    (while (progn
+             (setq bufname (concat
+                            "*scratch-"
+                            (int-to-string n)
+                            "*"))
+             (setq n (1+ n))
+             (get-buffer bufname)))
+    (switch-to-buffer (get-buffer-create bufname))
+    (if (= n 1) initial-major-mode))) ; 1, because n was incremented
 
-  ;; ---------------------------------------------------------------------------
-  ;; shortcut to create scratch buffers.
-  (defun anupamk:utils/create-new-scratch-buffer ()
-    "create a new scratch buffer to work in. (could be *scratch* - *scratch-X*)"
-    (interactive)
-    (let ((n 0)
-          bufname)
-      (while (progn
-               (setq bufname (concat
-                              "*scratch-"
-                              (int-to-string n)
-                              "*"))
-               (setq n (1+ n))
-               (get-buffer bufname)))
-      (switch-to-buffer (get-buffer-create bufname))
-      (if (= n 1) initial-major-mode))) ; 1, because n was incremented
+;; -----------------------------------------------------------------------------
+;; hostname predicate
+(defun anupamk:utils/host-name-is (host_name)
+  "return true if host-name is `host_name'"
+  (string-equal (system-name) host_name))
 
-  ;; ---------------------------------------------------------------------------
-  ;; hostname predicate
-  (defun anupamk:utils/host-name-is (host_name)
-    "return true if host-name is `host_name'"
-    (string-equal (system-name) host_name))
+;; -----------------------------------------------------------------------------
+;; did vi(m) get anything right ? paren matching probably...
+(defun anupamk:utils/vi-match-paren (arg)
+  "Go to the matching paren if on a paren; otherwise insert %."
+  (interactive "p")
+  (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
+        ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
+        (t (self-insert-command (or arg 1)))))
 
-  ;; ---------------------------------------------------------------------------
-  ;; did vi(m) get anything right ? paren matching probably...
-  (defun anupamk:utils/vi-match-paren (arg)
-    "Go to the matching paren if on a paren; otherwise insert %."
-    (interactive "p")
-    (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
-          ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
-          (t (self-insert-command (or arg 1)))))
+;; -----------------------------------------------------------------------------
+;; fill current line with '-' upto '80' columns, let the user have
+;; the satisfaction of inserting a newline
+(defun anupamk:utils/fill-to-end ()
+  (interactive)
+  (progn
+    (insert-char ?- (- 80 (current-column)))))
 
+;; -----------------------------------------------------------------------------
+;; copy file name to clipboard
+(defun anupamk:utils/copy-file-name-to-clipboard ()
+  "Copy the current buffer file name to the clipboard."
+  (interactive)
+  (let ((filename (if (equal major-mode 'dired-mode)
+                      default-directory
+                    (buffer-file-name))))
+    (when filename
+      (kill-new filename)
+      (message "Copied buffer file name '%s' to the clipboard." filename))))
 
-  ;; ---------------------------------------------------------------------------
-  ;; fill current line with '-' upto '80' columns, let the user have
-  ;; the satisfaction of inserting a newline
-  (defun anupamk:utils/fill-to-end ()
-    (interactive)
-    (progn
-      (insert-char ?- (- 80 (current-column)))))
+;; -----------------------------------------------------------------------------
+;; toggle display of invisible characters
+(defun anupamk:utils/toggle-invisibles ()
+  "toggle display of invisible characters"
+  (interactive)
+  (if (bound-and-true-p whitespace-mode)
+      (whitespace-mode -1)
+    (whitespace-mode)))
 
-  ;; ---------------------------------------------------------------------------
-  ;; copy file name to clipboard
-  (defun anupamk:utils/copy-file-name-to-clipboard ()
-    "Copy the current buffer file name to the clipboard."
-    (interactive)
-    (let ((filename (if (equal major-mode 'dired-mode)
-                        default-directory
-                      (buffer-file-name))))
-      (when filename
-        (kill-new filename)
-        (message "Copied buffer file name '%s' to the clipboard." filename))))
+;; -----------------------------------------------------------------------------
+;; toggle display of line-numbers
+(defun anupamk:utils/toggle-line-numbers ()
+  "toggle display of line-numbers in all buffers"
+  (interactive)
+  (if (bound-and-true-p display-line-numbers-mode)
+      (display-line-numbers-mode -1)
+    (display-line-numbers-mode)))
 
-  ;; ---------------------------------------------------------------------------
-  ;; toggle display of invisible characters
-  (defun anupamk:utils/toggle-invisibles ()
-    "toggle display of invisible characters"
-    (interactive)
-    (if (bound-and-true-p whitespace-mode)
-        (whitespace-mode -1)
-      (whitespace-mode)))
+;; -----------------------------------------------------------------------------
+;; auto fill comments in programming modes only
+(defun anupamk:utils/auto-fill-comments ()
+  "comments in programming mode are automatically filled"
+  (setq-local comment-auto-fill-only-comments t)
+  (auto-fill-mode 1))
 
-  ;; ---------------------------------------------------------------------------
-  ;; toggle display of line-numbers
-  (defun anupamk:utils/toggle-line-numbers ()
-    "toggle display of line-numbers in all buffers"
-    (interactive)
-    (if (bound-and-true-p display-line-numbers-mode)
-        (display-line-numbers-mode -1)
-      (display-line-numbers-mode)))
-
-  ;; ---------------------------------------------------------------------------
-  ;; auto fill comments in programming modes only
-  (defun anupamk:utils/auto-fill-comments ()
-    "comments in programming mode are automatically filled"
-    (setq-local comment-auto-fill-only-comments t)
-    (auto-fill-mode 1))
-
-  ;; ---------------------------------------------------------------------------
-  ;; revert all buffers that are open without any confirmation, and
-  ;; ignoring all errors. useful for those cases when you change git
-  ;; branches and want to have the same set of buffers to be around in
-  ;; the new branch as well.
-  (defun anupamk:utils/revert-all-buffers ()
-    "revert all file buffers without any confirmation. buffers visiting files
+;; -----------------------------------------------------------------------------
+;; revert all buffers that are open without any confirmation, and
+;; ignoring all errors. useful for those cases when you change git
+;; branches and want to have the same set of buffers to be around in
+;; the new branch as well.
+(defun anupamk:utils/revert-all-buffers ()
+  "revert all file buffers without any confirmation. buffers visiting files
     that are not readable (including those that do no longer exist) are ignored.
     other errors while reverting a buffer are reported only as messages."
-    (interactive)
-    (let (file)
-      (dolist (buf  (buffer-list))
-        (setq file  (buffer-file-name buf))
-        (when (and file  (file-readable-p file))
-          (with-current-buffer buf
-            (with-demoted-errors "Error: %S" (revert-buffer t t)))))))
+  (interactive)
+  (let (file)
+    (dolist (buf  (buffer-list))
+      (setq file  (buffer-file-name buf))
+      (when (and file  (file-readable-p file))
+        (with-current-buffer buf
+          (with-demoted-errors "Error: %S" (revert-buffer t t)))))))
 
+;; -----------------------------------------------------------------------------
+;; bold faces are quite annoying. remove them all...
+(defun anupamk:utils/unbold-all-faces ()
+  "unbold all faces in emacs"
+  (interactive)
+  (message "unbolding all faces")
+  (mapc (lambda (face)
+          (when (eq (face-attribute face :weight) 'bold)
+            (set-face-attribute face nil :weight 'normal)))
+        (face-list)))
 
-  ;; ---------------------------------------------------------------------------
-  ;; bold faces are quite annoying. remove them all...
-  (defun anupamk:utils/unbold-all-faces ()
-    "unbold all faces in emacs"
-    (interactive)
-    (mapc (lambda (face)
-            (when (eq (face-attribute face :weight) 'bold)
-              (set-face-attribute face nil :weight 'normal)))
-          (face-list)))
+;; -----------------------------------------------------------------------------
+;; saved kbd-macro to lineup next comment seperator in a c++
+;; source. this will ensure that the line
+;;     '/// ----'
+;; extends to the last terminating column in the source
+;; file. normally, as new blocks are introduced || removed
+;; etc. comment seperators don't terminate at the right column.
+;;
+;; for running this on the whole file, do this:
+;;    C-u <some-large-number> anupamk:utils/lineup-c++-comment-seperator
+(fset 'anupamk:utils/lineup-c++-comment-seperator
+      (kmacro-lambda-form [?\C-s ?/ ?/ ?/ ?\C-a ?\C-s ?/ ?/ ?/ ?  ?- ?- ?- ?\C-a ?\C-k ?\M-\; ?\C-c ?e down ?\C-a ?\C-a] 0 "%d"))
 
-  ;; ---------------------------------------------------------------------------
-  ;; saved kbd-macro to lineup next comment seperator in a c++
-  ;; source. this will ensure that the line
-  ;;     '/// ----'
-  ;; extends to the last terminating column in the source
-  ;; file. normally, as new blocks are introduced || removed
-  ;; etc. comment seperators don't terminate at the right column.
-  ;;
-  ;; for running this on the whole file, do this:
-  ;;    C-u <some-large-number> anupamk:utils/lineup-c++-comment-seperator
-  (fset 'anupamk:utils/lineup-c++-comment-seperator
-        (kmacro-lambda-form [?\C-s ?/ ?/ ?/ ?\C-a ?\C-s ?/ ?/ ?/ ?  ?- ?- ?- ?\C-a ?\C-k ?\M-\; ?\C-c ?e down ?\C-a ?\C-a] 0 "%d"))
+;; -----------------------------------------------------------------------------
+;; open file as root with sudo
+(defun anupamk:utils/edit-file-with-sudo (&optional arg)
+  "Edit currently visited file as root.
+With a prefix ARG prompt for a file to visit.
+Will also prompt for a file to visit if current
+buffer is not visiting a file."
+  (interactive "P")
+  (if (or arg (not buffer-file-name))
+      (find-file (concat "/sudo:root@localhost:"
+                         (ido-read-file-name "Find file(as root): ")))
+    (find-alternate-file (concat "/sudo:root@localhost:" buffer-file-name))))
 
-  ;; ---------------------------------------------------------------------------
-  ;; open file as root with sudo
-  (defun anupamk:utils/edit-file-with-sudo (file)
-    "open FILE as root"
-    (interactive "Fopen file as root: ")
-
-    ;; -------------------------------------------------------------------------
-    ;; no sudo for user-writeable files
-    (when (file-writable-p file)
-      (user-error "File is user writeable, aborting 'sudo'"))
-
-    (find-file (if (file-remote-p file)
-                   (concat "/" (file-remote-p file 'method) ":"
-                           (file-remote-p file 'user) "@" (file-remote-p file 'host)
-                           "|sudo:root@"
-                           (file-remote-p file 'host) ":" (file-remote-p file 'localname))
-                 (concat "/sudo:root@localhost:" file))))
-
-  ;; ---------------------------------------------------------------------------
-  ;; use the 'font:default' for the compilation buffer as well. just reduce the
-  ;; font size, we can always increase it if required f.e. on error
-  (defun anupamk:utils/setup-compilation-buffer-font()
-    (let ((font-family-name (anupamk:utils/font-info (anupamk:utils/get-attribute-value "font:default"))))
-      (setq buffer-face-mode-face '(:family font-family-name :height 90))
-      (buffer-face-mode)))
+;; -----------------------------------------------------------------------------
+;; use the 'font:default' for the compilation buffer as well. just reduce the
+;; font size, we can always increase it if required f.e. on error
+(defun anupamk:utils/setup-compilation-buffer-font()
+  (setq buffer-face-mode-face '(:family "Fira Code" :height 90))
+  (buffer-face-mode))
 
 #+end_src
+
 
 
 * Interface and interactions
@@ -670,48 +685,48 @@ the aforementioned scheme.
 
 #+begin_src emacs-lisp
 
-  ;; ---------------------------------------------------------------------------
-  ;; this function is called to return attribute table specific to a host
-  (defun anupamk:utils/get-host-attribute-table ()
-    "return host specific attribute table"
-    (interactive)
-    (cond ((anupamk:utils/host-name-is "virat") personal-attribute-table)
-          ((anupamk:utils/host-name-is "astra") personal-attribute-table)
-          ((anupamk:utils/host-name-is "pnq-dev-01") tarana-attributes-table)
-          ((anupamk:utils/host-name-is "aws-devel-01") tarana-attributes-table)
-          (t nil)))
+;; -----------------------------------------------------------------------------
+;; this function is called to return attribute table specific to a host
+(defun anupamk:utils/get-host-attribute-table ()
+  "return host specific attribute table"
+  (interactive)
+  (cond ((anupamk:utils/host-name-is "virat") personal-attribute-table)
+        ((anupamk:utils/host-name-is "astra") personal-attribute-table)
+        ((anupamk:utils/host-name-is "pnq-dev-01") tarana-attributes-table)
+        ((anupamk:utils/host-name-is "aws-devel-01") tarana-attributes-table)
+        (t nil)))
 
-  ;; ---------------------------------------------------------------------------
-  ;; this function is called to return the value of a host-specific attribute
-  (defun anupamk:utils/get-attribute-value (attr-name)
-    "return value of a host-specific attribute"
-    (gethash attr-name (anupamk:utils/get-host-attribute-table)))
+;; -----------------------------------------------------------------------------
+;; this function is called to return the value of a host-specific attribute
+(defun anupamk:utils/get-attribute-value (attr-name)
+  "return value of a host-specific attribute"
+  (gethash attr-name (anupamk:utils/get-host-attribute-table)))
 
-  ;; ---------------------------------------------------------------------------
-  ;; this function is called to display value of an attribute. mostly useful for
-  ;; debugging.
-  (defun anupamk:utils/display-attribute-value (attr-name)
-    "display value of an attribute"
-    (interactive)
-    (message (format "attr:'%s' == '%s'" attr-name (anupamk:utils/get-attribute-value attr-name))))
+;; -----------------------------------------------------------------------------
+;; this function is called to display value of an attribute. mostly useful for
+;; debugging.
+(defun anupamk:utils/display-attribute-value (attr-name)
+  "display value of an attribute"
+  (interactive)
+  (message (format "attr:'%s' == '%s'" attr-name (anupamk:utils/get-attribute-value attr-name))))
 
-  ;; ---------------------------------------------------------------------------
-  ;; setup face-attributes
-  (defun anupamk:utils/do-face-attribute-setup (face family height)
-    (set-face-attribute face nil :family family :height height :weight 'normal))
+;; -----------------------------------------------------------------------------
+;; setup face-attributes
+(defun anupamk:utils/do-face-attribute-setup (face family height)
+  (set-face-attribute face nil :family family :height height :weight 'normal))
 
-  ;; ---------------------------------------------------------------------------
-  ;; find configured face, family and height for a given font.
-  (defun anupamk:utils/font-info (font-attr-alist &optional which-attr)
-    (alist-get (or which-attr ':family) font-attr-alist))
+;; -----------------------------------------------------------------------------
+;; find configured face, family and height for a given font.
+(defun anupamk:utils/font-info (font-attr-alist &optional which-attr)
+  (alist-get (or which-attr ':family) font-attr-alist))
 
-  ;; ---------------------------------------------------------------------------
-  ;; setup various fonts
-  (defun anupamk:utils/setup-font(&optional which-font)
-    (let ((font-attrs (anupamk:utils/get-attribute-value (or which-font "font:default"))))
-      (anupamk:utils/do-face-attribute-setup (anupamk:utils/font-info font-attrs ':face)
-                                             (anupamk:utils/font-info font-attrs ':family)
-                                             (anupamk:utils/font-info font-attrs ':height))))
+;; -----------------------------------------------------------------------------
+;; setup various fonts
+(defun anupamk:utils/setup-font(&optional which-font)
+  (let ((font-attrs (anupamk:utils/get-attribute-value (or which-font "font:default"))))
+    (anupamk:utils/do-face-attribute-setup (anupamk:utils/font-info font-attrs ':face)
+                                           (anupamk:utils/font-info font-attrs ':family)
+                                           (anupamk:utils/font-info font-attrs ':height))))
 
 #+end_src
 
@@ -720,54 +735,54 @@ This section defines personal perferences for various attributes.
 
 #+begin_src emacs-lisp
 
-  (defvar personal-attribute-table
-    #s(hash-table
-       size 512
-       test equal
-       data (
-             ;; ------------------------------------------------------------------
-             ;; name of this table
-             "NAME"                     "personal-attribute-table"
+(defvar personal-attribute-table
+  #s(hash-table
+     size 512
+     test equal
+     data (
+           ;; ------------------------------------------------------------------
+           ;; name of this table
+           "NAME"                     "personal-attribute-table"
 
-             ;; ------------------------------------------------------------------
-             ;; global keybindings via this function
-             "GLOBAL-KEYBINDINGS-FUNC"  personal:setup-global-keys
+           ;; ------------------------------------------------------------------
+           ;; global keybindings via this function
+           "GLOBAL-KEYBINDINGS-FUNC"  personal:setup-global-keys
 
-             ;; ------------------------------------------------------------------
-             ;; font properties.
-             ;;
-             ;; notice that we have absolute point size only for the 'default'
-             ;; face. heights of fixed-pitch and variable-pitch are _relative_ to
-             ;; that (see, set-face-attribute documentation for more info)
-             "font:default"             ((:face   . default)
-                                         (:family . "PragmataPro Mono")
-                                         (:height . 120))
+           ;; ------------------------------------------------------------------
+           ;; font properties.
+           ;;
+           ;; notice that we have absolute point size only for the 'default'
+           ;; face. heights of fixed-pitch and variable-pitch are _relative_ to
+           ;; that (see, set-face-attribute documentation for more info)
+           "font:default"             ((:face   . default)
+                                       (:family . "PragmataPro Mono")
+                                       (:height . 140))
 
-             "font:fixed-pitch"         ((:face   . fixed-pitch)
-                                         (:family . "Ioseavka Fixed SS02 Regular")
-                                         (:height . 1.0))
+           "font:fixed-pitch"         ((:face   . fixed-pitch)
+                                       (:family . "Ioseavka Fixed SS02 Regular")
+                                       (:height . 1.0))
 
-             "font:variable-pitch"      ((:face   . variable-pitch)
-                                         (:family . "Ioseavka Fixed SS02 Regular")
-                                         (:height . 1.0))
+           "font:variable-pitch"      ((:face   . variable-pitch)
+                                       (:family . "Ioseavka Fixed SS02 Regular")
+                                       (:height . 1.0))
 
-             ;; ------------------------------------------------------------------
-             ;; c/c++-mode configuration
-             "cc-mode:c-basic-offset"           4
-             "cc-mode:tab-width"                4
-             "cc-mode:fill-column"              80
-             "cc-mode:comment-column"           60
-             "cc-mode:clangd-with-args"         ("clangd"
-                                                 "-j=4"
-                                                 "--all-scopes-completion=1"
-                                                 "--background-index=1"
-                                                 "--limit-results=128"
-                                                 "--cross-file-rename"
-                                                 "--completion-style=detailed"
-                                                 "--pch-storage=memory"
-                                                 "--log=error")
-             ))
-    )
+           ;; ------------------------------------------------------------------
+           ;; c/c++-mode configuration
+           "cc-mode:c-basic-offset"           8
+           "cc-mode:tab-width"                8
+           "cc-mode:fill-column"              80
+           "cc-mode:comment-column"           80
+           "cc-mode:clangd-with-args"         ("clangd"
+                                               "-j=4"
+                                               "--all-scopes-completion=1"
+                                               "--background-index=1"
+                                               "--limit-results=128"
+                                               "--cross-file-rename"
+                                               "--completion-style=detailed"
+                                               "--pch-storage=memory"
+                                               "--log=error")
+           ))
+  )
 
 #+end_src
 
@@ -785,54 +800,54 @@ This section contains work environment configuration items
 
 #+begin_src emacs-lisp
 
-  (defvar tarana-attributes-table
-    #s(hash-table
-       size 512
-       test equal
-       data (
-             ;; ------------------------------------------------------------------
-             ;; name of this table
-             "NAME"                     "tarana-attributes-table"
+(defvar tarana-attributes-table
+  #s(hash-table
+     size 512
+     test equal
+     data (
+           ;; ------------------------------------------------------------------
+           ;; name of this table
+           "NAME"                     "tarana-attributes-table"
 
-             ;; ------------------------------------------------------------------
-             ;; global keybindings via this function
-             "GLOBAL-KEYBINDINGS-FUNC"  tarana-wireless:setup-global-keys
+           ;; ------------------------------------------------------------------
+           ;; global keybindings via this function
+           "GLOBAL-KEYBINDINGS-FUNC"  tarana-wireless:setup-global-keys
 
-             ;; ------------------------------------------------------------------
-             ;; font properties.
-             ;;
-             ;; notice that we have absolute point size only for the 'default'
-             ;; face. heights of fixed-pitch and variable-pitch are _relative_ to
-             ;; that (see, set-face-attribute documentation for more info)
-             "font:default"             ((:face   . default)
-                                         (:family . "Fira Code")
-                                         (:height . 140))
+           ;; ------------------------------------------------------------------
+           ;; font properties.
+           ;;
+           ;; notice that we have absolute point size only for the 'default'
+           ;; face. heights of fixed-pitch and variable-pitch are _relative_ to
+           ;; that (see, set-face-attribute documentation for more info)
+           "font:default"             ((:face   . default)
+                                       (:family . "Fira Code")
+                                       (:height . 140))
 
-             "font:fixed-pitch"         ((:face   . fixed-pitch)
-                                         (:family . "Go Mono Regular")
-                                         (:height . 1.0))
+           "font:fixed-pitch"         ((:face   . fixed-pitch)
+                                       (:family . "Go Mono Regular")
+                                       (:height . 1.0))
 
-             "font:variable-pitch"      ((:face   . variable-pitch)
-                                         (:family . "Go Mono Regular")
-                                         (:height . 1.0))
+           "font:variable-pitch"      ((:face   . variable-pitch)
+                                       (:family . "Go Mono Regular")
+                                       (:height . 1.0))
 
-             ;; ------------------------------------------------------------------
-             ;; c/c++-mode configuration
-             "cc-mode:c-basic-offset"           2
-             "cc-mode:tab-width"                2
-             "cc-mode:fill-column"              80
-             "cc-mode:comment-column"           80
-             "cc-mode:clangd-with-args"         ("/usr/bin/clangd-11"
-                                                 "-j=16"
-                                                 "--all-scopes-completion=1"
-                                                 "--background-index=1"
-                                                 "--limit-results=128"
-                                                 "--cross-file-rename"
-                                                 "--completion-style=detailed"
-                                                 "--pch-storage=memory"
-                                                 "--log=error")
-             ))
-    )
+           ;; ------------------------------------------------------------------
+           ;; c/c++-mode configuration
+           "cc-mode:c-basic-offset"           2
+           "cc-mode:tab-width"                2
+           "cc-mode:fill-column"              80
+           "cc-mode:comment-column"           80
+           "cc-mode:clangd-with-args"         ("/usr/bin/clangd-11"
+                                               "-j=16"
+                                               "--all-scopes-completion=1"
+                                               "--background-index=1"
+                                               "--limit-results=128"
+                                               "--cross-file-rename"
+                                               "--completion-style=detailed"
+                                               "--pch-storage=memory"
+                                               "--log=error")
+           ))
+  )
 
 #+end_src
 
@@ -879,21 +894,21 @@ interactions with Emacs. Lets set that up here.
 
 #+begin_src emacs-lisp
 
-  (use-package zenburn-theme
+(use-package zenburn-theme
 
-    :custom-face
-    (diff-added    ((t :foreground "green"   :underline nil)))
-    (diff-removed  ((t :foreground "red"     :underline nil)))
-    (highlight     ((t :background "#a9a9a9" :underline nil)))
+  :custom-face
+  (diff-added    ((t :foreground "green"   :underline nil)))
+  (diff-removed  ((t :foreground "red"     :underline nil)))
+  (highlight     ((t :background "#a9a9a9" :underline nil)))
 
-    :init
-    ;; -------------------------------------------------------------------------
-    ;; this looks nice !
-    (setq default-frame-alist '((cursor-color . "gold")))
+  :init
+  ;; ---------------------------------------------------------------------------
+  ;; this looks nice !
+  (setq default-frame-alist '((cursor-color . "gold")))
 
-    :config
-    (load-theme 'zenburn :no-confirm)
-    )
+  :config
+  (load-theme 'zenburn :no-confirm)
+  )
 
 #+end_src
 
@@ -903,27 +918,27 @@ From Protesilaos Stavrou
 
 #+begin_src emacs-lisp
 
-  (use-package modus-themes
-    :disabled
+(use-package modus-themes
+  :disabled
 
-    :custom
-    (modus-themes-italic-constructs nil)
-    (modus-themes-bold-constructs nil)
-    (modus-themes-region '(accented bg-only no-extend))
+  :custom
+  (modus-themes-italic-constructs nil)
+  (modus-themes-bold-constructs nil)
+  (modus-themes-region '(accented bg-only no-extend))
 
-    :custom-face
-    (diff-added    ((t :foreground "green"   :underline nil)))
-    (diff-removed  ((t :foreground "red"     :underline nil)))
-    (highlight     ((t :background "#a9a9a9" :underline nil)))
+  :custom-face
+  (diff-added    ((t :foreground "green"   :underline nil)))
+  (diff-removed  ((t :foreground "red"     :underline nil)))
+  (highlight     ((t :background "#a9a9a9" :underline nil)))
 
-    :init
-    ;; -------------------------------------------------------------------------
-    ;; load theme files before enabling a theme
-    (modus-themes-load-themes)
+  :init
+  ;; ---------------------------------------------------------------------------
+  ;; load theme files before enabling a theme
+  (modus-themes-load-themes)
 
-    :config
-    (modus-themes-load-operandi)
-    )
+  :config
+  (modus-themes-load-operandi)
+  )
 
 #+end_src
 
@@ -978,20 +993,20 @@ the left side of the frame, and =0= pixels wide on the right side.
 
 #+begin_src emacs-lisp
 
-  (fringe-mode '(6 . 0))
+(fringe-mode '(3 . 0))
 
-  ;; ---------------------------------------------------------------------------
-  ;; customize line continuation indicator bitmaps (with muted colors)
-  (define-fringe-bitmap 'left-curly-arrow [16 48 112 240 240 112 48 16])
-  (set-fringe-bitmap-face 'left-curly-arrow 'shadow)
+;; -----------------------------------------------------------------------------
+;; customize line continuation indicator bitmaps (with muted colors)
+(define-fringe-bitmap 'left-curly-arrow [16 48 112 240 240 112 48 16])
+(set-fringe-bitmap-face 'left-curly-arrow 'shadow)
 
-  (define-fringe-bitmap 'right-curly-arrow [8 12 14 15 15 14 12 8])
-  (set-fringe-bitmap-face 'right-curly-arrow 'shadow)
+(define-fringe-bitmap 'right-curly-arrow [8 12 14 15 15 14 12 8])
+(set-fringe-bitmap-face 'right-curly-arrow 'shadow)
 
-  (setq-default fringes-outside-margins nil)
-  (setq-default indicate-buffer-boundaries nil)
-  (setq-default indicate-empty-lines nil)
-  (setq-default overflow-newline-into-fringe t)
+(setq-default fringes-outside-margins nil)
+(setq-default indicate-buffer-boundaries nil)
+(setq-default indicate-empty-lines nil)
+(setq-default overflow-newline-into-fringe t)
 
 #+end_src
 
@@ -1007,27 +1022,27 @@ limited to!) the following:
 
 #+begin_src emacs-lisp
 
-  ;; ---------------------------------------------------------------------------
-  (setq search-highlight t)
-  (setq query-replace-highlight t)
-  (setq transient-mark-mode t)
+;; -----------------------------------------------------------------------------
+(setq search-highlight t)
+(setq query-replace-highlight t)
+(setq transient-mark-mode t)
 
-  ;; ---------------------------------------------------------------------------
-  ;; enable highlighting on current line as well as current line on all windows.
-  (require 'hl-line)
-  (custom-set-variables '(global-hl-line-sticky-flag t))
-  (global-hl-line-mode 1)
+;; -----------------------------------------------------------------------------
+;; enable highlighting on current line as well as current line on all windows.
+(require 'hl-line)
+(custom-set-variables '(global-hl-line-sticky-flag t))
+(global-hl-line-mode 1)
 
-  ;; ---------------------------------------------------------------------------
-  ;; highlight matching parenthesis quickly in most unobtrusive way
-  ;; possible, also setup the missing parenthesis highlighting as well.
-  (require 'paren)
-  (setq show-paren-style 'parenthesis)
-  (setq show-paren-delay 0)
-  (set-face-foreground 'show-paren-mismatch "orange red")
-  (set-face-background 'show-paren-match "black")
-  (set-face-foreground 'show-paren-match "gold")
-  (show-paren-mode t)
+;; -----------------------------------------------------------------------------
+;; highlight matching parenthesis quickly in most unobtrusive way
+;; possible, also setup the missing parenthesis highlighting as well.
+(require 'paren)
+(setq show-paren-style 'parenthesis)
+(setq show-paren-delay 0)
+(set-face-foreground 'show-paren-mismatch "orange red")
+(set-face-background 'show-paren-match "black")
+(set-face-foreground 'show-paren-match "gold")
+(show-paren-mode t)
 
 #+end_src
 
@@ -1038,36 +1053,35 @@ limited to!) the following:
   (use-package highlight-parentheses
     :delight
     :config
-    (global-highghlight-parenthesis-mode))
+    (global-highlight-parentheses-mode))
 
 #+end_src
 ** Modeline customizations
 
 #+begin_src emacs-lisp
 
-  (use-package telephone-line
-    :init
-    (telephone-line-defsegment anupamk/telephone-line-segment-clock ()
-                               "display current time"
-                               (format-time-string "[%H:%M %m/%d]"))
+(use-package telephone-line
+  :delight
 
-    ;; ---------------------------------------------------------------------------
-    ;; lhs of modeline
-    (setq telephone-line-lhs '((nil . (telephone-line-buffer-segment
-                                       telephone-line-position-segment
-                                       anupamk/telephone-line-segment-clock))))
+  :init
+  (telephone-line-defsegment anupamk/telephone-line-segment-clock ()
+    "display current time"
+    (format-time-string "[%H:%M %m/%d]"))
 
-    ;; ---------------------------------------------------------------------------
-    ;; rhs of modeline
-    (setq telephone-line-rhs '((accent . (telephone-line-vc-segment))))
+  ;; ---------------------------------------------------------------------------
+  ;; lhs of modeline
+  (setq telephone-line-lhs '((nil . (telephone-line-buffer-segment
+                                     telephone-line-position-segment
+                                     anupamk/telephone-line-segment-clock))))
 
-    :hook
-    (after-init-hook . (lambda() (telephone-line-mode t))))
+  ;; ---------------------------------------------------------------------------
+  ;; rhs of modeline
+  (setq telephone-line-rhs '((accent . (telephone-line-vc-segment))))
+
+  :hook
+  (after-init . (lambda() (telephone-line-mode t))))
 
 #+end_src
-
-
-
 
 
 * Keyboard Configuration
@@ -1080,7 +1094,9 @@ Lets just set the basics up first, we can migrate our configuration to
 it later.
 
 #+begin_src emacs-lisp
+
   (use-package general)
+
 #+end_src
 
 ** General key bindings
@@ -1089,106 +1105,107 @@ keybindings. These are all defined here.
 *** Global Keys
 #+begin_src emacs-lisp
 
-  (use-package emacs
-    :init
+(use-package emacs
+  :init
 
-    ;; ---------------------------------------------------------------------------
-    ;; define a new keymap and add bindings to it
-    (defvar anupamk/global-keymap (make-sparse-keymap) "keymap for anupamk/minor-keymap-mode")
+  ;; ---------------------------------------------------------------------------
+  ;; define a new keymap and add bindings to it
+  (defvar anupamk/global-keymap (make-sparse-keymap) "keymap for anupamk/minor-keymap-mode")
 
-    (define-minor-mode anupamk/minor-keymap-mode
-      "override major mode keys with my keys"
-      :init-value t
-      :keymap anupamk/global-keymap)
+  (define-minor-mode anupamk/minor-keymap-mode
+    "override major mode keys with my keys"
+    :init-value t
+    :keymap anupamk/global-keymap)
 
-    (define-globalized-minor-mode anupamk/global-keymap-mode anupamk/minor-keymap-mode anupamk/minor-keymap-mode)
+  (define-globalized-minor-mode anupamk/global-keymap-mode anupamk/minor-keymap-mode anupamk/minor-keymap-mode)
 
-    ;; ---------------------------------------------------------------------------
-    ;; keymaps in 'emulation-mode-map-alists' take precedence
-    (add-to-list 'emulation-mode-map-alists `((anupamk/minor-keymap-mode . ,anupamk/global-keymap-mode)))
+  ;; ---------------------------------------------------------------------------
+  ;; keymaps in 'emulation-mode-map-alists' take precedence
+  (add-to-list 'emulation-mode-map-alists `((anupamk/minor-keymap-mode . ,anupamk/global-keymap-mode)))
 
-    ;; ---------------------------------------------------------------------------
-    ;; ofcourse we don't want these to be active in the minibuffer.
-    (defun anupamk/utils:minibuffer-setup-hook ()
-      (anupamk/minor-keymap-mode nil))
-    (add-hook 'minibuffer-setup-hook 'anupamk/utils:minibuffer-setup-hook)
+  ;; ---------------------------------------------------------------------------
+  ;; ofcourse we don't want these to be active in the minibuffer.
+  (defun anupamk/utils:minibuffer-setup-hook ()
+    (anupamk/minor-keymap-mode nil))
+  (add-hook 'minibuffer-setup-hook 'anupamk/utils:minibuffer-setup-hook)
 
-    ;; ---------------------------------------------------------------------------
-    ;; assign various keys to the 'anupamk/global-keymap' here ↓
+  ;; ---------------------------------------------------------------------------
+  ;; assign various keys to the 'anupamk/global-keymap' here ↓
 
-    ;; -------------------------------------------------------------------------
-    ;; <meta-g g> : goes to a specific line
-    (define-key anupamk/global-keymap (kbd "M-g g") #'goto-line)
+  ;; ---------------------------------------------------------------------------
+  ;; <meta-g g> : goes to a specific line
+  (define-key anupamk/global-keymap (kbd "M-g g") #'goto-line)
 
-    ;; -------------------------------------------------------------------------
-    ;; recenter current line
-    (define-key anupamk/global-keymap (kbd "C-c r") #'recenter)
+  ;; ---------------------------------------------------------------------------
+  ;; recenter current line
+  (define-key anupamk/global-keymap (kbd "C-c r") #'recenter)
 
-    ;; -------------------------------------------------------------------------
-    ;; jump to begining / end of buffer
-    (define-key anupamk/global-keymap (kbd "C-c <end>")  #'end-of-buffer)
-    (define-key anupamk/global-keymap (kbd "C-c <home>") #'beginning-of-buffer)
+  ;; ---------------------------------------------------------------------------
+  ;; jump to begining / end of buffer
+  (define-key anupamk/global-keymap (kbd "C-c <end>")  #'end-of-buffer)
+  (define-key anupamk/global-keymap (kbd "C-c <home>") #'beginning-of-buffer)
 
-    ;; -------------------------------------------------------------------------
-    ;; create a new scratch buffer
-    (define-key anupamk/global-keymap (kbd "C-c s") #'anupamk:utils/create-new-scratch-buffer)
+  ;; ---------------------------------------------------------------------------
+  ;; create a new scratch buffer
+  (define-key anupamk/global-keymap (kbd "C-c s") #'anupamk:utils/create-new-scratch-buffer)
 
-    ;; -------------------------------------------------------------------------
-    ;; rename current buffer
-    (define-key anupamk/global-keymap (kbd "C-c C-x C-r") #'anupamk:utils/rename-current-buffer-file)
+  ;; ---------------------------------------------------------------------------
+  ;; rename current buffer
+  (define-key anupamk/global-keymap (kbd "C-c C-x C-r") #'anupamk:utils/rename-current-buffer-file)
 
-    ;; -------------------------------------------------------------------------
-    ;; vi style parenthesis matching
-    (define-key anupamk/global-keymap (kbd "%") #'anupamk:utils/vi-match-paren)
+  ;; ---------------------------------------------------------------------------
+  ;; vi style parenthesis matching
+  (define-key anupamk/global-keymap (kbd "%") #'anupamk:utils/vi-match-paren)
 
-    ;; -------------------------------------------------------------------------
-    ;; regex search always
-    (define-key anupamk/global-keymap [remap isearch-forward]  #'isearch-forward-regexp)
-    (define-key anupamk/global-keymap [remap isearch-backward] #'isearch-backward-regexp)
+  ;; ---------------------------------------------------------------------------
+  ;; regex search always
+  (define-key anupamk/global-keymap [remap isearch-forward]  #'isearch-forward-regexp)
+  (define-key anupamk/global-keymap [remap isearch-backward] #'isearch-backward-regexp)
 
-    ;; -------------------------------------------------------------------------
-    ;; visual demarcation in code
-    (define-key anupamk/global-keymap (kbd "C-c e") #'anupamk:utils/fill-to-end)
+  ;; ---------------------------------------------------------------------------
+  ;; visual demarcation in code
+  (define-key anupamk/global-keymap (kbd "C-c e") #'anupamk:utils/fill-to-end)
+  (define-key anupamk/global-keymap (kbd "C-c C-e") #'anupamk:utils/fill-to-end)
 
-    ;; ------------------------------------------------------------------------
-    ;; <esc> to quit from a command
-    (define-key anupamk/global-keymap (kbd "<escape>") #'keyboard-escape-quit)
+  ;; ---------------------------------------------------------------------------
+  ;; <esc> to quit from a command
+  (define-key anupamk/global-keymap (kbd "<escape>") #'keyboard-escape-quit)
 
-    ;; ---------------------------------------------------------------------------
-    ;; create + destroy frames
-    (define-key anupamk/global-keymap (kbd "C-c C-n") #'make-frame)
-    (define-key anupamk/global-keymap (kbd "C-c C-w") #'delete-frame)
+  ;; ---------------------------------------------------------------------------
+  ;; create + destroy frames
+  (define-key anupamk/global-keymap (kbd "C-c C-n") #'make-frame)
+  (define-key anupamk/global-keymap (kbd "C-c C-w") #'delete-frame)
 
-    ;; -------------------------------------------------------------------------
-    ;; prevent accidental emacs-kill
-    (define-key anupamk/global-keymap (kbd "C-x C-c") (lambda()
-                                                        (interactive)
-                                                        (message "terminate this emacs session with \'M-x kill-emacs\'")))
+  ;; ---------------------------------------------------------------------------
+  ;; prevent accidental emacs-kill
+  (define-key anupamk/global-keymap (kbd "C-x C-c") (lambda()
+                                                      (interactive)
+                                                      (message "terminate this emacs session with \'M-x kill-emacs\'")))
 
-    ;; -----------------------------------------------------------------------
-    ;; created numbered vterm instance
-    (define-key anupamk/global-keymap (kbd "C-c C-<return>") #'anupamk:utils/create-numbered-vterm-instance))
+  ;; ---------------------------------------------------------------------------
+  ;; created numbered vterm instance
+  (define-key anupamk/global-keymap (kbd "C-c C-<return>") #'anupamk:utils/create-numbered-vterm-instance))
 
 #+end_src
 *** Toggle keys
 #+begin_src emacs-lisp
 
-  ;; ---------------------------------------------------------------------------
-  ;; define some keybindings via the `C-x t` prefix, for toggling
-  ;; different behaviors.
-  ;;
-  ;; just rolls off the tongue doesn't it ?
-  (use-package emacs
+;; -----------------------------------------------------------------------------
+;; define some keybindings via the `C-x t` prefix, for toggling
+;; different behaviors.
+;;
+;; just rolls off the tongue doesn't it ?
+(use-package emacs
 
-    :init
-    (bind-keys :prefix-map toggle-map
-               :prefix "C-c t"
-               ("i" . anupamk:utils/toggle-invisibles)
-               ("l" . anupamk:utils/toggle-line-numbers)
-               ("f" . hs-toggle-hiding)
-               ("t" . text-mode)
-               ("R" . anupamk:utils/edit-file-with-sudo))
-    )
+  :init
+  (bind-keys :prefix-map toggle-map
+             :prefix "C-c t"
+             ("i" . anupamk:utils/toggle-invisibles)
+             ("l" . anupamk:utils/toggle-line-numbers)
+             ("f" . hs-toggle-hiding)
+             ("t" . text-mode)
+             ("R" . anupamk:utils/edit-file-with-sudo))
+  )
 
 #+end_src
 ** Window movement
@@ -1202,23 +1219,23 @@ FWIW, =julia-assange= (yes, /that/ one) had
 
 #+begin_src emacs-lisp
 
-  (use-package emacs
-    :init
-    (require 'windmove)
+(use-package emacs
+  :init
+  (require 'windmove)
 
-    ;; ---------------------------------------------------------------------------
-    ;; movement that falls-of-the-edge of the frame will wrap around to
-    ;; find the window on the opposite side of the frame.
-    (setq windmove-wrap-around t)
+  ;; ---------------------------------------------------------------------------
+  ;; movement that falls-of-the-edge of the frame will wrap around to
+  ;; find the window on the opposite side of the frame.
+  (setq windmove-wrap-around t)
 
-    :commands
-    (windmove-up windmove-down windmove-left windmove-right)
+  :commands
+  (windmove-up windmove-down windmove-left windmove-right)
 
-    :bind
-    (("C-<M-up>"    . windmove-up)
-     ("C-<M-down>"  . windmove-down)
-     ("C-<M-left>"  . windmove-left)
-     ("C-<M-right>" . windmove-right)))
+  :bind
+  (("C-<M-up>"    . windmove-up)
+   ("C-<M-down>"  . windmove-down)
+   ("C-<M-left>"  . windmove-left)
+   ("C-<M-right>" . windmove-right)))
 
 #+end_src
 ** Buffer movement
@@ -1228,16 +1245,16 @@ various windows more easily than the usual =C-x b=.
 
 #+begin_src emacs-lisp
 
-  (use-package buffer-move
-    :delight
-    :commands
-    (buf-move-up buf-move-down buf-move-left buf-move-right)
+(use-package buffer-move
+  :delight
+  :commands
+  (buf-move-up buf-move-down buf-move-left buf-move-right)
 
-    :bind
-    (("C-c <C-S-up>"     . buf-move-up)
-     ("C-c <C-S-down>"   . buf-move-down)
-     ("C-c <C-S-left>"   . buf-move-left)
-     ("C-c <C-S-right>"  . buf-move-right)))
+  :bind
+  (("C-c <C-S-up>"     . buf-move-up)
+   ("C-c <C-S-down>"   . buf-move-down)
+   ("C-c <C-S-left>"   . buf-move-left)
+   ("C-c <C-S-right>"  . buf-move-right)))
 
 #+end_src
 
@@ -1253,20 +1270,20 @@ visting files that were operated on recently.
 
 #+begin_src emacs-lisp
 
-  (use-package emacs
-    :init
-    (require 'recentf)
+(use-package emacs
+  :init
+  (require 'recentf)
 
-    ;; -------------------------------------------------------------------------
-    ;; 300 files ought to be enough for anybody
-    (setq recentf-max-saved-items 300)
+  ;; ---------------------------------------------------------------------------
+  ;; 300 files ought to be enough for anybody
+  (setq recentf-max-saved-items 300)
 
-    ;; -------------------------------------------------------------------------
-    ;; don't show labels for keys that can be used to open nth files
-    (setq recentf-show-file-shortcuts-flag nil)
+  ;; ---------------------------------------------------------------------------
+  ;; don't show labels for keys that can be used to open nth files
+  (setq recentf-show-file-shortcuts-flag nil)
 
-    :hook
-    (after-init-hook . recentf-mode))
+  :hook
+  (after-init . recentf-mode))
 
 #+end_src
 
@@ -1289,40 +1306,40 @@ think of.
 
 #+begin_src emacs-lisp
 
-  (require 'savehist)
-  (setq kill-ring-max 1000)
-  (setq history-length 1000)
-  (setq savehist-additional-variables
-        '(kill-ring
-          command-history
-          set-variable-value-history
-          custom-variable-history
-          query-replace-history
-          read-expression-history
-          minibuffer-history
-          read-char-history
-          face-name-history
-          bookmark-history
-          file-name-history))
+(require 'savehist)
+(setq kill-ring-max 1000)
+(setq history-length 1000)
+(setq savehist-additional-variables
+      '(kill-ring
+        command-history
+        set-variable-value-history
+        custom-variable-history
+        query-replace-history
+        read-expression-history
+        minibuffer-history
+        read-char-history
+        face-name-history
+        bookmark-history
+        file-name-history))
 
-  (put 'minibuffer-history 'history-length 1000)
-  (put 'file-name-history          'history-length 1000)
-  (put 'set-variable-value-history 'history-length 1000)
-  (put 'custom-variable-history    'history-length 1000)
-  (put 'query-replace-history      'history-length 1000)
-  (put 'read-expression-history    'history-length 1000)
-  (put 'read-char-history          'history-length 1000)
-  (put 'face-name-history          'history-length 1000)
-  (put 'bookmark-history           'history-length 1000)
+(put 'minibuffer-history 'history-length 1000)
+(put 'file-name-history          'history-length 1000)
+(put 'set-variable-value-history 'history-length 1000)
+(put 'custom-variable-history    'history-length 1000)
+(put 'query-replace-history      'history-length 1000)
+(put 'read-expression-history    'history-length 1000)
+(put 'read-char-history          'history-length 1000)
+(put 'face-name-history          'history-length 1000)
+(put 'bookmark-history           'history-length 1000)
 
-  ;; ---------------------------------------------------------------------------
-  ;; no duplicates in history
-  (setq history-delete-duplicates t)
+;; -----------------------------------------------------------------------------
+;; no duplicates in history
+(setq history-delete-duplicates t)
 
-  ;; ---------------------------------------------------------------------------
-  ;; start it
-  (let (message-log-max)
-    (savehist-mode))
+;; -----------------------------------------------------------------------------
+;; start it
+(let (message-log-max)
+  (savehist-mode))
 
 #+end_src
 
@@ -1343,41 +1360,41 @@ Where is the point at ?
 
 #+begin_src emacs-lisp
 
-  (use-package marginalia
-    :general
-    (:keymaps 'minibuffer-local-map
-              "M-A" 'marginalias-cycle)
+(use-package marginalia
+  :general
+  (:keymaps 'minibuffer-local-map
+            "M-A" 'marginalias-cycle)
 
-    :custom
-    ((marginalia-align-offset -1)         ; 1 space on the right
-     (marginalia-align 'right)
-     (marginalia-margin-threshold 200)
-     (marginalia-separator-threshold 120)
-     (marginalia-truncate-width 100)
-     (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil)))
+  :custom
+  ((marginalia-align-offset -1)         ; 1 space on the right
+   (marginalia-align 'right)
+   (marginalia-margin-threshold 200)
+   (marginalia-separator-threshold 120)
+   (marginalia-truncate-width 100)
+   (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil)))
 
-    :init
-    (marginalia-mode))
+  :init
+  (marginalia-mode))
 
 #+end_src
 ** Vertico
 
 #+begin_src emacs-lisp
 
-  (use-package vertico
-    :demand t
-    :custom
-    (vertico-count 20)
-    (vertico-cycle nil)
+(use-package vertico
+  :demand t
+  :custom
+  (vertico-count 20)
+  (vertico-cycle nil)
 
-    :general
-    (:keymaps 'vertico-map
-              "C-n" #'vertico-next
-              "C-p" #'vertico-previous
-              "C-q" #'vertico-exit)
+  :general
+  (:keymaps 'vertico-map
+            "C-n" #'vertico-next
+            "C-p" #'vertico-previous
+            "C-q" #'vertico-exit)
 
-    :config
-    (vertico-mode))
+  :config
+  (vertico-mode))
 
 #+end_src
 
@@ -1385,14 +1402,14 @@ Where is the point at ?
 
 #+begin_src emacs-lisp
 
-  (use-package orderless
-    :demand t
-    :custom
-    (completion-styles '(orderless))
-    (completion-category-defaults nil)
-    (orderless-component-matching-styles '(orderless-regexp orderless-flex))
-    (orderless-regexp-separator "[/\s_-]+")
-    (completion-category-overrides '((file (styles . (partial-completion))))))
+(use-package orderless
+  :demand t
+  :custom
+  (completion-styles '(orderless))
+  (completion-category-defaults nil)
+  (orderless-component-matching-styles '(orderless-regexp orderless-flex))
+  (orderless-regexp-separator "[/\s_-]+")
+  (completion-category-overrides '((file (styles . (partial-completion))))))
 
 #+end_src
 
@@ -1400,35 +1417,35 @@ Where is the point at ?
 
 #+begin_src emacs-lisp
 
-  (use-package consult
+(use-package consult
 
-    :custom
-    ((register-preview-delay 0)
-     (consult-narrow-key "<"))
+  :custom
+  ((register-preview-delay 0)
+   (consult-narrow-key "<"))
 
-    :init
-    ;; -------------------------------------------------------------------------
-    ;; show absolute line-numbers when narrowing is active
-    (setq consult-line-numbers-widen t)
+  :init
+  ;; ---------------------------------------------------------------------------
+  ;; show absolute line-numbers when narrowing is active
+  (setq consult-line-numbers-widen t)
 
-    ;; -------------------------------------------------------------------------
-    ;; setup project root for `project.el'
-    (setq consult-project-root-function
-                (lambda ()
-                  (when-let (project (project-current))
-                    (project-root project))))
+  ;; ---------------------------------------------------------------------------
+  ;; setup project root for `project.el'
+  (setq consult-project-root-function
+        (lambda ()
+          (when-let (project (project-current))
+            (project-root project))))
 
-    ;; -------------------------------------------------------------------------
-    ;; use plocate as the locate backend, ignoring case, and limiting to 100
-    ;; results
-    (setq consult-locate-args "plocate --ignore-case --limit 100")
+  ;; ---------------------------------------------------------------------------
+  ;; use plocate as the locate backend, ignoring case, and limiting to 100
+  ;; results
+  (setq consult-locate-args "plocate --ignore-case --limit 100")
 
-    :general
-    (:keymaps 'consult-map
-              "M-y"     #'consult-yank-from-kill-ring
-              "C-s"     #'isearch-forward
-              "C-x b"   #'consult-buffer
-              "C-x C-b" #'consult-buffer))
+  :general
+  (:keymaps 'consult-map
+            "M-y"     #'consult-yank-from-kill-ring
+            "C-s"     #'isearch-forward
+            "C-x b"   #'consult-buffer
+            "C-x C-b" #'consult-buffer))
 
 #+end_src
 
@@ -1437,20 +1454,20 @@ Emacs Mini Buffer Actions Rooted in Keymaps !
 
 #+begin_src emacs-lisp
 
-  (use-package embark
-    :init
-    (setq prefix-help-command #'embark-prefix-help-command)
+(use-package embark
+  :init
+  (setq prefix-help-command #'embark-prefix-help-command)
 
-    :general
-    (("C-."    . embark-act)
-     ("C-;"    . embark-dwim)
-     ("C-h B"  . embark-bindings))
+  :general
+  (("C-."    . embark-act)
+   ("C-;"    . embark-dwim)
+   ("C-h B"  . embark-bindings))
 
-    :config
-    (add-to-list 'display-buffer-alist
-                 '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                   nil
-                   (window-parameters (mode-line-format . none)))))
+  :config
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
 
 #+end_src
 
@@ -1458,14 +1475,14 @@ Consult users normally want embark-consult as well.
 
 #+begin_src emacs-lisp
 
-  (use-package embark-consult
-    :after
-    (embark consult)
+(use-package embark-consult
+  :after
+  (embark consult)
 
-    :demand t
+  :demand t
 
-    :hook
-    (embark-collect-mode . consult-preview-at-point-mode))
+  :hook
+  (embark-collect . consult-preview-at-point-mode))
 
 #+end_src
 
@@ -1475,15 +1492,15 @@ Quickly lookup words in a dictionary
 
 #+begin_src emacs-lisp
 
-  (use-package dictionary
-    :commands
-    (dictionary-search)
+(use-package dictionary
+  :commands
+  (dictionary-search)
 
-    :init
-    (global-set-key (kbd "C-c d") #'dictionary-search)
+  :init
+  (global-set-key (kbd "C-c d") #'dictionary-search)
 
-    :config
-    (setq  dictionary-server "dict.org"))
+  :config
+  (setq dictionary-server "dict.org"))
 
 #+end_src
 *** Spelling correction
@@ -1491,39 +1508,39 @@ I am using [[https://github.com/redguardtoo/wucuo][wucuo]] for spell checking.
 
 #+begin_src emacs-lisp
 
-  (use-package wucuo
-    :custom
-    ;; -------------------------------------------------------------------------
-    ;; just spell check the documentation regions and comments in
-    ;; code. spell checking other regions seems kind of wasteful.
-    ;;
-    ;; would be _really_ cool to have this configured on a per
-    ;; major-mode basis.
-    (wucuo-font-faces-to-check '(font-lock-doc-face font-lock-comment-face))
+(use-package wucuo
+  :custom
+  ;; ---------------------------------------------------------------------------
+  ;; just spell check the documentation regions and comments in
+  ;; code. spell checking other regions seems kind of wasteful.
+  ;;
+  ;; would be _really_ cool to have this configured on a per
+  ;; major-mode basis.
+  (wucuo-font-faces-to-check '(font-lock-doc-face font-lock-comment-face))
 
-    :init
-    ;; -------------------------------------------------------------------------
-    ;; spell checking via `aspell'
-    (setq ispell-program-name "aspell")
-    (setq ispell-extra-args '("--sug-mode=ultra" "--lang=en_US" "--run-together" "--run-together-limit=16"))
+  :init
+  ;; ---------------------------------------------------------------------------
+  ;; spell checking via `aspell'
+  (setq ispell-program-name "aspell")
+  (setq ispell-extra-args '("--sug-mode=ultra" "--lang=en_US" "--run-together" "--run-together-limit=16"))
 
-    ;; -------------------------------------------------------------------------
-    ;; disable spell checking in some major-modes
-    (setq wucuo-spell-check-buffer-predicate
-          (lambda ()
-            (not (memq major-mode '(dired-mode
-                                    log-edit-mode
-                                    compilation-mode
-                                    help-mode
-                                    profiler-report-mode
-                                    speedbar-mode
-                                    gud-mode
-                                    calc-mode
-                                    Info-mode)))))
+  ;; ---------------------------------------------------------------------------
+  ;; disable spell checking in some major-modes
+  (setq wucuo-spell-check-buffer-predicate
+        (lambda ()
+          (not (memq major-mode '(dired-mode
+                                  log-edit-mode
+                                  compilation-mode
+                                  help-mode
+                                  profiler-report-mode
+                                  speedbar-mode
+                                  gud-mode
+                                  calc-mode
+                                  Info-mode)))))
 
-    :hook
-    (prog-mode . wucuo-start)
-    (text-mode . wucuo-start))
+  :hook
+  (prog-mode . wucuo-start)
+  (text-mode . wucuo-start))
 
 #+end_src
 
@@ -1533,10 +1550,10 @@ changes to affected buffers.
 
 #+begin_src emacs-lisp
 
-  (use-package wgrep
-    :init
-    (setq wgrep-auto-save-buffer t)
-    (setq wgrep-change-readonly-file t))
+(use-package wgrep
+  :init
+  (setq wgrep-auto-save-buffer t)
+  (setq wgrep-change-readonly-file t))
 
 #+end_src
 
@@ -1544,23 +1561,23 @@ changes to affected buffers.
 
 #+begin_src emacs-lisp
 
-  (require 'isearch)
+(require 'isearch)
 
-  ;; ---------------------------------------------------------------------------
-  ;; basic settings
-  (setq search-whitespace-regexp ".*?")
-  (setq search-highlight t)
-  (setq isearch-lax-whitespace t)
-  (setq isearch-regexp-lax-whitespace nil)
-  (setq isearch-lazy-highlight t)
+;; -----------------------------------------------------------------------------
+;; basic settings
+(setq search-whitespace-regexp ".*?")
+(setq search-highlight t)
+(setq isearch-lax-whitespace t)
+(setq isearch-regexp-lax-whitespace nil)
+(setq isearch-lazy-highlight t)
 
-  ;; ---------------------------------------------------------------------------
-  ;; these are newer
-  (setq isearch-lazy-count t)
-  (setq lazy-count-prefix-format "(%s/%s) ")
-  (setq lazy-count-suffix-format "[%s of %s]")
-  (setq isearch-yank-on-move 'shift)
-  (setq isearch-allow-scroll 'unlimited)
+;; -----------------------------------------------------------------------------
+;; these are newer
+(setq isearch-lazy-count t)
+(setq lazy-count-prefix-format "(%s/%s) ")
+(setq lazy-count-suffix-format "[%s of %s]")
+(setq isearch-yank-on-move 'shift)
+(setq isearch-allow-scroll 'unlimited)
 
 #+end_src
 
@@ -1572,95 +1589,95 @@ search results, specifying custom query commands etc. etc.
 
 #+begin_src emacs-lisp
 
-  (use-package rg
-    :after
-    (wgrep)
+(use-package rg
+  :after
+  (wgrep)
 
-    :custom
-    ;; ---------------------------------------------------------------------------
-    ;; group matches in same file together
-    (rg-group-result t)
+  :custom
+  ;; ---------------------------------------------------------------------------
+  ;; group matches in same file together
+  (rg-group-result t)
 
-    ;; ---------------------------------------------------------------------------
-    ;; hide most of rg command line when non nil
-    (rg-hide-command t)
+  ;; ---------------------------------------------------------------------------
+  ;; hide most of rg command line when non nil
+  (rg-hide-command t)
 
-    ;; ---------------------------------------------------------------------------
-    ;; show the columns of matches in the output buffer
-    (rg-show-columns nil)
+  ;; ---------------------------------------------------------------------------
+  ;; show the columns of matches in the output buffer
+  (rg-show-columns nil)
 
-    ;; ---------------------------------------------------------------------------
-    ;; show headers in the result
-    (rg-show-header t)
+  ;; ---------------------------------------------------------------------------
+  ;; show headers in the result
+  (rg-show-header t)
 
-    ;; ---------------------------------------------------------------------------
-    ;; file aliases added to the 'rg' built-in aliases
-    (rg-custom-type-aliases nil)
+  ;; ---------------------------------------------------------------------------
+  ;; file aliases added to the 'rg' built-in aliases
+  (rg-custom-type-aliases nil)
 
-    ;; ---------------------------------------------------------------------------
-    ;; default file alias to use when no alias can be determined
-    (rg-default-alias-fallback "all")
+  ;; ---------------------------------------------------------------------------
+  ;; default file alias to use when no alias can be determined
+  (rg-default-alias-fallback "all")
 
-    :config
-    ;; ---------------------------------------------------------------------------
-    ;; ripgrep in project root
-    (rg-define-search anupamk:ripgrep-search/rg-vc-or-dir
-                      "ripgrep in project-root or $pwd"
-                      :query ask
-                      :format regexp
-                      :files "everything"
+  :config
+  ;; ---------------------------------------------------------------------------
+  ;; ripgrep in project root
+  (rg-define-search anupamk:ripgrep-search/rg-vc-or-dir
+    "ripgrep in project-root or $pwd"
+    :query ask
+    :format regexp
+    :files "everything"
 
-                      ;; ---------------------------------------------------------
-                      ;; smart setting will trigger an analyze of the
-                      ;; search string and if it’s all lower case, the
-                      ;; search will be case insensitive, otherwise it
-                      ;; will be case sensitive
-                      :rg-ignore-case smart
+    ;; -------------------------------------------------------------------------
+    ;; smart setting will trigger an analyze of the
+    ;; search string and if it’s all lower case, the
+    ;; search will be case insensitive, otherwise it
+    ;; will be case sensitive
+    :rg-ignore-case smart
 
-                      ;; ---------------------------------------------------------
-                      ;; select a root-search directory. project-root or
-                      ;; current directory
-                      :dir (let ((vc (vc-root-dir)))
-                             (if vc
-                                 vc
-                               default-directory))
+    ;; -------------------------------------------------------------------------
+    ;; select a root-search directory. project-root or
+    ;; current directory
+    :dir (let ((vc (vc-root-dir)))
+           (if vc
+               vc
+             default-directory))
 
-                      ;; ---------------------------------------------------------
-                      ;; specifies if the final search command line can
-                      ;; be modified and confirmed by the user.
-                      :confirm prefix
-                      :flags ("--no-hidden -g '!*.patch' -g '!*.patch.*' -g '!*.savehist'"))
+    ;; -------------------------------------------------------------------------
+    ;; specifies if the final search command line can
+    ;; be modified and confirmed by the user.
+    :confirm prefix
+    :flags ("--no-hidden -g '!*.patch' -g '!*.patch.*' -g '!*.savehist'"))
 
-    ;; ---------------------------------------------------------------------------
-    ;; ripgrep for symbol at point in $PWD
-    (rg-define-search anupamk:ripgrep-search/rg-ref-in-pwd
-                      "ripgrep for symbol at point in $pwd"
-                      :query ask
-                      :format regexp
-                      :files "everything"
+  ;; ---------------------------------------------------------------------------
+  ;; ripgrep for symbol at point in $PWD
+  (rg-define-search anupamk:ripgrep-search/rg-ref-in-pwd
+    "ripgrep for symbol at point in $pwd"
+    :query ask
+    :format regexp
+    :files "everything"
 
-                      ;; ---------------------------------------------------------
-                      ;; smart setting will trigger an analyze of the
-                      ;; search string and if it’s all lower case, the
-                      ;; search will be case insensitive, otherwise it
-                      ;; will be case sensitive
-                      :rg-ignore-case smart
+    ;; -------------------------------------------------------------------------
+    ;; smart setting will trigger an analyze of the
+    ;; search string and if it’s all lower case, the
+    ;; search will be case insensitive, otherwise it
+    ;; will be case sensitive
+    :rg-ignore-case smart
 
-                      :dir default-directory
-                      :confirm prefix
-                      :flags ("--no-hidden -g '!*.patch' -g '!*.patch.*' -g '!*.savehist'"))
+    :dir default-directory
+    :confirm prefix
+    :flags ("--no-hidden -g '!*.patch' -g '!*.patch.*' -g '!*.savehist'"))
 
 
-    (defun anupamk:ripgrep-search/save-search-as-name ()
-      "Save `rg' buffer, naming it after the current search query.
+  (defun anupamk:ripgrep-search/save-search-as-name ()
+    "Save `rg' buffer, naming it after the current search query.
           This function is meant to be mapped to a key in `rg-mode-map'."
-      (interactive)
-      (let ((pattern (car rg-pattern-history)))
-        (rg-save-search-as-name (concat "≪" pattern "≫"))))
+    (interactive)
+    (let ((pattern (car rg-pattern-history)))
+      (rg-save-search-as-name (concat "≪" pattern "≫"))))
 
-    :bind
-    (("M-s r" . anupamk:ripgrep-search/rg-vc-or-dir)
-     ("M-s d" . anupamk:ripgrep-search/rg-ref-in-pwd)))
+  :bind
+  (("M-s r" . anupamk:ripgrep-search/rg-vc-or-dir)
+   ("M-s d" . anupamk:ripgrep-search/rg-ref-in-pwd)))
 
 #+end_src
 
@@ -1673,23 +1690,23 @@ currently entered incomplete command.
 
 #+begin_src emacs-lisp
 
-  (use-package which-key
-    :commands
+(use-package which-key
+  :commands
 
-    (which-key-C-h-dispatch)
+  (which-key-C-h-dispatch)
 
-    :config
-    (setq which-key-show-early-on-C-h t)
-    (setq which-key-idle-delay 10000)
-    (setq which-key-idle-secondary-delay 0.05)
-    (setq which-key-popup-type 'side-window)
-    (setq which-key-show-prefix 'echo)
-    (setq which-key-max-display-columns 6)
-    (setq which-key-separator " ")
-    (setq which-key-special-keys '("SPC" "TAB" "RET" "ESC" "DEL"))
+  :config
+  (setq which-key-show-early-on-C-h t)
+  (setq which-key-idle-delay 10000)
+  (setq which-key-idle-secondary-delay 0.05)
+  (setq which-key-popup-type 'side-window)
+  (setq which-key-show-prefix 'echo)
+  (setq which-key-max-display-columns 6)
+  (setq which-key-separator " ")
+  (setq which-key-special-keys '("SPC" "TAB" "RET" "ESC" "DEL"))
 
-    :hook
-    (after-init . which-key-mode))
+  :hook
+  (after-init . which-key-mode))
 
 #+end_src
 ** Dynamic word completion
@@ -1711,21 +1728,21 @@ What does it have to do with hippies ? No idea.
 
 #+begin_src emacs-lisp
 
-  ;; ---------------------------------------------------------------------------
-  ;; forward                       bar/mumble/name    quux/mumble/name
-  ;; reverse                       name\mumble\bar    name\mumble\quux
-  ;; post-forward                  name|bar/mumble    name|quux/mumble
-  ;; post-forward-angle-brackets   name<bar/mumble>   name<quux/mumble>
-  ;; nil                           name               name<2>
-  (setf uniquify-buffer-name-style 'post-forward-angle-brackets)
+;; -----------------------------------------------------------------------------
+;; forward                       bar/mumble/name    quux/mumble/name
+;; reverse                       name\mumble\bar    name\mumble\quux
+;; post-forward                  name|bar/mumble    name|quux/mumble
+;; post-forward-angle-brackets   name<bar/mumble>   name<quux/mumble>
+;; nil                           name               name<2>
+(setf uniquify-buffer-name-style 'post-forward-angle-brackets)
 
 #+end_src
 ** Auto revert
 
 #+begin_src emacs-lisp
 
-  (require 'autorevert)
-  (global-auto-revert-mode t)
+(require 'autorevert)
+(global-auto-revert-mode t)
 
 #+end_src
 ** Version control
@@ -1733,76 +1750,79 @@ What does it have to do with hippies ? No idea.
 
 #+begin_src emacs-lisp
 
-  (use-package magit
-    :delight
-    :config
+(use-package magit
+  :delight
+  :config
 
-    ;; ---------------------------------------------------------------------------
-    ;; whether to show word-granularity differences within diff hunks
-    (setq magit-diff-refine-hunk t)
+  ;; ---------------------------------------------------------------------------
+  ;; whether to show word-granularity differences within diff hunks
+  (setq magit-diff-refine-hunk t)
 
-    ;; ---------------------------------------------------------------------------
-    ;; move untracked files section behind Unstaged changes section
-    (magit-add-section-hook 'magit-status-sections-hook
-                            'magit-insert-untracked-files
-                            'magit-insert-unpushed-commits t)
+  ;; ---------------------------------------------------------------------------
+  ;; move untracked files section behind Unstaged changes section
+  (magit-add-section-hook 'magit-status-sections-hook
+                          'magit-insert-untracked-files
+                          'magit-insert-unpushed-commits t)
 
-    (remove-hook 'git-commit-finish-query-functions
-                 'git-commit-check-style-conventions)
+  (remove-hook 'git-commit-finish-query-functions
+               'git-commit-check-style-conventions)
 
-    :bind  (("C-c g" . magit-status)
-            ("C-c l" . magit-log)
-            ("C-h B" . magit-blame)))
+  ;; ---------------------------------------------------------------------------
+  ;; full-frame magit-status
+  ;;    from: http://whattheemacsd.com/setup-magit.el-01.html
+  (defadvice magit-status (around magit-fullscreen activate)
+    (window-configuration-to-register :magit-fullscreen)
+    ad-do-it
+    (delete-other-windows)
+    (anupamk:utils/unbold-all-faces))
 
-#+end_src
-*** Diff highlight
+  (defun magit-quit-session ()
+    "Restores the previous window configuration and kills the magit buffer"
+    (interactive)
+    (kill-buffer)
+    (jump-to-register :magit-fullscreen))
 
-#+begin_src emacs-lisp
+  (define-key magit-status-mode-map (kbd "q") 'magit-quit-session)
 
-  (use-package diff-hl
-    :delight
-
-    :config
-    (global-diff-hl-mode t)
-
-    :hook
-    (magit-post-refresh-hook #'diff-hl-magit-post-refresh))
+  :bind  (("C-c g" . magit-status)
+          ("C-c l" . magit-log)
+          ("C-h B" . magit-blame)))
 
 #+end_src
 ** Bookmark places in buffer
 
 #+begin_src emacs-lisp
 
-  (use-package bookmark
-    :delight
+(use-package bookmark
+  :delight
 
-    :functions
-    (anupamk:bookmark/quick-save-bookmark)
+  :functions
+  (anupamk:bookmark/quick-save-bookmark)
 
-    :config
-    (defun anupamk:bookmark/quick-save-bookmark ()
-      "Save bookmark with name as 'buffer:row:col'"
-      (interactive)
-      (bookmark-set (format "%s:%s:line %s:column %s"
-                            (thing-at-point 'symbol)
-                            (buffer-name)
-                            (line-number-at-pos)
-                            (current-column)))
-      (message "Bookmarked saved at current position"))
+  :config
+  (defun anupamk:bookmark/quick-save-bookmark ()
+    "Save bookmark with name as 'buffer:row:col'"
+    (interactive)
+    (bookmark-set (format "%s:%s:line %s:column %s"
+                          (thing-at-point 'symbol)
+                          (buffer-name)
+                          (line-number-at-pos)
+                          (current-column)))
+    (message "Bookmarked saved at current position"))
 
-    (setq bookmark-save-flag t)
+  (setq bookmark-save-flag t)
 
-    :bind
-    (("C-c q s b" . anupamk:bookmark/quick-save-bookmark)))
+  :bind
+  (("C-c q s b" . anupamk:bookmark/quick-save-bookmark)))
 
 #+end_src
 ** Collection of Ridiculously Useful eXtensions
 
 #+begin_src emacs-lisp
 
-  (use-package crux
-    :bind
-    (("C-a" . crux-move-beginning-of-line)))
+(use-package crux
+  :bind
+  (("C-a" . crux-move-beginning-of-line)))
 
 #+end_src
 ** VTerm
@@ -1812,40 +1832,40 @@ as compared to alternatives f.e. =ansi-term=.
 
 #+begin_src emacs-lisp
 
-  (use-package vterm
-    :custom
-    ;; ---------------------------------------------------------------------------
-    ;; ignore bold text properties
-    (vterm-disable-bold t)
+(use-package vterm
+  :custom
+  ;; ---------------------------------------------------------------------------
+  ;; ignore bold text properties
+  (vterm-disable-bold t)
 
-    ;; ---------------------------------------------------------------------------
-    ;; ignore underline text properties
-    (vterm-disable-underline t)
+  ;; ---------------------------------------------------------------------------
+  ;; ignore underline text properties
+  (vterm-disable-underline t)
 
-    ;; ---------------------------------------------------------------------------
-    ;; ignore inverse-video text properties
-    (vterm-disable-inverse-video t)
+  ;; ---------------------------------------------------------------------------
+  ;; ignore inverse-video text properties
+  (vterm-disable-inverse-video t)
 
-    ;; ---------------------------------------------------------------------------
-    ;; how big should the scrollback buffer be ?
-    (vterm-max-scrollback 10000)
+  ;; ---------------------------------------------------------------------------
+  ;; how big should the scrollback buffer be ?
+  (vterm-max-scrollback 10000)
 
-    ;; ---------------------------------------------------------------------------
-    ;; Controls whether or not to exclude the prompt when copying a line
-    ;; in vterm-copy-mode
-    (vterm-copy-exclude-prompt t)
+  ;; ---------------------------------------------------------------------------
+  ;; Controls whether or not to exclude the prompt when copying a line
+  ;; in vterm-copy-mode
+  (vterm-copy-exclude-prompt t)
 
-    :config
-    ;; ---------------------------------------------------------------------------
-    ;; open a terminal in the current project
-    (defun anupamk:term/spawn-vterm-in-project ()
-      "Spawn a vterm in the current project."
-      (interactive)
-      (let* ((project-current (project-current))
-             (default-directory (if project-current
-                                    (project-root project-current)
-                                  default-directory)))
-        (vterm))))
+  :config
+  ;; ---------------------------------------------------------------------------
+  ;; open a terminal in the current project
+  (defun anupamk:term/spawn-vterm-in-project ()
+    "Spawn a vterm in the current project."
+    (interactive)
+    (let* ((project-current (project-current))
+           (default-directory (if project-current
+                                  (project-root project-current)
+                                default-directory)))
+      (vterm))))
 
 #+end_src
 ** Code folding
@@ -1870,113 +1890,103 @@ experience.
 
 #+begin_src emacs-lisp
 
+;; -----------------------------------------------------------------------------
+;; override, display-buffer-alist to better manage appearance of popup
+;; windows in an emacs-frame.
+(use-package emacs
+  :custom
+  (display-buffer-alist
+   '(
+     ;; ------------------------------------------------------------------------
+     ;; left-side window configuration
+
+     ;; ------------------------------------------------------------------------
+     ;; right-side window configuration
+
+     ("\\*\\(Help\\|Faces\\|Colors\\|Apropos\\).*"
+      (display-buffer-in-side-window)
+      (window-width . 0.40)
+      (side . right)
+      (slot . 0)
+      (window-parameters . ((mode-line-format . (" "
+                                                 mode-line-buffer-identification)))))
+
+     ;; ------------------------------------------------------------------------
+     ;; top-side window configuration
+
+     ;; ------------------------------------------------------------------------
+     ;; bottom-side window configuration
+
+     ;; ------------------------------------------------------------------------
+     ;; magit stash
+     ("\\*~stash.*"
+      (display-buffer-in-side-window)
+      (window-width . 0.50)
+      (side . bottom)
+      (slot . 0)
+      (window-parameters . ((mode-line-format . (" "
+                                                 mode-line-buffer-identification)))))
+
+     ;; ------------------------------------------------------------------------
+     ;; code searches via ripgrep, xref etc.
+     ("\\*\\(rg\\|xref\\).*"
+      (display-buffer-in-side-window)
+      (window-width . 0.50)
+      (side . bottom)
+      (slot . 0)
+      (window-parameters . ((mode-line-format . (" "
+                                                 mode-line-buffer-identification)))))
+
+     ;; ------------------------------------------------------------------------
+     ;; bottom-side window (right of `rg' ∵ 'slot == 1')
+     ("\\*compilation*"
+      (display-buffer-in-side-window)
+      (window-width . 0.30)
+      (side . bottom)
+      (slot . 1)
+      (window-parameters . ((mode-line-format . (" "
+                                                 mode-line-buffer-identification)))))
+
+     ;; ------------------------------------------------------------------------
+     ;; this is the Emacs byte compilation
+     ("\\*\\(Compile-Log\\).*"
+      (display-buffer-in-side-window)
+      (window-width . 0.20)
+      (dedicated . t)
+      (side . bottom)
+      (slot . 0)
+      (window-parameters . ((mode-line-format . (" "
+                                                 mode-line-buffer-identification)))))
+     ))
+
+  (even-window-sizes 'height-only)
+
+  :hook
+  ((help-mode . visual-line-mode)
+   (custom-mode . visual-line-mode))
+  )
+
+(use-package emacs
+  :functions (anupamk:window-utils/display-buffer-at-bottom)
+
+  :config
+
   ;; ---------------------------------------------------------------------------
-  ;; override, display-buffer-alist to better manage appearance of popup
-  ;; windows in an emacs-frame.
-  (use-package emacs
-    :custom
-    (display-buffer-alist
-     '(
-       ;; ------------------------------------------------------------------
-       ;; left-side window configuration
-
-       ;; ------------------------------------------------------------------------
-       ;; right-side window configuration
-
-       ;; ------------------------------------------------------------------------
-       ;; magit and related windows
-       ("\\magit.*"
-        (display-buffer-in-side-window)
-        (window-width . 0.50)
-        (side . right)
-        (slot . 0)
-        (window-parameters . ((mode-line-format . (" "
-                                                   mode-line-buffer-identification)))))
-
-       ("\\*\\(Help\\|Faces\\|Colors\\|Apropos\\).*"
-        (display-buffer-in-side-window)
-        (window-width . 0.40)
-        (side . right)
-        (slot . 0)
-        (window-parameters . ((mode-line-format . (" "
-                                                   mode-line-buffer-identification)))))
-
-       ;; ------------------------------------------------------------------------
-       ;; top-side window configuration
-
-       ;; ------------------------------------------------------------------------
-       ;; bottom-side window configuration
-
-       ;; ------------------------------------------------------------------
-       ;; magit stash
-       ("\\*~stash.*"
-        (display-buffer-in-side-window)
-        (window-width . 0.50)
-        (side . bottom)
-        (slot . 0)
-        (window-parameters . ((mode-line-format . (" "
-                                                   mode-line-buffer-identification)))))
-
-       ;; ------------------------------------------------------------------
-       ;; code searches via ripgrep, xref etc.
-       ("\\*\\(rg\\|xref\\).*"
-        (display-buffer-in-side-window)
-        (window-width . 0.50)
-        (side . bottom)
-        (slot . 0)
-        (window-parameters . ((mode-line-format . (" "
-                                                   mode-line-buffer-identification)))))
-
-       ;; ------------------------------------------------------------------------
-       ;; bottom-side window (right of `rg' ∵ 'slot == 1')
-       ("\\*compilation*"
-        (display-buffer-in-side-window)
-        (window-width . 0.30)
-        (side . bottom)
-        (slot . 1)
-        (window-parameters . ((mode-line-format . (" "
-                                                   mode-line-buffer-identification)))))
-
-       ;; ------------------------------------------------------------------
-       ;; this is the Emacs byte compilation
-       ("\\*\\(Compile-Log\\).*"
-        (display-buffer-in-side-window)
-        (window-width . 0.20)
-        (dedicated . t)
-        (side . bottom)
-        (slot . 0)
-        (window-parameters . ((mode-line-format . (" "
-                                                   mode-line-buffer-identification)))))
-       ))
-
-    (even-window-sizes 'height-only)
-
-    :hook
-    ((help-mode . visual-line-mode)
-     (custom-mode . visual-line-mode))
-    )
-
-  (use-package emacs
-    :functions (anupamk:window-utils/display-buffer-at-bottom)
-
-    :config
-
-    ;; ---------------------------------------------------------------------------
-    ;; move current buffer to bottom of the frame.
-    (defun anupamk:window-utils/display-buffer-at-bottom ()
-      "move current buffer to the bottom of the frame. this is useful to take a
+  ;; move current buffer to bottom of the frame.
+  (defun anupamk:window-utils/display-buffer-at-bottom ()
+    "move current buffer to the bottom of the frame. this is useful to take a
               buffer out of a side window."
-      (interactive)
-      (let ((buffer (current-buffer)))
-        (with-current-buffer buffer
-          (delete-window)
-          (display-buffer-at-bottom buffer `((window-parameters . ((mode-line-format . (" "
-                                                                                        mode-line-buffer-identification)))))))))
+    (interactive)
+    (let ((buffer (current-buffer)))
+      (with-current-buffer buffer
+        (delete-window)
+        (display-buffer-at-bottom buffer `((window-parameters . ((mode-line-format . (" "
+                                                                                      mode-line-buffer-identification)))))))))
 
-    :bind
-    (("C-c b" . anupamk:window-utils/display-buffer-at-bottom))
+  :bind
+  (("C-c b" . anupamk:window-utils/display-buffer-at-bottom))
 
-    )
+  )
 
 #+end_src
 
@@ -1995,44 +2005,44 @@ Lets set that up.
 
 #+begin_src emacs-lisp
 
-  (use-package emacs
-    :init
+(use-package emacs
+  :init
 
-    :functions
-    (anupamk:project-utils/locate-project-root
-     anupamk:project-utils/do-locate-project-root)
+  :functions
+  (anupamk:project-utils/locate-project-root
+   anupamk:project-utils/do-locate-project-root)
 
-    :config
-    ;; --------------------------------------------------------------------
-    ;; find project root-dir by searching (recursively) through a list of
-    ;; project-root-markers.
-    (defun anupamk:project-utils/do-locate-project-root (dirname all-marker-lists)
-      "find project root directory (starting from DIRNAME) by searching
+  :config
+  ;; ---------------------------------------------------------------------------
+  ;; find project root-dir by searching (recursively) through a list of
+  ;; project-root-markers.
+  (defun anupamk:project-utils/do-locate-project-root (dirname all-marker-lists)
+    "find project root directory (starting from DIRNAME) by searching
        for markers defined in ALL-MARKER-LISTS"
 
-      (when all-marker-lists
-        (let ((anupamk:project-root (locate-dominating-file dirname (car all-marker-lists))))
-          (if (not anupamk:project-root)
-              ;; -------------------------------------------------------------------
-              ;; keep looking ...
-              (anupamk:project-utils/do-locate-project-root dirname (cdr all-marker-lists))
+    (when all-marker-lists
+      (let ((anupamk:project-root (locate-dominating-file dirname (car all-marker-lists))))
+        (if (not anupamk:project-root)
+            ;; -----------------------------------------------------------------
+            ;; keep looking ...
+            (anupamk:project-utils/do-locate-project-root dirname (cdr all-marker-lists))
 
-            ;; ---------------------------------------------------------------------
-            ;; we got a live one
-            (cons 'vc anupamk:project-root)))))
+          ;; -------------------------------------------------------------------
+          ;; we got a live one
+          (cons 'vc anupamk:project-root)))))
 
-    ;; ---------------------------------------------------------------------------
-    ;; just a wrapper over the real thaang
-    (defun anupamk:project-utils/locate-project-root (dirname)
-      (let ((project-root-markers (list "Cargo.toml"
-                                        "WORKSPACE"
-                                        "compile_commands.json"
-                                        "compile_flags.txt"
-                                        ".git")))
-        (anupamk:project-utils/do-locate-project-root dirname project-root-markers)))
+  ;; ---------------------------------------------------------------------------
+  ;; just a wrapper over the real thaang
+  (defun anupamk:project-utils/locate-project-root (dirname)
+    (let ((project-root-markers (list "Cargo.toml"
+                                      "WORKSPACE"
+                                      "compile_commands.json"
+                                      "compile_flags.txt"
+                                      ".git")))
+      (anupamk:project-utils/do-locate-project-root dirname project-root-markers)))
 
-    :hook
-    (project-find-functions #'anupamk:project-utils/locate-project-root))
+  :hook
+  (project-find-functions #'anupamk:project-utils/locate-project-root))
 
 #+end_src
 
@@ -2044,95 +2054,95 @@ Define some utility functions for working with c/c++ sources.
 
 #+begin_src emacs-lisp
 
-  (use-package emacs
-    :functions
-    (anupamk:cc-utils/compile-eventually
-     anupamk:cc-utils/compile-eventually-with-make
-     anupamk:cc-utils/compile-eventually-with-bazel
-     anupamk:cc-utils/verify-with-bazel
-     anupamk:cc-utils/build-everything-with-bazel
-     anupamk:cc-utils/quick-compile-cmdstr)
+(use-package emacs
+  :functions
+  (anupamk:cc-utils/compile-eventually
+   anupamk:cc-utils/compile-eventually-with-make
+   anupamk:cc-utils/compile-eventually-with-bazel
+   anupamk:cc-utils/verify-with-bazel
+   anupamk:cc-utils/build-everything-with-bazel
+   anupamk:cc-utils/quick-compile-cmdstr)
 
-    :config
-    (defun anupamk:cc-utils/compile-eventually (search-fname compile-cmdstr)
-      "recursively search up the directory tree for 'search-file-name',
+  :config
+  (defun anupamk:cc-utils/compile-eventually (search-fname compile-cmdstr)
+    "recursively search up the directory tree for 'search-file-name',
         and when found, run 'compile-cmdstr'"
 
-      ;; find the root of the development-tree
-      (defvar search-root-dir (file-name-directory buffer-file-name))
-      (defvar devel-root-dir (locate-dominating-file search-root-dir search-fname))
+    ;; find the root of the development-tree
+    (defvar search-root-dir (file-name-directory buffer-file-name))
+    (defvar devel-root-dir (locate-dominating-file search-root-dir search-fname))
 
-      ;; do the build
-      (if devel-root-dir (with-temp-buffer (cd devel-root-dir)
-                                           (compile compile-cmdstr))
-        (progn  (message (concat "unable to find: '"
-                                 search-fname "' within: '"
-                                 search-root-dir "', running quick-compile"))
-                (compile (anupamk:cc-utils/quick-compile-cmdstr)))))
+    ;; do the build
+    (if devel-root-dir (with-temp-buffer (cd devel-root-dir)
+                                         (compile compile-cmdstr))
+      (progn  (message (concat "unable to find: '"
+                               search-fname "' within: '"
+                               search-root-dir "', running quick-compile"))
+              (compile (anupamk:cc-utils/quick-compile-cmdstr)))))
 
-    ;; ---------------------------------------------------------------------------
-    ;; compile with a makefile
-    (defun anupamk:cc-utils/compile-eventually-with-make ()
-      "compile with make"
-      (interactive)
-      (anupamk:cc-utils/compile-eventually "Makefile" "make"))
+  ;; ---------------------------------------------------------------------------
+  ;; compile with a makefile
+  (defun anupamk:cc-utils/compile-eventually-with-make ()
+    "compile with make"
+    (interactive)
+    (anupamk:cc-utils/compile-eventually "Makefile" "make"))
 
-    ;; ---------------------------------------------------------------------------
-    ;; compile with bazel
-    (defun anupamk:cc-utils/compile-eventually-with-bazel(target)
-      "compile with bazel"
-      (interactive)
-      (let ((bazel-compile-cmdstr (concat "set -e ; time t3 build --gen-compile-commands -c " target " | cut -c26-")))
-        (anupamk:cc-utils/compile-eventually "bazel_build_defs" bazel-compile-cmdstr)))
+  ;; ---------------------------------------------------------------------------
+  ;; compile with bazel
+  (defun anupamk:cc-utils/compile-eventually-with-bazel(target)
+    "compile with bazel"
+    (interactive)
+    (let ((bazel-compile-cmdstr (concat "set -e ; time t3 build --gen-compile-commands -c " target " | cut -c26-")))
+      (anupamk:cc-utils/compile-eventually "bazel_build_defs" bazel-compile-cmdstr)))
 
-    ;; ---------------------------------------------------------------------------
-    ;; test with bazel
-    (defun anupamk:cc-utils/verify-with-bazel ()
-      "test with bazel"
-      (interactive)
-      (let ((bazel-test-cmdstr (concat "t3 verify | cut -c26-")))
-        (anupamk:cc-utils/compile-eventually "bazel_build_defs" bazel-test-cmdstr)))
+  ;; ---------------------------------------------------------------------------
+  ;; test with bazel
+  (defun anupamk:cc-utils/verify-with-bazel ()
+    "test with bazel"
+    (interactive)
+    (let ((bazel-test-cmdstr (concat "t3 verify | cut -c26-")))
+      (anupamk:cc-utils/compile-eventually "bazel_build_defs" bazel-test-cmdstr)))
 
-    ;; ---------------------------------------------------------------------------
-    ;; test with bazel
-    (defun anupamk:cc-utils/build-everything-with-bazel ()
-      "test with bazel"
-      (interactive)
-      (let ((bazel-test-cmdstr (concat "t3 build | cut -c26-")))
-        (anupamk:cc-utils/compile-eventually "bazel_build_defs" bazel-test-cmdstr)))
+  ;; ---------------------------------------------------------------------------
+  ;; test with bazel
+  (defun anupamk:cc-utils/build-everything-with-bazel ()
+    "test with bazel"
+    (interactive)
+    (let ((bazel-test-cmdstr (concat "t3 build | cut -c26-")))
+      (anupamk:cc-utils/compile-eventually "bazel_build_defs" bazel-test-cmdstr)))
 
-    ;; ---------------------------------------------------------------------------
-    ;; quickly compile single source c/c++ programs. it produces final
-    ;; executable in the 'obj' sub-directory. the executable is called
-    ;; `file-name' without the extension
-    ;;
-    ;; this, a file called `<some-path>/foo.cpp' will produce an
-    ;; executable called `<some-path>/obj/foo'
-    (defun anupamk:cc-utils/quick-compile-cmdstr()
-      "quick compile single-file c/c++ programs"
+  ;; ---------------------------------------------------------------------------
+  ;; quickly compile single source c/c++ programs. it produces final
+  ;; executable in the 'obj' sub-directory. the executable is called
+  ;; `file-name' without the extension
+  ;;
+  ;; this, a file called `<some-path>/foo.cpp' will produce an
+  ;; executable called `<some-path>/obj/foo'
+  (defun anupamk:cc-utils/quick-compile-cmdstr()
+    "quick compile single-file c/c++ programs"
 
-      ;; -------------------------------------------------------------------------
-      ;; how we build c/c++ sources are almost fixed
-      ;;     -fdiagnostics-color=never ==> no ansii colorized output
-      (defvar qc-cmd-prefix:c   "gcc -fdiagnostics-color=never -std=c99 -g -O2 -Wall -o obj/")
-      (defvar qc-cmd-prefix:cpp "g++ -fdiagnostics-color=never -std=c++20 -g -O2 -Wall -o obj/")
+    ;; -------------------------------------------------------------------------
+    ;; how we build c/c++ sources are almost fixed
+    ;;     -fdiagnostics-color=never ==> no ansii colorized output
+    (defvar qc-cmd-prefix:c   "gcc -fdiagnostics-color=never -std=c99 -g -O2 -Wall -o obj/")
+    (defvar qc-cmd-prefix:cpp "g++ -fdiagnostics-color=never -std=c++20 -g -O2 -Wall -o obj/")
 
-      ;; first setup the appropriate compilation command based on buffer
-      ;; major-mode
-      (setq-local compile-command
-                  (format "%s%s %s"
-                          ;; %s: 'qc-cmd-prefix:{c,cpp}'
-                          (if (eq major-mode 'c-mode)
-                              qc-cmd-prefix:c
-                            qc-cmd-prefix:cpp)
+    ;; first setup the appropriate compilation command based on buffer
+    ;; major-mode
+    (setq-local compile-command
+                (format "%s%s %s"
+                        ;; %s: 'qc-cmd-prefix:{c,cpp}'
+                        (if (eq major-mode 'c-mode)
+                            qc-cmd-prefix:c
+                          qc-cmd-prefix:cpp)
 
-                          ;; %s: 'obj/<file-name>'
-                          (file-name-nondirectory (file-name-sans-extension (buffer-file-name)))
+                        ;; %s: 'obj/<file-name>'
+                        (file-name-nondirectory (file-name-sans-extension (buffer-file-name)))
 
-                          ;; %s: '<file-name>.{c,cpp}'
-                          (file-name-nondirectory (buffer-file-name)))))
+                        ;; %s: '<file-name>.{c,cpp}'
+                        (file-name-nondirectory (buffer-file-name)))))
 
-    )
+  )
 
 #+end_src
 
@@ -2140,108 +2150,111 @@ Define some utility functions for working with c/c++ sources.
 
 #+begin_src emacs-lisp
 
-  (use-package cc-mode
+(use-package clang-format+
+  )
 
-    :functions
-    (anupamk:cc/common-mode-hook
-     anupamk:cc/c++-mode-hook
-     anupamk:cc/c-mode-hook)
 
-    :init
-    (defun anupamk:cc/common-mode-hook ()
+(use-package cc-mode
+  :functions (anupamk:cc/c-mode-common-hook
+              anupamk:cc/c++-mode-hook
+              anupamk:cc/c-mode-hook)
 
-      ;; -------------------------------------------------------------------------
-      ;; highlight parenthesis
-      (highlight-parentheses-mode t)
+  :config
+  (defun anupamk:cc/c-mode-common-hook ()
+    (message "loading c-mode-common customizations")
 
-      ;; -------------------------------------------------------------------------
-      ;; '_' is not a modifier anymore
-      (modify-syntax-entry ?_ "w")
+    ;; -------------------------------------------------------------------------
+    ;; highlight parenthesis
+    (highlight-parentheses-mode t)
 
-      ;; -------------------------------------------------------------------------
-      ;; any specific code-fmt'ing related changes
-      (setf c-basic-offset (anupamk:utils/get-attribute-value "cc-mode:c-basic-offset")
+    ;; -------------------------------------------------------------------------
+    ;; '_' is not a modifier anymore
+    (modify-syntax-entry ?_ "w")
 
-            ;; -------------------------------------------------------------------
-            ;; Distance between tab stops (for display of tab characters), in
-            ;; columns.
-            tab-width (anupamk:utils/get-attribute-value "cc-mode:tab-width")
+    ;; -------------------------------------------------------------------------
+    ;;  any specific code-fmt'ing related changes
+    (setq c-basic-offset (anupamk:utils/get-attribute-value "cc-mode:c-basic-offset")
 
-            ;; -------------------------------------------------------------------
-            ;; spaces instead of tabs :)
-            indent-tabs-mode nil
+          ;; -------------------------------------------------------------------
+          ;; Distance between tab stops (for display of tab
+          ;; characters), in columns.
+          tab-width (anupamk:utils/get-attribute-value "cc-mode:tab-width")
 
-            ;; -------------------------------------------------------------------
-            ;; column beyond which automatic line-wrapping should happen.
-            fill-column (anupamk:utils/get-attribute-value "cc-mode:fill-column")
+          ;; -------------------------------------------------------------------
+          ;; spaces instead of tabs :)
+          indent-tabs-mode nil
 
-            ;; -------------------------------------------------------------------
-            ;; column to indent right-margin comments to...
-            comment-column (anupamk:utils/get-attribute-value "cc-mode:comment-column")
+          ;; -------------------------------------------------------------------
+          ;; column beyond which automatic line-wrapping should
+          ;; happen.
+          fill-column (anupamk:utils/get-attribute-value "cc-mode:fill-column")
 
-            ;; -------------------------------------------------------------------
-            ;; Specifies how M-x indent-for-comment should handle comment-only
-            ;; lines. When this variable is non-nil, comment-only lines are
-            ;; indented according to syntactic analysis via `c-offsets-alist'.
-            ;; Otherwise, the comment is indented as if it was preceded by code.
-            ;; Note that this variable does not affect how the normal line
-            ;; indentation treats comment-only lines.
-            c-indent-comments-syntactically-p t)
+          ;; -------------------------------------------------------------------
+          ;; column to indent right-margin comments to...
+          comment-column (anupamk:utils/get-attribute-value "cc-mode:comment-column")
 
-      ;; -------------------------------------------------------------------------
-      ;; syntax-help:
-      ;;
-      ;;  +   c-basic-offset times 1
-      ;;  -   c-basic-offset times -1
-      ;;  ++  c-basic-offset times 2
-      ;;  --  c-basic-offset times -2
-      ;;  *   c-basic-offset times 0.5
-      ;;  /   c-basic-offset times -0.5
-      (c-set-offset 'case-label '+)
-      (c-set-offset 'access-label '/)
-      (c-set-offset 'label '/)
+          ;; -------------------------------------------------------------------
+          ;; Specifies how M-x indent-for-comment should handle
+          ;; comment-only lines. When this variable is non-nil,
+          ;; comment-only lines are indented according to syntactic
+          ;; analysis via `c-offsets-alist'. Otherwise, the comment is
+          ;; indented as if it was preceded by code. Note that this
+          ;; variable does not affect how the normal line indentation
+          ;; treats comment-only lines.
+          c-indent-comments-syntactically-p t)
 
-      ;; -------------------------------------------------------------------------
-      ;; clang-format c/c++ *only* files before save
-      ;;
-      ;; when `add-hook' is invoked with a non-nil 4th argument (as
-      ;; here), the hook's buffer-local value is modified rather than
-      ;; the global value. thereby, effectively making the hook
-      ;; buffer-local.
-      (add-hook 'before-save-hook (lambda()
-                                    (when (locate-dominating-file "." ".clang-format")
-                                      (clang-format-buffer)) nil)
-                nil
-                t)
-      )
+    ;; -------------------------------------------------------------------------
+    ;; syntax help
+    ;;  +   c-basic-offset times 1
+    ;;  -   c-basic-offset times -1
+    ;;  ++  c-basic-offset times 2
+    ;;  --  c-basic-offset times -2
+    ;;  *   c-basic-offset times 0.5
+    ;;  /   c-basic-offset times -0.5
+    (c-set-offset 'case-label '+)
+    (c-set-offset 'access-label '/)
+    (c-set-offset 'label '/)
 
-    (defun anupamk:cc/c++-mode-hook ()
-      (anupamk:cc/common-mode-hook)
-      (setq comment-start "///")
-      (setq comment-end ""))
-
-    (defun anupamk:cc/c-mode-hook ()
-      (anupamk:cc/common-mode-hook))
-
-    :config
-
-    (define-key c-mode-map (kbd "RET")     #'newline-and-indent)
-    (define-key c-mode-map (kbd "C-<ret>") #'recompile)
-
-    ;; ---------------------------------------------------------------------------
-    ;; one true style
-    (add-to-list 'c-default-style '(c-mode . "k&r"))
-
-    ;; ---------------------------------------------------------------------------
-    ;; jump directly to source when we see compilation errors
-    (add-to-list 'compilation-search-path (getenv "PWD"))
-
-    ;; ---------------------------------------------------------------------------
-    ;; add our mode specific hooks
-    :hook
-    (c-mode-hook . anupamk:cc/c-mode-hook)
-    (c++-mode-hook . anupamk:cc/c++-mode-hook)
+    ;; -------------------------------------------------------------------------
+    ;; set the file mode to clang-format+-mode so that clang-format is
+    ;; used for formatting all c/c++ sources
+    (clang-format+-mode t)
     )
+
+  ;; ---------------------------------------------------------------------------
+  ;; c++ mode customizations
+  (defun anupamk:cc/c++-mode-hook ()
+    (anupamk:cc/c-mode-common-hook)
+    (message "loading c++-mode customizations")
+    (setq comment-start "///")
+    (setq comment-end "")
+    )
+
+  ;; ---------------------------------------------------------------------------
+  ;; c-mode customizations
+  (defun anupamk:cc/c-mode-hook ()
+    (anupamk:cc/c-mode-common-hook)
+    (message "loading c-mode customizations")
+    )
+
+  ;; ---------------------------------------------------------------------------
+  ;; setup canonical styles
+  (add-to-list 'c-default-style '(c-mode . "k&r"))
+  (add-to-list 'c-default-style '(c++-mode . "Stroustrup"))
+
+  ;; ---------------------------------------------------------------------------
+  ;; some useful bindings
+  (define-key c-mode-map (kbd "RET")  #'newline-and-indent)
+  (define-key c-mode-map (kbd "C-<ret>") #'recompile)
+
+  ;; ---------------------------------------------------------------------------
+  ;; jump directly to source when we see compilation errors
+  (add-to-list 'compilation-search-path (getenv "PWD"))
+
+  :hook
+  (c-mode . anupamk:cc/c-mode-hook)
+  (c++-mode . anupamk:cc/c++-mode-hook)
+  )
 
 #+end_src
 
@@ -2260,22 +2273,22 @@ Pretty vanilla configuration
 
 #+begin_src emacs-lisp
 
-  (defun anupamk:java-mode-setup()
-    "setup java mode"
-    (interactive)
+(defun anupamk:java-mode-setup()
+  "setup java mode"
+  (interactive)
 
-    ;; -------------------------------------------------------------------------
-    ;; basic settings
-    (setq c-basic-offset 4)
-    (setq tab-width 4)
-    (setq indent-tabs-mode nil)
+  ;; ---------------------------------------------------------------------------
+  ;; basic settings
+  (setq c-basic-offset 4)
+  (setq tab-width 4)
+  (setq indent-tabs-mode nil)
 
-    ;; -------------------------------------------------------------------------
-    ;; comments
-    (setq comment-start "///")
-    (setq comment-end ""))
+  ;; ---------------------------------------------------------------------------
+  ;; comments
+  (setq comment-start "///")
+  (setq comment-end ""))
 
-  (add-hook 'java-mode-hook #'anupamk:java-mode-setup)
+(add-hook 'java-mode-hook #'anupamk:java-mode-setup)
 
 #+end_src
 
@@ -2293,24 +2306,24 @@ latest version of =flymake= is installed. This is best documented
 
 #+begin_src emacs-lisp
 
-  (straight-use-package 'flymake)
+(straight-use-package 'flymake)
 
 #+end_src
 
 #+begin_src emacs-lisp
 
-  (use-package eglot
-    :config
+(use-package eglot
+  :config
 
 
-    ;; ---------------------------------------------------------------------------
-    ;; disable annoying, _distracting_, over-the-top features that serve
-    ;; no useful purpose at all (imnsho)
-    (setq eglot-ignored-server-capabilities '(:documentHighlightProvider    ; highlight symbols automatically
-                                              :documentSymbolProvider       ; list symbols in a buffer
-                                              :hoverProvider                ; documentation on hover
-                                              :signatureHelpProvider        ; function-signature help
-                                              )))
+  ;; ---------------------------------------------------------------------------
+  ;; disable annoying, _distracting_, over-the-top features that serve
+  ;; no useful purpose at all (imnsho)
+  (setq eglot-ignored-server-capabilities '(:documentHighlightProvider    ; highlight symbols automatically
+                                            :documentSymbolProvider       ; list symbols in a buffer
+                                            :hoverProvider                ; documentation on hover
+                                            :signatureHelpProvider        ; function-signature help
+                                            )))
 
 #+end_src
 
@@ -2320,34 +2333,34 @@ applied in one fell swoop.
 
 #+begin_src emacs-lisp
 
-  ;; ---------------------------------------------------------------------------
-  ;; want to set-eglot-client! for multiple languages in a declarative way.
-  (defconst anupamk:eglot-lsp-config
-    '(
-      (c++-config . ((:mode-name          .  c++-mode)
-                     (:mode-hook          .  c++-mode-hook)
-                     (:lsp-server-program .  (anupamk:utils/get-attribute-value "cc-mode:clangd-with-args"))))
+;; -----------------------------------------------------------------------------
+;; want to set-eglot-client! for multiple languages in a declarative way.
+(defconst anupamk:eglot-lsp-config
+  '(
+    (c++-config . ((:mode-name          .  c++-mode)
+                   (:mode-hook          .  c++-mode-hook)
+                   (:lsp-server-program .  (anupamk:utils/get-attribute-value "cc-mode:clangd-with-args"))))
 
-      (c-config   . ((:mode-name          .  c-mode)
-                     (:mode-hook          .  c-mode-hook)
-                     (:lsp-server-program .  (anupamk:utils/get-attribute-value "cc-mode:clangd-with-args"))))
+    (c-config   . ((:mode-name          .  c-mode)
+                   (:mode-hook          .  c-mode-hook)
+                   (:lsp-server-program .  (anupamk:utils/get-attribute-value "cc-mode:clangd-with-args"))))
 
-      ;; -----------------------------------------------------------------------
-      ;; add more programming language specific customization ↑
-      ))
+    ;; -------------------------------------------------------------------------
+    ;; add more programming language specific customization ↑
+    ))
 
-  ;; ---------------------------------------------------------------------------
-  ;; now apply of these in one fell swoop
-  (mapcar (lambda (lsp-config-info)
-            (let ((lsp-config-attrs (cdr lsp-config-info)))
+;; -----------------------------------------------------------------------------
+;; now apply of these in one fell swoop
+(mapcar (lambda (lsp-config-info)
+          (let ((lsp-config-attrs (cdr lsp-config-info)))
 
-              (add-to-list 'eglot-server-programs `(,(alist-get ':mode-name lsp-config-attrs)
-                                                    .
-                                                    ,(eval (alist-get ':lsp-server-program lsp-config-attrs))))
+            (add-to-list 'eglot-server-programs `(,(alist-get ':mode-name lsp-config-attrs)
+                                                  .
+                                                  ,(eval (alist-get ':lsp-server-program lsp-config-attrs))))
 
-              (add-hook (alist-get ':mode-hook lsp-config-attrs) #'eglot-ensure)))
+            (add-hook (alist-get ':mode-hook lsp-config-attrs) #'eglot-ensure)))
 
-          anupamk:eglot-lsp-config)
+        anupamk:eglot-lsp-config)
 
 #+end_src
 
@@ -2361,42 +2374,42 @@ which allows word-wrap etc. to happen on =visual= lines rather than
 
 #+begin_src emacs-lisp
 
-  (defun anupamk/do-org-mode-setup ()
-    "run these commands every time an org-mode buffer starts up"
+(defun anupamk/do-org-mode-setup ()
+  "run these commands every time an org-mode buffer starts up"
 
-    ;; -------------------------------------------------------------------------
-    ;; highlight parenthesis
-    (highlight-parentheses-mode t)
+  ;; ---------------------------------------------------------------------------
+  ;; highlight parenthesis
+  (highlight-parentheses-mode t)
 
-    ;; -------------------------------------------------------------------------
-    ;; indent text according to outline structure
-    (org-indent-mode)
+  ;; ---------------------------------------------------------------------------
+  ;; indent text according to outline structure
+  (org-indent-mode)
 
-    ;; -------------------------------------------------------------------------
-    ;; code-blocks within org-mode
-    (setq org-src-window-setup 'current-window)
-    (setq org-src-fontify-natively t)
-    (setq org-src-preserve-indentation t)
-    (setq org-src-tab-acts-natively t)
-    (setq org-confirm-babel-evaluate nil)
-    (setq org-edit-src-content-indentation 0)
+  ;; ---------------------------------------------------------------------------
+  ;; code-blocks within org-mode
+  (setq org-src-window-setup 'current-window)
+  (setq org-src-fontify-natively t)
+  (setq org-src-preserve-indentation t)
+  (setq org-src-tab-acts-natively t)
+  (setq org-confirm-babel-evaluate nil)
+  (setq org-edit-src-content-indentation 0)
 
-    ;; -------------------------------------------------------------------------
-    ;; fontify natively
-    (setq org-src-fontify-natively t)
+  ;; ---------------------------------------------------------------------------
+  ;; fontify natively
+  (setq org-src-fontify-natively t)
 
-    ;; -------------------------------------------------------------------------
-    ;; fancy html5 generation
-    (setq org-html-html5-fancy t)
-    (setq org-html-doctype "html5")
+  ;; ---------------------------------------------------------------------------
+  ;; fancy html5 generation
+  (setq org-html-html5-fancy t)
+  (setq org-html-doctype "html5")
 
-    ;; -------------------------------------------------------------------------
-    ;; when `visual-line-mode' is enabled, word-wrap is turned on, and
-    ;; simple editing commands are redefined to act on visual lines, not
-    ;; logical lines.
-    (visual-line-mode 1))
+  ;; ---------------------------------------------------------------------------
+  ;; when `visual-line-mode' is enabled, word-wrap is turned on, and
+  ;; simple editing commands are redefined to act on visual lines, not
+  ;; logical lines.
+  (visual-line-mode 1))
 
-  (add-hook 'org-mode-hook #'anupamk/do-org-mode-setup)
+(add-hook 'org-mode-hook #'anupamk/do-org-mode-setup)
 
 #+end_src
 
@@ -2427,33 +2440,33 @@ and a note taking  strategy called =Zettlekasten=, also called a
 
 #+begin_src emacs-lisp
 
-  (use-package org-roam
-    :init
+(use-package org-roam
+  :init
 
-    ;; ---------------------------------------------------------------------------
-    ;; don't display the annoying warning message about upgrading
-    ;; org-roam to v2. because it needs to be defined _before_ package
-    ;; is loaded, we do this in the `init' section of the config.
-    (setq org-roam-v2-ack t)
+  ;; ---------------------------------------------------------------------------
+  ;; don't display the annoying warning message about upgrading
+  ;; org-roam to v2. because it needs to be defined _before_ package
+  ;; is loaded, we do this in the `init' section of the config.
+  (setq org-roam-v2-ack t)
 
-    :custom
-    (org-roam-directory "~/source-code/roam-notes")
-    (org-roam-completion-everywhere t)
+  :custom
+  (org-roam-directory "~/source-code/roam-notes")
+  (org-roam-completion-everywhere t)
 
-    :bind (("C-c n l" . org-roam-buffer-toggle)
-           ("C-c n f" . org-roam-node-find)
-           ("C-c n i" . org-roam-node-insert)
+  :bind (("C-c n l" . org-roam-buffer-toggle)
+         ("C-c n f" . org-roam-node-find)
+         ("C-c n i" . org-roam-node-insert)
 
-           :map org-mode-map
-           ("C-M-i" . completion-at-point))
+         :map org-mode-map
+         ("C-M-i" . completion-at-point))
 
-    :config
-    (org-roam-db-autosync-enable))
+  :config
+  (org-roam-db-autosync-enable))
 
 #+end_src
 
 
-* Local Variables
+* Local Variables :noexport:
 
 Tangle on each file save.
 
