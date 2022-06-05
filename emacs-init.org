@@ -356,7 +356,9 @@ much better.
     (setq switch-to-buffer-preserve-window-point t)
 
     ;; -------------------------------------------------------------------------
-    ;; completion before indent
+    ;; with 'complete, <TAB> first tries to indent the current line,
+    ;; and if the line was already indented, then try to complete the
+    ;; thing at point.
     (setq tab-always-indent 'complete)
 
     ;; -------------------------------------------------------------------------
@@ -1742,6 +1744,13 @@ What does it have to do with hippies ? No idea.
 #+begin_src emacs-lisp
 
 (require 'autorevert)
+
+;; -----------------------------------------------------------------------------
+;; don't announce when a buffer is reverted
+(setq-default auto-revert-verbose nil)
+
+;; -----------------------------------------------------------------------------
+;; enable globally
 (global-auto-revert-mode t)
 
 #+end_src
