@@ -1907,6 +1907,17 @@ Built in =hideshow= mode makes this quite a seamless experience.
   (add-hook 'prog-mode-hook #'hs-minor-mode)
 
 #+end_src
+** Minions err Snippets
+
+#+begin_src emacs-lisp
+
+(use-package yasnippet
+  :defer)
+
+(use-package yasnippet-snippets
+  :defer)
+
+#+end_src
 
 
 * Window Management
