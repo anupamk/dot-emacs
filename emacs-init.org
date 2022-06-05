@@ -661,13 +661,6 @@ buffer is not visiting a file."
     (find-alternate-file (concat "/sudo:root@localhost:" buffer-file-name))))
 
 ;; -----------------------------------------------------------------------------
-;; use the 'font:default' for the compilation buffer as well. just reduce the
-;; font size, we can always increase it if required f.e. on error
-(defun anupamk:utils/setup-compilation-buffer-font()
-  (setq buffer-face-mode-face '(:family "Fira Code" :height 90))
-  (buffer-face-mode))
-
-;; -----------------------------------------------------------------------------
 ;; add many items to a list
 (defun anupamk:utils/add-many-to-list (L &rest items)
   (dolist (item items)
@@ -889,7 +882,6 @@ Unbold all bold fonts everywhere
 #+begin_src emacs-lisp
 
   (add-hook 'emacs-startup-hook #'anupamk:utils/unbold-all-faces)
-  (add-hook 'compilation-mode-hook #'anupamk:utils/setup-compilation-buffer-font)
 
 #+end_src
 
@@ -2405,6 +2397,68 @@ applied in one fell swoop.
             (add-hook (alist-get ':mode-hook lsp-config-attrs) #'eglot-ensure)))
 
         anupamk:eglot-lsp-config)
+
+#+end_src
+** Building
+*** CMake
+
+#+begin_src emacs-lisp
+
+;; -----------------------------------------------------------------------------
+;; explicitly load cmake-mode.el
+(load-file (expand-file-name "straight/repos/cmake/Auxiliary/cmake-mode.el" user-emacs-directory))
+(require 'cmake-mode)
+
+(anupamk:utils/add-many-to-list 'auto-mode-alist
+
+                                  ;; -------------------------------------------
+                                  ;; CMakeLists.txt files
+                                  '("CMakeLists\\.txt\\'" . cmake-mode)
+
+                                  ;; -------------------------------------------
+                                  ;; *.cmake files
+                                  '("\\.cmake\\'" . cmake-mode))
+
+;; -----------------------------------------------------------------------------
+;; and setup cmake-font-lock
+(use-package cmake-font-lock
+  :hook
+  (cmake-mode . cmake-font-lock-activate))
+
+#+end_src
+
+*** Compilation buffer configuration
+
+#+begin_src emacs-lisp
+
+(setq compilation-scroll-output 'first-error ; Scroll but stop at first error.
+      compilation-skip-threshold 2           ; Skip anything less than errors.
+      compilation-always-kill t)             ; Don't ask, just start new compilation.
+
+;; -----------------------------------------------------------------------------
+;; setup compilation buffer
+(defun anupamk:utils/setup-compilation-buffer()
+  ;; ---------------------------------------------------------------------------
+  ;; setup a different font
+  (setq buffer-face-mode-face '(:family "Fira Code" :height 130))
+  (buffer-face-mode)
+
+  ;; ---------------------------------------------------------------------------
+  ;; Turn off adaptive process buffering when using compilation
+  ;; mode, which allows Emacs to read subprocess output in larger
+  ;; chunks.
+  ;;
+  ;; also see `v:read-process-output-max' for more information
+  (setq process-adaptive-read-buffering nil)
+  )
+
+(add-hook 'compilation-mode-hook #'anupamk:utils/setup-compilation-buffer)
+
+;; -----------------------------------------------------------------------------
+;; Turn it back on again when finished.
+(add-hook 'compilation-finish-functions
+          (lambda (buffer string)
+            (setq process-adaptive-read-buffering t)))
 
 #+end_src
 
