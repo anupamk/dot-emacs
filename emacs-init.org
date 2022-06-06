@@ -1350,9 +1350,10 @@ Where is the point at ?
 
 #+begin_src emacs-lisp
 
-  (require 'saveplace)
-  (setq save-place-file (expand-file-name "save-point-place" user-emacs-directory))
-  (save-place-mode t)
+(require 'saveplace)
+
+(setq-default save-place t)
+(setq save-place-file (expand-file-name "save-point-place" user-emacs-directory))
 
 #+end_src
 
@@ -1746,12 +1747,16 @@ What does it have to do with hippies ? No idea.
 (require 'autorevert)
 
 ;; -----------------------------------------------------------------------------
+;; enable globally
+(global-auto-revert-mode t)
+
+;; -----------------------------------------------------------------------------
 ;; don't announce when a buffer is reverted
 (setq-default auto-revert-verbose nil)
 
 ;; -----------------------------------------------------------------------------
-;; enable globally
-(global-auto-revert-mode t)
+;; also auto refresh dired buffers
+(setq global-auto-revert-non-file-buffers t)
 
 #+end_src
 ** Version control
