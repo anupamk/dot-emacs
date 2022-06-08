@@ -1357,6 +1357,30 @@ Where is the point at ?
 
 #+end_src
 
+** Desktop
+
+#+begin_src emacs-lisp
+
+
+(use-package desktop+
+  :init
+  ;; ---------------------------------------------------------------------------
+  ;; this is required to ensure that 'desktop-kill' function is added
+  ;; to the 'kill-emacs-query-functions' which is responsible for
+  ;; saving the desktop, and deleting the desktop lock file when Emacs
+  ;; is killed.
+  (require 'desktop)
+
+  ;; ---------------------------------------------------------------------------
+  ;; where are we saving all desktops ?
+  (setq desktop+-base-dir (expand-file-name "desktops" user-emacs-directory))
+  (make-directory desktop+-base-dir 'parents)
+
+  :commands
+  (desktop+-create desktop+-load)
+  )
+
+#+end_src
 
 * Selection candidates and search methods
 ** Marginalia
