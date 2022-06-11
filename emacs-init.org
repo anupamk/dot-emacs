@@ -1913,6 +1913,24 @@ Built in =hideshow= mode makes this quite a seamless experience.
   :defer)
 
 #+end_src
+** PDF Tools
+
+#+begin_src emacs-lisp
+
+(use-package pdf-tools
+  :defer
+  :init
+  (pdf-tools-install)
+
+  :general
+  (:keymaps 'pdf-view-mode-map
+            "C-s" 'isearch-forward)
+
+  :custom
+  (pdf-annot-activate-created-annotations t)
+  )
+
+#+end_src
 
 
 * Window Management
