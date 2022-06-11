@@ -2527,7 +2527,7 @@ applied in one fell swoop.
 (defun anupamk:utils/setup-compilation-buffer()
   ;; ---------------------------------------------------------------------------
   ;; setup a different font
-  (setq buffer-face-mode-face '(:family "Fira Code" :height 130))
+  (setq buffer-face-mode-face '(:family "Fira Code" :height 90))
   (buffer-face-mode)
 
   ;; ---------------------------------------------------------------------------
