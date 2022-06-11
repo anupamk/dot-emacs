@@ -407,10 +407,6 @@ much better.
   ;; enable recursive minibuffers (launch command that use the
   ;; minibuffer while already inside a minibuffer)
   (setq enable-recursive-minibuffers t)
-
-  ;; -------------------------------------------------------------------------
-  ;; magit is the only vc frontend that i care about
-  (setf vc-handled-backends nil)
   )
 
 #+end_src
@@ -1120,10 +1116,6 @@ keybindings. These are all defined here.
   ;; assign various keys to the 'anupamk/global-keymap' here ↓
 
   ;; ---------------------------------------------------------------------------
-  ;; <meta-g g> : goes to a specific line
-  (define-key anupamk/global-keymap (kbd "M-g g") #'goto-line)
-
-  ;; ---------------------------------------------------------------------------
   ;; recenter current line
   (define-key anupamk/global-keymap (kbd "C-c r") #'recenter)
 
@@ -1257,20 +1249,14 @@ visting files that were operated on recently.
 
 #+begin_src emacs-lisp
 
-(use-package emacs
-  :init
-  (require 'recentf)
+(require 'recentf)
+(recentf-mode t)
 
-  ;; ---------------------------------------------------------------------------
-  ;; 300 files ought to be enough for anybody
-  (setq recentf-max-saved-items 300)
-
-  ;; ---------------------------------------------------------------------------
-  ;; don't show labels for keys that can be used to open nth files
-  (setq recentf-show-file-shortcuts-flag nil)
-
-  :hook
-  (after-init . recentf-mode))
+;; -----------------------------------------------------------------------------
+;; 300 files ought to be enough for anybody (excluding some files in
+;; the process)
+(setq recentf-max-saved-items 300)
+(setq recentf-exclude '(".gz" ".xz" ".zip" "/elpa/" "/ssh:" "/sudo:"))
 
 #+end_src
 
@@ -1337,8 +1323,9 @@ Where is the point at ?
 
 (require 'saveplace)
 
-(setq-default save-place t)
 (setq save-place-file (expand-file-name "save-point-place" user-emacs-directory))
+(setq save-place-forget-unreadable-files t)
+(save-place-mode 1)
 
 #+end_src
 
@@ -1366,6 +1353,7 @@ Where is the point at ?
   )
 
 #+end_src
+
 
 * Selection candidates and search methods
 ** Marginalia
@@ -1453,12 +1441,9 @@ Where is the point at ?
   (setq consult-locate-args "plocate --ignore-case --limit 100")
 
   :general
-  (:keymaps 'consult-map
-            "M-y"     #'consult-yank-from-kill-ring
-            "C-s"     #'isearch-forward
-            "C-x b"   #'consult-buffer
-            "C-x C-b" #'consult-buffer))
-
+  ("C-x b"   #'consult-buffer)
+  ("M-g g"   #'consult-goto-line)
+  )
 #+end_src
 
 ** Embark
