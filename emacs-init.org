@@ -2298,6 +2298,11 @@ Define some utility functions for working with c/c++ sources.
     ;; set the file mode to clang-format+-mode so that clang-format is
     ;; used for formatting all c/c++ sources
     (clang-format+-mode t)
+
+    ;; -------------------------------------------------------------------------
+    ;; abbrev and subword modes are quite useful, enable those as well
+    (abbrev-mode t)
+    (subword-mode t)
     )
 
   ;; ---------------------------------------------------------------------------
@@ -2414,13 +2419,24 @@ latest version of =flymake= is installed. This is best documented
 
 (straight-use-package 'flymake)
 
+;; -----------------------------------------------------------------------------
+;; enable this in all programming modes, with slightly tweaked settings
+(add-hook 'prog-mode-hook #'flymake-mode)
+(setq flymake-fringe-indicator-position 'left-fringe
+      flymake-suppress-zero-counters t
+      flymake-start-on-flymake-mode t
+      flymake-no-changes-timeout nil
+      flymake-start-on-save-buffer t
+      flymake-proc-compilation-prevents-syntax-check t
+      flymake-wrap-around nil)
+
 #+end_src
 
 #+begin_src emacs-lisp
 
 (use-package eglot
+  :defer
   :config
-
 
   ;; ---------------------------------------------------------------------------
   ;; disable annoying, _distracting_, over-the-top features that serve
@@ -2492,6 +2508,7 @@ applied in one fell swoop.
 ;; -----------------------------------------------------------------------------
 ;; and setup cmake-font-lock
 (use-package cmake-font-lock
+  :defer
   :hook
   (cmake-mode . cmake-font-lock-activate))
 
