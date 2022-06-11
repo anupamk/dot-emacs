@@ -2367,6 +2367,26 @@ Pretty vanilla configuration
 #+end_src
 
 *** Emacs lisp
+*** Scheme
+Geiser is a generic Emacs/Scheme interaction mode, featuring an
+enhanced REPL and a set of minor modes improving Emacs' basic scheme
+major mode.
+
+Also install =geiser-racket= because that's what I am using for
+learning scheme.
+
+#+begin_src emacs-lisp
+
+(use-package geiser
+  :defer
+  )
+
+(use-package geiser-racket
+  :defer
+  )
+
+#+end_src
+
 *** Eglot LSP client
 Although =lsp-mode= has been in existence for a while, I prefer
 =eglot= because
