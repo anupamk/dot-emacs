@@ -30,6 +30,7 @@
 ;; maximum number of bytes (4mb) to read from sub-process in a single
 ;; chunk.
 (setq read-process-output-max (* 4 1024 1024))
+(setq process-adaptive-read-buffering nil)
 
 ;; -----------------------------------------------------------------------------
 ;; initialize + enable package-manager
@@ -45,11 +46,6 @@
       (goto-char (point-max))
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
-
-;; -----------------------------------------------------------------------------
-;; some perf tweaks
-(setq read-process-output-max (* 4 1024 1024)) ; 4mb
-(setq process-adaptive-read-buffering nil)     ; performance
 
 ;; -----------------------------------------------------------------------------
 ;; install use-package, and configure it to use straight.el by default

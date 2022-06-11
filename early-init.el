@@ -67,6 +67,10 @@
 (setq idle-update-delay 1.0)
 
 ;; -----------------------------------------------------------------------------
+;; don't want a mode line while loading init.
+(setq mode-line-format nil)
+
+;; -----------------------------------------------------------------------------
 ;; Disable bidirectional text scanning for a modest performance
 ;; boost. I've set this to `nil' in the past, but the
 ;; `bidi-display-reordering's docs say that is an undefined state and
@@ -86,7 +90,35 @@
 (setq-default cursor-in-non-selected-windows nil)
 (setq highlight-nonselected-windows nil)
 (setq fast-but-imprecise-scrolling t)
-(setq inhibit-compacting-font-caches t)
+(setq ring-bell-function 'ignore)
+
+;; -----------------------------------------------------------------------------
+;; remove unused gui toolkit components
+(when (fboundp 'scroll-bar-mode)
+  (scroll-bar-mode -1))
+
+(when (fboundp 'menu-bar-mode)
+  (menu-bar-mode -1))
+
+(when (fboundp 'tool-bar-mode)
+  (tool-bar-mode -1))
+
+(when (fboundp 'tooltip-mode)
+  (tooltip-mode -1))
+
+(when (fboundp 'scroll-bar-mode)
+  (scroll-bar-mode -1))
+
+(when (fboundp 'horizontal-scroll-bar-mode)
+  (horizontal-scroll-bar-mode -1))
+
+;; -----------------------------------------------------------------------------
+;; disable lots of annothing things that Emacs does at startup
+(setq-default inhibit-splash-screen t                ; disable splash screen
+              inhibit-startup-screen t               ; disable startup screen
+              inhibit-startup-message t              ; disable startup message
+              inhibit-startup-echo-area-message t    ; Disable initial echo message
+              initial-scratch-message "")            ; Empty the initial *scratch* buffer
 
 ;; -----------------------------------------------------------------------------
 ;; early-init.el ends here

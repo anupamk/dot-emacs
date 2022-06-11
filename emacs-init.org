@@ -92,19 +92,6 @@
 
 
 * Base Settings
-** Startup
-Disable lot of annoying things that Emacs does at startup
-
-#+begin_src emacs-lisp
-
-(setq-default inhibit-splash-screen t                ; disable splash screen
-              inhibit-startup-screen t               ; disable startup screen
-              inhibit-startup-message t              ; disable startup message
-              inhibit-startup-echo-area-message t    ; Disable initial echo message
-              initial-scratch-message "")            ; Empty the initial *scratch* buffer
-
-#+end_src
-
 ** Encoding
 
 #+begin_src emacs-lisp
