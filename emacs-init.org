@@ -97,12 +97,11 @@ Disable lot of annoying things that Emacs does at startup
 
 #+begin_src emacs-lisp
 
-  (setq-default
-   inhibit-splash-screen t                ; disable splash screen
-   inhibit-startup-screen t               ; disable startup screen
-   inhibit-startup-message t              ; disable startup message
-   inhibit-startup-echo-area-message t    ; Disable initial echo message
-   initial-scratch-message "")            ; Empty the initial *scratch* buffer
+(setq-default inhibit-splash-screen t                ; disable splash screen
+              inhibit-startup-screen t               ; disable startup screen
+              inhibit-startup-message t              ; disable startup message
+              inhibit-startup-echo-area-message t    ; Disable initial echo message
+              initial-scratch-message "")            ; Empty the initial *scratch* buffer
 
 #+end_src
 
@@ -110,24 +109,24 @@ Disable lot of annoying things that Emacs does at startup
 
 #+begin_src emacs-lisp
 
-  ;; ---------------------------------------------------------------------------
-  ;; prefer utf-8 encoding everywhere.
-  (set-default-coding-systems   'utf-8)
-  (prefer-coding-system         'utf-8)
-  (set-terminal-coding-system   'utf-8)
-  (set-keyboard-coding-system   'utf-8)
-  (set-language-environment     'utf-8)
-  (set-selection-coding-system  'utf-8)
+;; -----------------------------------------------------------------------------
+;; prefer utf-8 encoding everywhere.
+(set-default-coding-systems   'utf-8)
+(prefer-coding-system         'utf-8)
+(set-terminal-coding-system   'utf-8)
+(set-keyboard-coding-system   'utf-8)
+(set-language-environment     'utf-8)
+(set-selection-coding-system  'utf-8)
 
-  (setq locale-coding-system    'utf-8  ; coding system to use with system messages
-        coding-system-for-read  'utf-8  ; coding system for read operations
-        coding-system-for-write 'utf-8) ; coding system for write operations
+(setq locale-coding-system    'utf-8  ; coding system to use with system messages
+      coding-system-for-read  'utf-8  ; coding system for read operations
+      coding-system-for-write 'utf-8) ; coding system for write operations
 
-  ;; ---------------------------------------------------------------------------
-  ;; cons of coding system used for process i/o
-  (setq default-process-coding-system '(utf-8-unix ; decoding process output
-                                        .
-                                        utf-8-unix)) ; encoding process input
+;; -----------------------------------------------------------------------------
+;; cons of coding system used for process i/o
+(setq default-process-coding-system '(utf-8-unix ; decoding process output
+                                      .
+                                      utf-8-unix)) ; encoding process input
 
 #+end_src
 
@@ -156,7 +155,7 @@ Configure how Emacs backs the files up
   (setq backup-directory-alist       ; File name patterns and backup directory names.
         `(("." . ,(expand-file-name "backups" user-emacs-directory)))
         make-backup-files t          ; Backup of a file the first time it is saved.
-        vc-make-backup-files nil     ; No backup of files under version contr
+        vc-make-backup-files nil     ; No backup of files under version control
         backup-by-copying t          ; Don't clobber symlinks
         version-control t            ; Version numbers for backup files
         delete-old-versions t        ; Delete excess backup files silently
@@ -213,11 +212,11 @@ packages.
 
 #+begin_src emacs-lisp
 
-  (use-package delight
-    :after use-package)
+(use-package delight
+  :after use-package)
 
-  (use-package gcmh
-    :delight)
+(use-package gcmh
+  :delight)
 
 #+end_src
 
@@ -227,24 +226,23 @@ trailing spaces etc.
 
 #+begin_src emacs-lisp
 
-  (use-package whitespace
-    :delight
-    :hook
-    (prog-mode   . whitespace-mode)
-    (text-mode   . whitespace-mode)
-    (before-save . whitespace-cleanup)
+(use-package whitespace
+  :delight
+  :hook
+  (prog-mode   . whitespace-mode)
+  (text-mode   . whitespace-mode)
+  (before-save . whitespace-cleanup)
 
-    :custom
-    (whitespace-style '(face empty indentation::space tab trailing)))
+  :custom
+  (whitespace-style '(face empty indentation::space tab trailing)))
 
 #+end_src
 
 ** Autofilling
-We want to autofill only for code-comment sections
 
 #+begin_src emacs-lisp
 
-  (auto-fill-mode t)
+(auto-fill-mode t)
 
 #+end_src
 
@@ -254,9 +252,9 @@ connect to a running instance with =emacsclient -c= invokation.
 
 #+begin_src emacs-lisp
 
-  (unless (and (fboundp 'server-running-p)
-               (server-running-p))
-    (server-start))
+(unless (and (fboundp 'server-running-p)
+             (server-running-p))
+  (server-start))
 
 #+end_src
 
@@ -289,137 +287,131 @@ much better.
 
 #+begin_src emacs-lisp
 
-  (use-package emacs
+(use-package emacs
 
-    :init
+  :init
 
-    ;; -------------------------------------------------------------------------
-    ;; no scratchpad by default, we can always create one ourselves.
-    ;; see `anupamk:utils/create-new-scratch-buffer' for more details
-    (setf initial-scratch-message nil)
+  ;; -------------------------------------------------------------------------
+  ;; no scratchpad by default, we can always create one ourselves.
+  ;; see `anupamk:utils/create-new-scratch-buffer' for more details
+  (setf initial-scratch-message nil)
 
-    ;; -------------------------------------------------------------------------
-    ;; look ma, nobell
-    (setf ring-bell-function (lambda()))
+  ;; -------------------------------------------------------------------------
+  ;; look ma, nobell
+  (setf ring-bell-function (lambda()))
 
-    ;; -------------------------------------------------------------------------
-    ;; littering is a punishable offence in this and other states.
-    (setf backup-inhibited t
-          auto-save-default nil
-          make-backup-files nil
-          create-lockfiles nil)
+  ;; -------------------------------------------------------------------------
+  ;; littering is a punishable offence in this and other states.
+  (setf backup-inhibited t
+        auto-save-default nil
+        make-backup-files nil
+        create-lockfiles nil)
 
-    ;; -------------------------------------------------------------------------
-    ;; prefix for generating auto-save-list-file-name
-    (setf auto-save-list-file-prefix (locate-user-emacs-file "local/saves"))
+  ;; -------------------------------------------------------------------------
+  ;; prefix for generating auto-save-list-file-name
+  (setf auto-save-list-file-prefix (locate-user-emacs-file "local/saves"))
 
-    ;; -------------------------------------------------------------------------
-    ;; echo unfinished commands after 0.1 seconds of pause
-    (setf echo-keystrokes 0.1)
+  ;; -------------------------------------------------------------------------
+  ;; echo unfinished commands after 0.1 seconds of pause
+  (setf echo-keystrokes 0.1)
 
-    ;; -------------------------------------------------------------------------
-    ;; allow single character to delete a region
-    (setf delete-active-region nil)
+  ;; -------------------------------------------------------------------------
+  ;; allow single character to delete a region
+  (setf delete-active-region nil)
 
-    ;; -------------------------------------------------------------------------
-    ;; nullify function that is invoked to handle disabled commands i.e. all
-    ;; commands work normally
-    (setf disabled-command-function nil)
+  ;; -------------------------------------------------------------------------
+  ;; nullify function that is invoked to handle disabled commands i.e. all
+  ;; commands work normally
+  (setf disabled-command-function nil)
 
-    ;; -------------------------------------------------------------------------
-    ;; prefer loading newer `.el' files over older `.elc'
-    (setf load-prefer-newer t)
+  ;; -------------------------------------------------------------------------
+  ;; prefer loading newer `.el' files over older `.elc'
+  (setf load-prefer-newer t)
 
-    ;; -------------------------------------------------------------------------
-    ;; enable column numbers
-    (setq column-number-mode t)
+  ;; -------------------------------------------------------------------------
+  ;; enable column numbers
+  (setq column-number-mode t)
 
-    ;; -------------------------------------------------------------------------
-    ;; merge system and emacs clipboard
-    (setq select-enable-clipboard t)
-    (setq select-enable-primary t)
+  ;; -------------------------------------------------------------------------
+  ;; merge system and emacs clipboard
+  (setq select-enable-clipboard t)
+  (setq select-enable-primary t)
 
-    ;; -------------------------------------------------------------------------
-    ;; get rid of the insert key
-    (define-key global-map [(insert)] nil)
+  ;; -------------------------------------------------------------------------
+  ;; get rid of the insert key
+  (define-key global-map [(insert)] nil)
 
-    ;; -------------------------------------------------------------------------
-    ;; disable full 'yes' or 'no' (from emacs-28 onwards)
-    (setq use-short-answers t)
+  ;; -------------------------------------------------------------------------
+  ;; disable full 'yes' or 'no' (from emacs-28 onwards)
+  (setq use-short-answers t)
 
-    ;; -------------------------------------------------------------------------
-    ;; no tabs in sources
-    (setq-default indent-tabs-mode nil)
+  ;; -------------------------------------------------------------------------
+  ;; no tabs in sources
+  (setq-default indent-tabs-mode nil)
 
-    ;; -------------------------------------------------------------------------
-    ;; display buffer at its previous position
-    (setq switch-to-buffer-preserve-window-point t)
+  ;; -------------------------------------------------------------------------
+  ;; display buffer at its previous position
+  (setq switch-to-buffer-preserve-window-point t)
 
-    ;; -------------------------------------------------------------------------
-    ;; with 'complete, <TAB> first tries to indent the current line,
-    ;; and if the line was already indented, then try to complete the
-    ;; thing at point.
-    (setq tab-always-indent 'complete)
+  ;; -------------------------------------------------------------------------
+  ;; with 'complete, <TAB> first tries to indent the current line,
+  ;; and if the line was already indented, then try to complete the
+  ;; thing at point.
+  (setq tab-always-indent 'complete)
 
-    ;; -------------------------------------------------------------------------
-    ;; all themes are safe
-    (setq custom-safe-themes t)
+  ;; -------------------------------------------------------------------------
+  ;; all themes are safe
+  (setq custom-safe-themes t)
 
-    ;; -------------------------------------------------------------------------
-    ;; write over selected text on input. just like other editors.
-    (delete-selection-mode t)
+  ;; -------------------------------------------------------------------------
+  ;; write over selected text on input. just like other editors.
+  (delete-selection-mode t)
 
-    ;; -------------------------------------------------------------------------
-    ;; less noisy emacs-lisp compilation
-    (setq byte-compile-warnings '(not free-vars unresolved noruntime lexical make-local))
-    (setq native-comp-async-report-warnings-errors nil)
+  ;; -------------------------------------------------------------------------
+  ;; less noisy emacs-lisp compilation
+  (setq byte-compile-warnings '(not free-vars unresolved noruntime lexical make-local))
+  (setq native-comp-async-report-warnings-errors nil)
 
-    ;; -------------------------------------------------------------------------
-    ;; max number of bytes to read from a process in a single chunk. 8m
-    ;; is reasonable for lsp based c/c++ programming...
-    (setq read-process-output-max (* 8 1024 1024))
+  ;; -------------------------------------------------------------------------
+  ;; max number of bytes to read from a process in a single chunk. 8m
+  ;; is reasonable for lsp based c/c++ programming...
+  (setq read-process-output-max (* 8 1024 1024))
 
-    ;; -------------------------------------------------------------------------
-    ;; focus on help windows when opened
-    (setq-default help-window-select t)
+  ;; -------------------------------------------------------------------------
+  ;; focus on help windows when opened
+  (setq-default help-window-select t)
 
-    ;; -------------------------------------------------------------------------
-    ;; avoid recentering when scrolling far
-    (setq-default scroll-conservatively 101)
+  ;; -------------------------------------------------------------------------
+  ;; avoid recentering when scrolling far
+  (setq-default scroll-conservatively 101)
 
-    ;; -------------------------------------------------------------------------
-    ;; add a margin when scrolling vertically
-    (setq-default scroll-margin 2)
+  ;; -------------------------------------------------------------------------
+  ;; add a margin when scrolling vertically
+  (setq-default scroll-margin 2)
 
-    ;; -------------------------------------------------------------------------
-    ;; resize window proportionally
-    (setq-default window-combination-resize t)
+  ;; -------------------------------------------------------------------------
+  ;; resize window proportionally
+  (setq-default window-combination-resize t)
 
-    ;; -------------------------------------------------------------------------
-    ;; when non-nil left and right side windows occupy full height. when
-    ;; 'nil' top and bottom-side windows occupy full frame width
-    (setq-default window-sides-vertical nil)
+  ;; -------------------------------------------------------------------------
+  ;; when non-nil left and right side windows occupy full height. when
+  ;; 'nil' top and bottom-side windows occupy full frame width
+  (setq-default window-sides-vertical nil)
 
-    ;; -------------------------------------------------------------------------
-    ;; enable downcase-region and upcase-region
-    (put 'downcase-region 'disabled nil)
-    (put 'upcase-region 'disabled nil)
+  ;; -------------------------------------------------------------------------
+  ;; enable downcase-region and upcase-region
+  (put 'downcase-region 'disabled nil)
+  (put 'upcase-region 'disabled nil)
 
-    ;; -------------------------------------------------------------------------
-    ;; enable recursive minibuffers (launch command that use the
-    ;; minibuffer while already inside a minibuffer)
-    (setq enable-recursive-minibuffers t)
+  ;; -------------------------------------------------------------------------
+  ;; enable recursive minibuffers (launch command that use the
+  ;; minibuffer while already inside a minibuffer)
+  (setq enable-recursive-minibuffers t)
 
-    ;; -------------------------------------------------------------------------
-    ;; magit is the only vc frontend that i care about
-    (setf vc-handled-backends nil)
-
-    ;; -------------------------------------------------------------------------
-    ;; what to do if we follow a symbolic link to a file under version
-    ;; control. with `t', vc follows the link and visits the real file
-    ;; (telling about it in the echo area)
-    (setf vc-follow-symlinks t)
-    )
+  ;; -------------------------------------------------------------------------
+  ;; magit is the only vc frontend that i care about
+  (setf vc-handled-backends nil)
+  )
 
 #+end_src
 
@@ -458,16 +450,16 @@ default sensible behavior.
 
 #+begin_src emacs-lisp
 
-  (defun my-minibuffer-setup-hook ()
-    "Garbage collection will never occur."
-    (setq gc-cons-threshold most-positive-fixnum))
+(defun my-minibuffer-setup-hook ()
+  "Garbage collection will never occur."
+  (setq gc-cons-threshold most-positive-fixnum))
 
-  (defun my-minibuffer-exit-hook ()
-    "Garbage collection will kick off immediately."
-    (setq gc-cons-threshold gc-cons-threshold-original))
+(defun my-minibuffer-exit-hook ()
+  "Garbage collection will kick off immediately."
+  (setq gc-cons-threshold gc-cons-threshold-original))
 
-  (add-hook 'minibuffer-setup-hook #'my-minibuffer-setup-hook)
-  (add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
+(add-hook 'minibuffer-setup-hook #'my-minibuffer-setup-hook)
+(add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
 
 #+end_src
 
@@ -475,7 +467,7 @@ GC on focus out
 
 #+begin_src emacs-lisp
 
-  (add-hook 'focus-out-hook #'garbage-collect)
+(add-hook 'focus-out-hook #'garbage-collect)
 
 #+end_src
 
@@ -483,7 +475,7 @@ Dont steal focus while performing async compilations
 
 #+begin_src emacs-lisp
 
-  (setq warning-suppress-types '((comp)))
+(setq warning-suppress-types '((comp)))
 
 #+end_src
 
@@ -491,7 +483,7 @@ Potential speedup of cursor operations
 
 #+begin_src emacs-lisp
 
-  (setq auto-window-vscroll nil)
+(setq auto-window-vscroll nil)
 
 #+end_src
 
@@ -873,9 +865,9 @@ Define work specific keybindings
 
 #+begin_src emacs-lisp
 
-  (anupamk:utils/setup-font "font:default")
-  (anupamk:utils/setup-font "font:fixed-pitch")
-  (anupamk:utils/setup-font "font:variable-pitch")
+(anupamk:utils/setup-font "font:default")
+(anupamk:utils/setup-font "font:fixed-pitch")
+(anupamk:utils/setup-font "font:variable-pitch")
 
 #+end_src
 
@@ -883,7 +875,7 @@ Unbold all bold fonts everywhere
 
 #+begin_src emacs-lisp
 
-  (add-hook 'emacs-startup-hook #'anupamk:utils/unbold-all-faces)
+(add-hook 'emacs-startup-hook #'anupamk:utils/unbold-all-faces)
 
 #+end_src
 
@@ -2207,19 +2199,17 @@ Define some utility functions for working with c/c++ sources.
 
     ;; first setup the appropriate compilation command based on buffer
     ;; major-mode
-    (setq-local compile-command
-                (format "%s%s %s"
-                        ;; %s: 'qc-cmd-prefix:{c,cpp}'
-                        (if (eq major-mode 'c-mode)
-                            qc-cmd-prefix:c
-                          qc-cmd-prefix:cpp)
+    (setq-local compile-command (format "%s%s %s"
+                                        ;; %s: 'qc-cmd-prefix:{c,cpp}'
+                                        (if (eq major-mode 'c-mode)
+                                            qc-cmd-prefix:c
+                                          qc-cmd-prefix:cpp)
 
-                        ;; %s: 'obj/<file-name>'
-                        (file-name-nondirectory (file-name-sans-extension (buffer-file-name)))
+                                        ;; %s: 'obj/<file-name>'
+                                        (file-name-nondirectory (file-name-sans-extension (buffer-file-name)))
 
-                        ;; %s: '<file-name>.{c,cpp}'
-                        (file-name-nondirectory (buffer-file-name)))))
-
+                                        ;; %s: '<file-name>.{c,cpp}'
+                                        (file-name-nondirectory (buffer-file-name)))))
   )
 
 #+end_src
