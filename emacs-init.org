@@ -594,13 +594,6 @@ Potential speedup of cursor operations
     (display-line-numbers-mode)))
 
 ;; -----------------------------------------------------------------------------
-;; auto fill comments in programming modes only
-(defun anupamk:utils/auto-fill-comments ()
-  "comments in programming mode are automatically filled"
-  (setq-local comment-auto-fill-only-comments t)
-  (auto-fill-mode 1))
-
-;; -----------------------------------------------------------------------------
 ;; revert all buffers that are open without any confirmation, and
 ;; ignoring all errors. useful for those cases when you change git
 ;; branches and want to have the same set of buffers to be around in
@@ -2117,6 +2110,22 @@ Lets set that up.
 #+end_src
 
 ** Programming Languages
+*** Generic
+Enable auto-fill for comments in =prog-mode= buffers
+
+#+begin_src emacs-lisp
+
+;; -----------------------------------------------------------------------------
+;; auto fill comments in programming modes only
+(defun anupamk:utils/auto-fill-comments ()
+  "comments in programming mode are automatically filled"
+  (setq-local comment-auto-fill-only-comments t)
+  (auto-fill-mode))
+
+(add-hook 'prog-mode-hook #'anupamk:utils/auto-fill-comments)
+
+#+end_src
+
 *** C/C++
 **** Utility functions
 
