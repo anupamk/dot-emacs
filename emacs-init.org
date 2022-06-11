@@ -1343,6 +1343,7 @@ Where is the point at ?
 #+end_src
 
 
+
 * Selection candidates and search methods
 ** Marginalia
 
@@ -1665,6 +1666,7 @@ search results, specifying custom query commands etc. etc.
    ("M-s d" . anupamk:ripgrep-search/rg-ref-in-pwd)))
 
 #+end_src
+
 
 
 
@@ -2055,6 +2057,7 @@ experience.
   )
 
 #+end_src
+
 
 
 * Programming
@@ -2486,6 +2489,7 @@ applied in one fell swoop.
         anupamk:eglot-lsp-config)
 
 #+end_src
+
 ** Building
 *** CMake
 
