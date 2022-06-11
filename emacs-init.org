@@ -743,7 +743,7 @@ This section defines personal perferences for various attributes.
            ;; that (see, set-face-attribute documentation for more info)
            "font:default"             ((:face   . default)
                                        (:family . "PragmataPro Mono")
-                                       (:height . 140))
+                                       (:height . 90))
 
            "font:fixed-pitch"         ((:face   . fixed-pitch)
                                        (:family . "Ioseavka Fixed SS02 Regular")
