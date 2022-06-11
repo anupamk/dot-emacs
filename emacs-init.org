@@ -221,7 +221,8 @@ trailing spaces etc.
   (before-save . whitespace-cleanup)
 
   :custom
-  (whitespace-style '(face empty indentation::space tab trailing)))
+  ((whitespace-style '(face empty indentation::space tab trailing))
+   (tab-always-indent 'complete)))
 
 #+end_src
 
