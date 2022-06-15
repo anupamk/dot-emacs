@@ -1767,7 +1767,7 @@ What does it have to do with hippies ? No idea.
 
 ;; -----------------------------------------------------------------------------
 ;; enable globally
-(global-auto-revert-mode t)
+(global-auto-revert-mode)
 
 ;; -----------------------------------------------------------------------------
 ;; don't announce when a buffer is reverted
