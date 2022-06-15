@@ -1340,32 +1340,6 @@ Where is the point at ?
 
 #+end_src
 
-** Desktop
-
-#+begin_src emacs-lisp
-
-
-(use-package desktop+
-  :init
-  ;; ---------------------------------------------------------------------------
-  ;; this is required to ensure that 'desktop-kill' function is added
-  ;; to the 'kill-emacs-query-functions' which is responsible for
-  ;; saving the desktop, and deleting the desktop lock file when Emacs
-  ;; is killed.
-  (require 'desktop)
-
-  ;; ---------------------------------------------------------------------------
-  ;; where are we saving all desktops ?
-  (setq desktop+-base-dir (expand-file-name "desktops" user-emacs-directory))
-  (make-directory desktop+-base-dir 'parents)
-
-  :commands
-  (desktop+-create desktop+-load)
-  )
-
-#+end_src
-
-
 
 * Selection candidates and search methods
 ** Marginalia
@@ -1932,17 +1906,6 @@ Built in =hideshow= mode makes this quite a seamless experience.
   (add-hook 'prog-mode-hook #'hs-minor-mode)
 
 #+end_src
-** Minions err Snippets
-
-#+begin_src emacs-lisp
-
-(use-package yasnippet
-  :defer)
-
-(use-package yasnippet-snippets
-  :defer)
-
-#+end_src
 ** PDF Tools
 
 #+begin_src emacs-lisp
@@ -2426,26 +2389,6 @@ Pretty vanilla configuration
 #+end_src
 
 *** Emacs lisp
-*** Scheme
-Geiser is a generic Emacs/Scheme interaction mode, featuring an
-enhanced REPL and a set of minor modes improving Emacs' basic scheme
-major mode.
-
-Also install =geiser-racket= because that's what I am using for
-learning scheme.
-
-#+begin_src emacs-lisp
-
-(use-package geiser
-  :defer
-  )
-
-(use-package geiser-racket
-  :defer
-  )
-
-#+end_src
-
 *** Eglot LSP client
 Although =lsp-mode= has been in existence for a while, I prefer
 =eglot= because
