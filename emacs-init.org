@@ -410,6 +410,12 @@ much better.
   ;; enable recursive minibuffers (launch command that use the
   ;; minibuffer while already inside a minibuffer)
   (setq enable-recursive-minibuffers t)
+
+  ;; -------------------------------------------------------------------------
+  ;; what to do if we follow a symbolic link to a file under version
+  ;; control. with `t', vc follows the link and visits the real file
+  ;; (telling about it in the echo area)
+  (setf vc-follow-symlinks t)
   )
 
 #+end_src
@@ -1057,12 +1063,12 @@ limited to!) the following:
   ;; ---------------------------------------------------------------------------
   ;; lhs of modeline
   (setq telephone-line-lhs '((nil . (telephone-line-buffer-segment
-                                     telephone-line-position-segment
-                                     anupamk/telephone-line-segment-clock))))
+                                     telephone-line-vc-segment
+                                     telephone-line-position-segment))))
 
   ;; ---------------------------------------------------------------------------
   ;; rhs of modeline
-  (setq telephone-line-rhs '((accent . (telephone-line-vc-segment))))
+  (setq telephone-line-rhs '((accent . (anupamk/telephone-line-segment-clock))))
 
   :hook
   (after-init . (lambda() (telephone-line-mode t))))
