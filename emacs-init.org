@@ -2497,11 +2497,6 @@ latest version of =flymake= is installed. This is best documented
 ;; setup compilation buffer
 (defun anupamk:utils/setup-compilation-buffer()
   ;; ---------------------------------------------------------------------------
-  ;; setup a different font
-  (setq buffer-face-mode-face '(:family "Fira Code" :height 90))
-  (buffer-face-mode)
-
-  ;; ---------------------------------------------------------------------------
   ;; Turn off adaptive process buffering when using compilation
   ;; mode, which allows Emacs to read subprocess output in larger
   ;; chunks.
