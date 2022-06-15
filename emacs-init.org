@@ -2262,13 +2262,17 @@ Define some utility functions for working with c/c++ sources.
 (use-package clang-format+
   )
 
-
 (use-package cc-mode
   :functions (anupamk:cc/c-mode-common-hook
               anupamk:cc/c++-mode-hook
               anupamk:cc/c-mode-hook)
 
+  :init
+
+  (defconst cc-lang-server-cmdline (anupamk:utils/get-attribute-value "cc-mode:clangd-with-args"))
+
   :config
+
   (defun anupamk:cc/c-mode-common-hook ()
     (message "loading c-mode-common customizations")
 
@@ -2342,6 +2346,10 @@ Define some utility functions for working with c/c++ sources.
     (message "loading c++-mode customizations")
     (setq comment-start "///")
     (setq comment-end "")
+
+    ;; -------------------------------------------------------------------------
+    ;; setup eglot with c++ mode
+    (add-to-list 'eglot-server-programs `(c++-mode . ,cc-lang-server-cmdline))
     )
 
   ;; ---------------------------------------------------------------------------
@@ -2349,6 +2357,10 @@ Define some utility functions for working with c/c++ sources.
   (defun anupamk:cc/c-mode-hook ()
     (anupamk:cc/c-mode-common-hook)
     (message "loading c-mode customizations")
+
+    ;; -------------------------------------------------------------------------
+    ;; setup eglot with c++ mode
+    (add-to-list 'eglot-server-programs `(c-mode . ,cc-lang-server-cmdline))
     )
 
   ;; ---------------------------------------------------------------------------
@@ -2449,23 +2461,11 @@ latest version of =flymake= is installed. This is best documented
 
 (straight-use-package 'flymake)
 
-;; -----------------------------------------------------------------------------
-;; enable this in all programming modes, with slightly tweaked settings
-(add-hook 'prog-mode-hook #'flymake-mode)
-(setq flymake-fringe-indicator-position 'left-fringe
-      flymake-suppress-zero-counters t
-      flymake-start-on-flymake-mode t
-      flymake-no-changes-timeout nil
-      flymake-start-on-save-buffer t
-      flymake-proc-compilation-prevents-syntax-check t
-      flymake-wrap-around nil)
-
 #+end_src
 
 #+begin_src emacs-lisp
 
 (use-package eglot
-  :defer
   :config
 
   ;; ---------------------------------------------------------------------------
@@ -2475,76 +2475,16 @@ latest version of =flymake= is installed. This is best documented
                                             :documentSymbolProvider       ; list symbols in a buffer
                                             :hoverProvider                ; documentation on hover
                                             :signatureHelpProvider        ; function-signature help
-                                            )))
+                                            ))
 
-#+end_src
-
-For all programming languages, we provide the =anupamk:eglot-lsp-config= which
-describes various attributes required for eglot + lsp interface. These are then
-applied in one fell swoop.
-
-#+begin_src emacs-lisp
-
-;; -----------------------------------------------------------------------------
-;; want to set-eglot-client! for multiple languages in a declarative way.
-(defconst anupamk:eglot-lsp-config
-  '(
-    (c++-config . ((:mode-name          .  c++-mode)
-                   (:mode-hook          .  c++-mode-hook)
-                   (:lsp-server-program .  (anupamk:utils/get-attribute-value "cc-mode:clangd-with-args"))))
-
-    (c-config   . ((:mode-name          .  c-mode)
-                   (:mode-hook          .  c-mode-hook)
-                   (:lsp-server-program .  (anupamk:utils/get-attribute-value "cc-mode:clangd-with-args"))))
-
-    ;; -------------------------------------------------------------------------
-    ;; add more programming language specific customization ↑
-    ))
-
-;; -----------------------------------------------------------------------------
-;; now apply of these in one fell swoop
-(mapcar (lambda (lsp-config-info)
-          (let ((lsp-config-attrs (cdr lsp-config-info)))
-
-            (add-to-list 'eglot-server-programs `(,(alist-get ':mode-name lsp-config-attrs)
-                                                  .
-                                                  ,(eval (alist-get ':lsp-server-program lsp-config-attrs))))
-
-            (add-hook (alist-get ':mode-hook lsp-config-attrs) #'eglot-ensure)))
-
-        anupamk:eglot-lsp-config)
+  :hook
+  (c-mode   . eglot-ensure)
+  (c++-mode . eglot-ensure)
+  )
 
 #+end_src
 
 ** Building
-*** CMake
-
-#+begin_src emacs-lisp
-
-;; -----------------------------------------------------------------------------
-;; explicitly load cmake-mode.el
-(load-file (expand-file-name "straight/repos/cmake/Auxiliary/cmake-mode.el" user-emacs-directory))
-(require 'cmake-mode)
-
-(anupamk:utils/add-many-to-list 'auto-mode-alist
-
-                                  ;; -------------------------------------------
-                                  ;; CMakeLists.txt files
-                                  '("CMakeLists\\.txt\\'" . cmake-mode)
-
-                                  ;; -------------------------------------------
-                                  ;; *.cmake files
-                                  '("\\.cmake\\'" . cmake-mode))
-
-;; -----------------------------------------------------------------------------
-;; and setup cmake-font-lock
-(use-package cmake-font-lock
-  :defer
-  :hook
-  (cmake-mode . cmake-font-lock-activate))
-
-#+end_src
-
 *** Compilation buffer configuration
 
 #+begin_src emacs-lisp
