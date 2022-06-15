@@ -1801,27 +1801,19 @@ What does it have to do with hippies ? No idea.
                'git-commit-check-style-conventions)
 
   ;; ---------------------------------------------------------------------------
-  ;; full-frame magit-status
-  ;;    from: http://whattheemacsd.com/setup-magit.el-01.html
-  (defadvice magit-status (around magit-fullscreen activate)
-    (window-configuration-to-register :magit-fullscreen)
+  ;; 'stuff' to-do before magit-status, for now, just unbold all faces :o)
+  (defadvice magit-status (around anupamk/magit-status-pre activate)
     ad-do-it
-    (delete-other-windows)
     (anupamk:utils/unbold-all-faces))
-
-  (defun magit-quit-session ()
-    "Restores the previous window configuration and kills the magit buffer"
-    (interactive)
-    (kill-buffer)
-    (jump-to-register :magit-fullscreen))
-
-  (define-key magit-status-mode-map (kbd "q") 'magit-quit-session)
 
   :bind  (("C-c g" . magit-status)
           ("C-c l" . magit-log)
           ("C-h B" . magit-blame)))
 
 #+end_src
+
+#+RESULTS:
+: magit-blame
 
 *** Git Gutter in Emacs
 These are indicators in fringe that show uncomitted
@@ -1993,6 +1985,17 @@ experience.
 
      ;; ------------------------------------------------------------------------
      ;; right-side window configuration
+
+     ;; ------------------------------------------------------------------------
+     ;; magit and related windows
+     ("\\magit.*"
+      (display-buffer-in-side-window)
+      (dedicated . nil)
+      (window-width . 0.50)
+      (side . right)
+      (slot . 0)
+      (window-parameters . ((mode-line-format . (" "
+                                                 mode-line-buffer-identification)))))
 
      ("\\*\\(Help\\|Faces\\|Colors\\|Apropos\\).*"
       (display-buffer-in-side-window)
