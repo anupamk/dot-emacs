@@ -24,8 +24,9 @@ elpa/*
 # and other transient stuff that we can ignore
 transient/*
 tramp
-savehist
-saveplace
+save-hist
+save-place
+save-point
 prescient-items
 recentf
 package-quickstart.el

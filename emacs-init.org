@@ -1289,22 +1289,24 @@ think of.
 #+begin_src emacs-lisp
 
 (require 'savehist)
+
+(setq savehist-file (expand-file-name "save-hist" user-emacs-directory))
+
 (setq kill-ring-max 1000)
 (setq history-length 1000)
-(setq savehist-additional-variables
-      '(kill-ring
-        command-history
-        set-variable-value-history
-        custom-variable-history
-        query-replace-history
-        read-expression-history
-        minibuffer-history
-        read-char-history
-        face-name-history
-        bookmark-history
-        file-name-history))
+(setq savehist-additional-variables '(kill-ring
+                                      command-history
+                                      set-variable-value-history
+                                      custom-variable-history
+                                      query-replace-history
+                                      read-expression-history
+                                      minibuffer-history
+                                      read-char-history
+                                      face-name-history
+                                      bookmark-history
+                                      file-name-history))
 
-(put 'minibuffer-history 'history-length 1000)
+(put 'minibuffer-history         'history-length 1000)
 (put 'file-name-history          'history-length 1000)
 (put 'set-variable-value-history 'history-length 1000)
 (put 'custom-variable-history    'history-length 1000)
@@ -1332,7 +1334,7 @@ Where is the point at ?
 
 (require 'saveplace)
 
-(setq save-place-file (expand-file-name "save-point-place" user-emacs-directory))
+(setq save-place-file (expand-file-name "save-point" user-emacs-directory))
 (setq save-place-forget-unreadable-files t)
 (save-place-mode 1)
 
