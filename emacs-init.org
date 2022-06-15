@@ -90,6 +90,20 @@
   =foo= is a function, as it documents the fact that it is intended to
   be funcalled.
 
++ "Backquote" constructs allow you to quote a list, but selectively
+  evaluate elements within that list. This gives us the following:
+
+#+begin_src emacs-lisp :tangle no
+
+(setq a "a value")
+(setq b "b value")
+(setq c "c value")
+
+'(a b c)            ; => (a b c)
+`(,a b c)           ; => ("a value" b c)
+
+#+end_src
+
 
 * Base Settings
 ** Encoding
