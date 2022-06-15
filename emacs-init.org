@@ -229,14 +229,15 @@ trailing spaces etc.
 
 (use-package whitespace
   :delight
+
   :hook
   (prog-mode   . whitespace-mode)
   (text-mode   . whitespace-mode)
   (before-save . whitespace-cleanup)
 
   :custom
-  ((whitespace-style '(face empty indentation::space tab trailing))
-   (tab-always-indent 'complete)))
+  (whitespace-style '(trailing))
+  )
 
 #+end_src
 
