@@ -2,7 +2,7 @@
 #+TITLE: GNU Emacs Configuration
 #+AUTHOR: Anupam Kapoor
 #+EMAIL: anupam.kapoor@gmail.com
-#+STARTUP: show2levels indent hidestars
+#+STARTUP: show2levels hidestars
 #+PROPERTY: header-args :tangle yes
 # ----------------------------  ^^^ tangle all code blocks.
 
