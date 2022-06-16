@@ -1430,6 +1430,7 @@ Where is the point at ?
   ("C-x b"   #'consult-buffer)
   ("M-g g"   #'consult-goto-line)
   )
+
 #+end_src
 
 ** Embark
@@ -1752,6 +1753,7 @@ What does it have to do with hippies ? No idea.
 (setq global-auto-revert-non-file-buffers t)
 
 #+end_src
+
 ** Version control
 *** Magit
 
@@ -2098,6 +2100,10 @@ Lets set that up.
                                       "compile_flags.txt"
                                       ".git")))
       (anupamk:project-utils/do-locate-project-root dirname project-root-markers)))
+
+  :bind
+  (("C-c p f" . project-find-file)
+   ("C-c p r" . project-find-regexp))
 
   :hook
   (project-find-functions #'anupamk:project-utils/locate-project-root))
