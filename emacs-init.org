@@ -2394,6 +2394,26 @@ Pretty vanilla configuration
 
 #+end_src
 
+*** Scheme
+Using =racket-mode= for programming in scheme.
+
+#+begin_src emacs-lisp
+
+(use-package racket-mode
+  :mode
+  ("\\.rkt\\'" . racket-mode)
+
+  :config
+  (racket-add-back-end "/home/anupam/source-code/sicp/racket"
+                       :racket-program "/usr/bin/racket")
+
+  :general
+  (:keymaps 'racket-mode-map
+            "<f7>" #'racket-run)
+  )
+
+#+end_src
+
 *** Emacs lisp
 *** Eglot LSP client
 Although =lsp-mode= has been in existence for a while, I prefer
