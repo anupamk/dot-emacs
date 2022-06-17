@@ -12,7 +12,7 @@
   packages that we are using in our configuration.
 
   This is just a quick syntax reminder for its day-to-day usage. For
-  way more informaton, see [[https://github.com/jwiegley/use-package#getting-started][this]].
+  way more informaton, see [[https://github.com/jwiegley/use-package#getting-started][this]] or [[https://jwiegley.github.io/use-package/keywords/][this]].
 
   + =:config= and =:init=
 
