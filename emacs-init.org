@@ -84,6 +84,35 @@
     Note that in the =:hook= section above, we have just used
     =c-mode-common= and not =c-mode-common-hook= !
 
+  + =:if, :when, :unless=
+
+    With these keywords packages can be conditionally loaded. This is
+    quite handy for example when some packages make sense to be loaded
+    in some environments only.
+
+    Thus, suppose we want to load a package / configuration on host
+    'astra' and a different one on host 'aws-devel-01' we can do the
+    following:
+
+    #+begin_src emacs-lisp :tangle no
+
+(use-package emacs
+  :if (anupamk:utils/host-name-is "astra")
+  :init
+  (message "now running on 'astra'")
+  )
+
+    #+end_src
+
+    Once this snippet of code is loaded, you will see the following in
+    the =*Messages*= buffers
+
+    #+begin_src emacs-lisp :tangle no
+
+now running on 'astra'
+
+    #+end_src
+
 ** Emacs Lisp
 + In Emacs Lisp, if =foo= is a symbol, then ='foo= and =#'foo= are
   completely equivalent. The latter form (with =#'=) is preferred when
