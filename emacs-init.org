@@ -1942,6 +1942,12 @@ Built in =hideshow= mode makes this quite a seamless experience.
 #+begin_src emacs-lisp
 
 (use-package pdf-tools
+
+  ;; ---------------------------------------------------------------------------
+  ;; enabled where we might actually use this package
+  :if (or (anupamk:utils/host-name-is "astra")
+          (anupamk:utils/host-name-is "virat"))
+
   :defer
   :init
   (pdf-tools-install)
