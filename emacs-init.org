@@ -1025,7 +1025,7 @@ the left side of the frame, and =0= pixels wide on the right side.
 
 #+begin_src emacs-lisp
 
-(fringe-mode '(3 . 0))
+(fringe-mode '(4 . 0))
 
 ;; -----------------------------------------------------------------------------
 ;; customize line continuation indicator bitmaps (with muted colors)
@@ -1828,9 +1828,6 @@ What does it have to do with hippies ? No idea.
 
 #+end_src
 
-#+RESULTS:
-: magit-blame
-
 *** Git Gutter in Emacs
 These are indicators in fringe that show uncomitted
 added/deleted/modified blocks in a buffer.
@@ -1842,13 +1839,32 @@ added/deleted/modified blocks in a buffer.
 
 ;; -----------------------------------------------------------------------------
 ;; lets just set it up for all files in a git repository
+(require 'git-gutter-fringe)
 (global-git-gutter-mode t)
 
 ;; -----------------------------------------------------------------------------
 ;; setup the bitmap for appearance
-(define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
-(define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
-(define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom)
+(when (fboundp 'define-fringe-bitmap)
+      (define-fringe-bitmap 'git-gutter-fr:added [255 255 255 255 255
+                                                      255 255 255 255
+                                                      255 255 255 255
+                                                      255 255 255 255
+                                                      255 255 255 255
+                                                      255 255 255 255] nil nil '(center t))
+
+       (define-fringe-bitmap 'git-gutter-fr:modified [255 255 255 255 255
+                                                          255 255 255 255
+                                                          255 255 255 255
+                                                          255 255 255 255
+                                                          255 255 255 255
+                                                          255 255 255 255] nil nil '(center t))
+
+       (define-fringe-bitmap 'git-gutter-fr:deleted [255 255 255 255 255
+                                                       255 255 255 255
+                                                       255 255 255 255
+                                                       255 255
+                                                       255 255
+                                                       255] nil nil '(center t)))
 
 ;; -----------------------------------------------------------------------------
 ;; interval (in seconds) for updating diff information.
