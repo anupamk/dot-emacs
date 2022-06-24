@@ -581,6 +581,17 @@ Potential speedup of cursor operations
   (string-equal (system-name) host_name))
 
 ;; -----------------------------------------------------------------------------
+;; running on home machine ?
+(defun anupamk:utils/at-home-p ()
+  (or (anupamk:utils/host-name-is "astra")
+      (anupamk:utils/host-name-is "virat")))
+
+;; -----------------------------------------------------------------------------
+;; not running on home machine ?
+(defun anupam:utils/not-at-home-p ()
+  (not anupamk:utils/at-home-p))
+
+;; -----------------------------------------------------------------------------
 ;; did vi(m) get anything right ? paren matching probably...
 (defun anupamk:utils/vi-match-paren (arg)
   "Go to the matching paren if on a paren; otherwise insert %."
@@ -1944,9 +1955,8 @@ Built in =hideshow= mode makes this quite a seamless experience.
 (use-package pdf-tools
 
   ;; ---------------------------------------------------------------------------
-  ;; enabled where we might actually use this package
-  :if (or (anupamk:utils/host-name-is "astra")
-          (anupamk:utils/host-name-is "virat"))
+  ;; only iff running on home setup
+  :if (anupamk:utils/at-home-p)
 
   :defer
   :init
