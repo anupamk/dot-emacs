@@ -1987,7 +1987,14 @@ Built in =hideshow= mode makes this quite a seamless experience.
   )
 
 #+end_src
+** Completion
 
+#+begin_src emacs-lisp
+
+(use-package company)
+(global-company-mode)
+
+#+end_src
 
 * Window Management
 The association list in =display-buffer-alist= describes the rule-set
@@ -2185,6 +2192,48 @@ Enable auto-fill for comments in =prog-mode= buffers
   (auto-fill-mode))
 
 (add-hook 'prog-mode-hook #'anupamk:utils/auto-fill-comments)
+
+#+end_src
+
+*** Eglot LSP client
+Although =lsp-mode= has been in existence for a while, I prefer
+=eglot= because
+
++ almost /zero-touch/ provisioning and
++ built into Emacs, and positively /spartan/ (yes, that is a /virtue/)
+
+Lets set that up...but before we do that, we need to ensure that the
+latest version of =flymake= is installed. This is best documented
+[[https://github.com/radian-software/straight.el#the-wrong-version-of-my-package-was-loaded][here]].
+
+#+begin_src emacs-lisp
+
+(straight-use-package 'flymake)
+
+#+end_src
+
+#+begin_src emacs-lisp
+
+;; -----------------------------------------------------------------------------
+;; don't allow long eldoc strings to resize echo area display
+(setq eldoc-echo-area-use-multiline-p nil)
+
+(use-package eglot
+  :config
+
+  ;; ---------------------------------------------------------------------------
+  ;; disable annoying, _distracting_, over-the-top features that serve
+  ;; no useful purpose at all (imnsho)
+  (setq eglot-ignored-server-capabilities '(:documentHighlightProvider    ; highlight symbols automatically
+                                            :documentSymbolProvider       ; list symbols in a buffer
+                                            :hoverProvider                ; documentation on hover
+                                            :signatureHelpProvider        ; function-signature help
+                                            ))
+
+  :hook
+  (c-mode   . eglot-ensure)
+  (c++-mode . eglot-ensure)
+  )
 
 #+end_src
 
@@ -2475,42 +2524,17 @@ Using =racket-mode= for programming in scheme.
 
 #+end_src
 
-*** Emacs lisp
-*** Eglot LSP client
-Although =lsp-mode= has been in existence for a while, I prefer
-=eglot= because
-
-+ almost /zero-touch/ provisioning and
-+ built into Emacs, and positively /spartan/ (yes, that is a /virtue/)
-
-Lets set that up...but before we do that, we need to ensure that the
-latest version of =flymake= is installed. This is best documented
-[[https://github.com/radian-software/straight.el#the-wrong-version-of-my-package-was-loaded][here]].
+*** Python
 
 #+begin_src emacs-lisp
 
-(straight-use-package 'flymake)
+(use-package blacken)
 
-#+end_src
-
-#+begin_src emacs-lisp
-
-(use-package eglot
-  :config
-
-  ;; ---------------------------------------------------------------------------
-  ;; disable annoying, _distracting_, over-the-top features that serve
-  ;; no useful purpose at all (imnsho)
-  (setq eglot-ignored-server-capabilities '(:documentHighlightProvider    ; highlight symbols automatically
-                                            :documentSymbolProvider       ; list symbols in a buffer
-                                            :hoverProvider                ; documentation on hover
-                                            :signatureHelpProvider        ; function-signature help
-                                            ))
+(use-package elpy
+  :init
 
   :hook
-  (c-mode   . eglot-ensure)
-  (c++-mode . eglot-ensure)
-  )
+  (elpy-mode . flymake-mode))
 
 #+end_src
 
