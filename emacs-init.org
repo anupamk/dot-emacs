@@ -786,9 +786,14 @@ This section defines personal perferences for various attributes.
            ;; notice that we have absolute point size only for the 'default'
            ;; face. heights of fixed-pitch and variable-pitch are _relative_ to
            ;; that (see, set-face-attribute documentation for more info)
+           ;; "font:default"             ((:face   . default)
+           ;;                             (:family . "Terminus")
+           ;;                             (:height . 140))
+
            "font:default"             ((:face   . default)
                                        (:family . "PragmataPro Mono")
                                        (:height . 90))
+
 
            "font:fixed-pitch"         ((:face   . fixed-pitch)
                                        (:family . "Ioseavka Fixed SS02 Regular")
@@ -909,7 +914,7 @@ Define work specific keybindings
 
 #+end_src
 
-Unbold all bold fonts everywhere
+** Unbold all bold fonts everywhere
 
 #+begin_src emacs-lisp
 
