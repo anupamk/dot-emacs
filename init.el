@@ -88,7 +88,7 @@
 
 ;; -----------------------------------------------------------------------------
 ;; load the org-mode from elpa/melpa rather than the builtin
-(straight-use-package 'org)
+(straight-use-package '(org  :type built-in))
 
 ;; -----------------------------------------------------------------------------
 ;; GCMH - the Garbage Collector Magic Hack
@@ -160,15 +160,11 @@
 ;; the org file is tangled into emacs-init.el
 ;;
 ;; this file is then loaded here...
-(defvar main-config-fname "emacs-init.el"
-  "basename of main configuration file")
+(defvar main-config-fname (concat user-emacs-directory "emacs-init.org")
+  "main configuration file")
 
-(defvar main-config-el-filename
-  (concat user-emacs-directory main-config-fname)
-  "full pathname of main emacs configuration file")
-
-(when (file-readable-p main-config-el-filename)
-  (load-file main-config-el-filename))
+(when (file-exists-p main-config-fname)
+  (org-babel-load-file main-config-fname))
 
 ;; -----------------------------------------------------------------------------
 ;; init.el ends here
