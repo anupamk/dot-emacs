@@ -2184,6 +2184,16 @@ Lets set that up.
 #+end_src
 
 ** Programming Languages
+*** CMake
+
+#+begin_src emacs-lisp
+
+(use-package cmake-mode
+  :config
+  (add-to-list 'auto-mode-alist '("\\CMakeLists.txt\\'" . cmake-mode)))
+
+#+end_src
+
 *** Generic
 Enable auto-fill for comments in =prog-mode= buffers
 
