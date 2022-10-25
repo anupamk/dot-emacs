@@ -742,28 +742,10 @@ the aforementioned scheme.
   (interactive)
   (message (format "attr:'%s' == '%s'" attr-name (anupamk:utils/get-attribute-value attr-name))))
 
-;; -----------------------------------------------------------------------------
-;; setup face-attributes
-(defun anupamk:utils/do-face-attribute-setup (face family height)
-  (set-face-attribute face nil :family family :height height :weight 'normal))
-
-;; -----------------------------------------------------------------------------
-;; find configured face, family and height for a given font.
-(defun anupamk:utils/font-info (font-attr-alist &optional which-attr)
-  (alist-get (or which-attr ':family) font-attr-alist))
-
-;; -----------------------------------------------------------------------------
-;; setup various fonts
-(defun anupamk:utils/setup-font(&optional which-font)
-  (let ((font-attrs (anupamk:utils/get-attribute-value (or which-font "font:default"))))
-    (anupamk:utils/do-face-attribute-setup (anupamk:utils/font-info font-attrs ':face)
-                                           (anupamk:utils/font-info font-attrs ':family)
-                                           (anupamk:utils/font-info font-attrs ':height))))
-
 #+end_src
 
 *** Personal
-This section defines personal perferences for various attributes.
+This section defines personal preference for various attributes.
 
 #+begin_src emacs-lisp
 
@@ -779,29 +761,6 @@ This section defines personal perferences for various attributes.
            ;; ------------------------------------------------------------------
            ;; global keybindings via this function
            "GLOBAL-KEYBINDINGS-FUNC"  personal:setup-global-keys
-
-           ;; ------------------------------------------------------------------
-           ;; font properties.
-           ;;
-           ;; notice that we have absolute point size only for the 'default'
-           ;; face. heights of fixed-pitch and variable-pitch are _relative_ to
-           ;; that (see, set-face-attribute documentation for more info)
-           ;; "font:default"             ((:face   . default)
-           ;;                             (:family . "Terminus")
-           ;;                             (:height . 140))
-
-           "font:default"             ((:face   . default)
-                                       (:family . "PragmataPro Mono")
-                                       (:height . 90))
-
-
-           "font:fixed-pitch"         ((:face   . fixed-pitch)
-                                       (:family . "Ioseavka Fixed SS02 Regular")
-                                       (:height . 1.0))
-
-           "font:variable-pitch"      ((:face   . variable-pitch)
-                                       (:family . "Ioseavka Fixed SS02 Regular")
-                                       (:height . 1.0))
 
            ;; ------------------------------------------------------------------
            ;; c/c++-mode configuration
@@ -851,24 +810,6 @@ This section contains work environment configuration items
            "GLOBAL-KEYBINDINGS-FUNC"  tarana-wireless:setup-global-keys
 
            ;; ------------------------------------------------------------------
-           ;; font properties.
-           ;;
-           ;; notice that we have absolute point size only for the 'default'
-           ;; face. heights of fixed-pitch and variable-pitch are _relative_ to
-           ;; that (see, set-face-attribute documentation for more info)
-           "font:default"             ((:face   . default)
-                                       (:family . "Fira Code")
-                                       (:height . 140))
-
-           "font:fixed-pitch"         ((:face   . fixed-pitch)
-                                       (:family . "Go Mono Regular")
-                                       (:height . 1.0))
-
-           "font:variable-pitch"      ((:face   . variable-pitch)
-                                       (:family . "Go Mono Regular")
-                                       (:height . 1.0))
-
-           ;; ------------------------------------------------------------------
            ;; c/c++-mode configuration
            "cc-mode:c-basic-offset"           2
            "cc-mode:tab-width"                2
@@ -906,11 +847,69 @@ Define work specific keybindings
 
 ** Setup fonts
 
+Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]] package:
+
 #+begin_src emacs-lisp
 
-(anupamk:utils/setup-font "font:default")
-(anupamk:utils/setup-font "font:fixed-pitch")
-(anupamk:utils/setup-font "font:variable-pitch")
+(straight-use-package 'fontaine)
+(require 'fontaine)
+
+;; -----------------------------------------------------------------------------
+;; these are the default font heights
+(setq fontaine-presets
+      '((tiny
+         :default-height 70)
+
+        (small
+         :default-height 80)
+
+        (regular
+         :default-height 90)
+
+        (large
+         :default-height 110)
+
+        (presentation
+         :default-height 120)))
+
+;; -----------------------------------------------------------------------------
+;; setup host specific *default* fontaine-presets
+(add-to-list 'fontaine-presets
+             (cond
+
+              ;; virat
+              ((anupamk:utils/host-name-is "virat")
+               '(t
+                 :default-family "PragmataPro Mono"
+                 :default-weight regular
+                 :default-height 90))
+
+              ;; aws-devel-01
+              ((anupamk:utils/host-name-is "aws-devel-01")
+               '(t
+                 :default-family "Go Mono"
+                 :default-weight regular
+                 :default-height 90))
+
+              ;; everything else
+              ((t
+                '(t
+                  :default-family "PragmataPro Mono"
+                  :default-weight regular
+                  :default-height 90)))))
+
+;; Recover last preset or fall back to desired style from `fontaine-presets'.
+(fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
+
+;; the other side of 'fontaine-restore-latest-preset
+(add-hook 'kill-emacs-hook #'fontaine-store-latest-preset)
+
+;; fontaine does not define any key bindings.  This is just a sample that
+;; respects the key binding conventions.  Evaluate:
+;;
+;;     (info "(elisp) Key Binding Conventions")
+(define-key global-map (kbd "C-c f") #'fontaine-set-preset)
+(define-key global-map (kbd "C-c F") #'fontaine-set-face-font)
 
 #+end_src
 
