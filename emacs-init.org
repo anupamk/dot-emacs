@@ -729,30 +729,31 @@ the aforementioned scheme.
 
 #+begin_src emacs-lisp
 
-;; -----------------------------------------------------------------------------
-;; this function is called to return attribute table specific to a host
-(defun anupamk:utils/get-host-attribute-table ()
-  "return host specific attribute table"
-  (interactive)
-  (cond ((anupamk:utils/host-name-is "virat") personal-attribute-table)
-        ((anupamk:utils/host-name-is "astra") personal-attribute-table)
-        ((anupamk:utils/host-name-is "pnq-dev-01") tarana-attributes-table)
-        ((anupamk:utils/host-name-is "aws-devel-01") tarana-attributes-table)
-        (t nil)))
+  ;; -----------------------------------------------------------------------------
+  ;; this function is called to return attribute table specific to a host
+  (defun anupamk:utils/get-host-attribute-table ()
+    "return host specific attribute table"
+    (interactive)
+    (cond ((anupamk:utils/host-name-is "virat") personal-attribute-table)
+          ((anupamk:utils/host-name-is "astra") personal-attribute-table)
+          ((anupamk:utils/host-name-is "pnq-dev-01") tarana-attributes-table)
+          ((anupamk:utils/host-name-is "aws-devel-01") tarana-attributes-table)
+          ((anupamk:utils/host-name-is "mbp-01.local") personal-attribute-table)
+          (t nil)))
 
-;; -----------------------------------------------------------------------------
-;; this function is called to return the value of a host-specific attribute
-(defun anupamk:utils/get-attribute-value (attr-name)
-  "return value of a host-specific attribute"
-  (gethash attr-name (anupamk:utils/get-host-attribute-table)))
+  ;; -----------------------------------------------------------------------------
+  ;; this function is called to return the value of a host-specific attribute
+  (defun anupamk:utils/get-attribute-value (attr-name)
+    "return value of a host-specific attribute"
+    (gethash attr-name (anupamk:utils/get-host-attribute-table)))
 
-;; -----------------------------------------------------------------------------
-;; this function is called to display value of an attribute. mostly useful for
-;; debugging.
-(defun anupamk:utils/display-attribute-value (attr-name)
-  "display value of an attribute"
-  (interactive)
-  (message (format "attr:'%s' == '%s'" attr-name (anupamk:utils/get-attribute-value attr-name))))
+  ;; -----------------------------------------------------------------------------
+  ;; this function is called to display value of an attribute. mostly useful for
+  ;; debugging.
+  (defun anupamk:utils/display-attribute-value (attr-name)
+    "display value of an attribute"
+    (interactive)
+    (message (format "attr:'%s' == '%s'" attr-name (anupamk:utils/get-attribute-value attr-name))))
 
 #+end_src
 
@@ -878,11 +879,18 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
         (regular
          :default-height 90)
 
-        (large
+        (big
          :default-height 110)
 
+        (large
+         :default-height 120)
+
+        (humongous
+         :default-height 160)
+
         (presentation
-         :default-height 120)))
+         :default-height 200)
+        ))
 
 ;; -----------------------------------------------------------------------------
 ;; setup host specific *default* fontaine-presets
@@ -903,12 +911,19 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
                  :default-weight regular
                  :default-height 90))
 
+              ;; mbp-01.local
+              ((anupamk:utils/host-name-is "mbp-01.local")
+               '(t
+                 :default-family "PragmataPro Mono"
+                 :default-weight regular
+                 :default-height 200))
+
               ;; everything else
-              ((t
+              (t
                 '(t
                   :default-family "PragmataPro Mono"
                   :default-weight regular
-                  :default-height 90)))))
+                  :default-height 90))))
 
 ;; Recover last preset or fall back to desired style from `fontaine-presets'.
 (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
