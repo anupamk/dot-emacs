@@ -1995,8 +1995,46 @@ Built in =hideshow= mode makes this quite a seamless experience.
 
 #+begin_src emacs-lisp
 
-(use-package company)
-(global-company-mode)
+(use-package company
+  :ensure t
+  :defer t
+
+  :custom
+  ;; ---------------------------------------------------------------------------
+  ;; Search other buffers with the same modes for completion instead
+  ;; of searching all other buffers.
+  (company-dabbrev-other-buffers t)
+  (company-dabbrev-code-other-buffers t)
+
+  ;; ---------------------------------------------------------------------------
+  ;; M-<num> to select an option according to its number.
+  (company-show-numbers t)
+
+  ;; ---------------------------------------------------------------------------
+  ;; Only 2 letters required for completion to activate.
+  (company-minimum-prefix-length 3)
+
+  ;; ---------------------------------------------------------------------------
+  ;; Do not downcase completions by default.
+  (company-dabbrev-downcase nil)
+
+  ;; ---------------------------------------------------------------------------
+  ;; Even if I write something with the wrong case, provide the correct casing.
+  (company-dabbrev-ignore-case t)
+
+  ;; ---------------------------------------------------------------------------
+  ;; company completion wait
+  (company-idle-delay 0.2)
+
+  ;; ---------------------------------------------------------------------------
+  ;; No company-mode in shell & eshell
+  (company-global-modes '(not eshell-mode shell-mode))
+
+  ;; ---------------------------------------------------------------------------
+  ;; for both text and programming modes.
+  :hook
+  ((text-mode . company-mode)
+   (prog-mode . company-mode)))
 
 #+end_src
 
@@ -2542,15 +2580,93 @@ Using =racket-mode= for programming in scheme.
 
 *** Python
 
++ The default package =python.el= provides =python-mode= which is the
+major-mode for python.
+
 #+begin_src emacs-lisp
 
-(use-package blacken)
+(use-package python
+  :config
 
-(use-package elpy
-  :init
+  ;; ---------------------------------------------------------------------------
+  ;; remove guess indent python message
+  (setq python-indent-guess-indent-offset-verbose nil))
+
+#+end_src
+
++ For inferior python processes hide the modeline.
+
+#+begin_src emacs-lisp
+
+(use-package hide-mode-line
+  :ensure t
+  :defer t
 
   :hook
-  (elpy-mode . flymake-mode))
+  (inferior-python-mode . hide-mode-line-mode))
+
+#+end_src
+
++ I use poetry to manage python environments, let's set that up.
+
+#+begin_src emacs-lisp
+
+(use-package poetry
+  :ensure t
+  :defer t
+
+  :config
+  ;; ---------------------------------------------------------------------------
+  ;; checks for the correct virtualenv, which is a better strategy
+  ;; because the default one is quite slow
+  (setq poetry-tracking-strategy 'switch-buffer)
+
+  :hook
+  (python-mode . poetry-tracking-mode))
+
+#+end_src
+
++ Formatting python buffers is under the aegis of [[https://github.com/psf/black][black]].
+
+#+begin_src emacs-lisp
+
+(use-package blacken
+  :ensure t
+  :defer t
+
+  :custom
+  (blacken-allow-py36 t)
+  (blacken-skip-string-normalization t)
+
+  :hook
+  (python-mode-hook . blacken-mode))
+
+#+end_src
+
++ Use numpy style docstrings for python.
+
+#+begin_src emacs-lisp
+
+(use-package numpydoc
+  :ensure t
+  :defer t
+
+  :custom
+  (numpydoc-insert-examples-block nil)
+  (numpydoc-template-long nil)
+
+  :bind
+  (:map python-mode-map  ("C-c C-n" . numpydoc-generate)))
+
+#+end_src
+
++ And ofcourse, all of this integrated with eglot
+
+#+begin_src emacs-lisp
+
+(use-package eglot
+  :hook
+  (python-mode . eglot-ensure))
 
 #+end_src
 
