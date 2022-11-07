@@ -2630,11 +2630,25 @@ major-mode for python.
 #+begin_src emacs-lisp
 
 (use-package python
+  :straight (:type built-in)
+
   :config
 
   ;; ---------------------------------------------------------------------------
   ;; remove guess indent python message
-  (setq python-indent-guess-indent-offset-verbose nil))
+  (setq python-indent-guess-indent-offset-verbose nil)
+
+  :custom
+  (python-shell-interpreter "ipython")
+  (python-shell-interpreter-args "-i --simple-prompt")
+  (python-indent-guess-indent-offset-verbose nil)
+
+  :bind
+  ( :map python-mode-map
+    ("C-c r" . python-indent-shift-right)
+    ("C-c l" . python-indent-shift-left))
+
+  )
 
 #+end_src
 
@@ -2678,6 +2692,8 @@ major-mode for python.
   :ensure t
   :defer t
 
+  :commands blacken-mode blacken-buffer
+
   :custom
   (blacken-allow-py36 t)
   (blacken-skip-string-normalization t)
@@ -2709,6 +2725,13 @@ major-mode for python.
 #+begin_src emacs-lisp
 
 (use-package eglot
+
+  :config
+  ;; ---------------------------------------------------------------------------
+  ;; install pyright (as root) with
+  ;;    'npm install -g pyright'
+  (add-to-list 'eglot-server-programs '(python-mode . ("pyright-langserver" "--stdio")))
+
   :hook
   (python-mode . eglot-ensure))
 
