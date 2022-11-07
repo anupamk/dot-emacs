@@ -12,7 +12,7 @@
   packages that we are using in our configuration.
 
   This is just a quick syntax reminder for its day-to-day usage. For
-  way more informaton, see [[https://github.com/jwiegley/use-package#getting-started][this]] or [[https://jwiegley.github.io/use-package/keywords/][this]].
+  way more information, see [[https://github.com/jwiegley/use-package#getting-started][this]] or [[https://jwiegley.github.io/use-package/keywords/][this]].
 
   + =:config= and =:init=
 
@@ -22,7 +22,9 @@
     Thus if a package =foo= offers a configuration option
     =conf-foo-doo= we can do this
 
+    # -------------------- vvvvv no tangling these stanzas
     #+begin_src emacs-lisp :tangle no
+
       (use-package foo
 
         ;; ---------------------------------------------------------------------
@@ -35,6 +37,7 @@
         :config
         (foo-mode)
         )
+
     #+end_src
 
   + =:bind=
@@ -44,10 +47,12 @@
     =consult= is loaded, do this:
 
     #+begin_src emacs-lisp :tangle no
+
       (use-package consult
         :bind
         ("C-x b" . consult-buffer)
         )
+
     #+end_src
 
   + =:custom=
@@ -56,10 +61,12 @@
     for example, doing this:
 
     #+begin_src emacs-lisp :tangle no
+
       (use-package straight
         :custom
         (straight-use-package-by-default t)
         )
+
     #+end_src
 
     sets `straight-use-package-by-default' after loading straight.el
@@ -96,11 +103,11 @@
 
     #+begin_src emacs-lisp :tangle no
 
-(use-package emacs
-  :if (anupamk:utils/host-name-is "astra")
-  :init
-  (message "now running on 'astra'")
-  )
+    (use-package emacs
+      :if (anupamk:utils/host-name-is "astra")
+      :init
+      (message "now running on 'astra'")
+      )
 
     #+end_src
 
@@ -109,9 +116,14 @@
 
     #+begin_src emacs-lisp :tangle no
 
-now running on 'astra'
+       now running on 'astra'
 
     #+end_src
+
+  + =:commands=
+
+    When you use the :commands keyword, it creates autoloads for those
+    commands and defers loading of the module until they are used.
 
 ** Emacs Lisp
 + In Emacs Lisp, if =foo= is a symbol, then ='foo= and =#'foo= are
@@ -1241,10 +1253,12 @@ keybindings. These are all defined here.
 
 #+end_src
 ** Window movement
+
 Emacs already has =windmove= package which provides a set of routines
-to for selection of windows in a frame geometrically. Thus,
-=windmove-left= will select a window immediately to the left of the
-current selected window etc.
+to for selection of windows in a frame geometrically.
+
+Thus, for example, =windmove-left= will select a window immediately to
+the left of the current selected window etc.
 
 FWIW, =julia-assange= (yes, /that/ one) had
 =change-windows-intuitively.el= which predated this !
@@ -1270,6 +1284,7 @@ FWIW, =julia-assange= (yes, /that/ one) had
    ("C-<M-right>" . windmove-right)))
 
 #+end_src
+
 ** Buffer movement
 
 With =buffer-move= Emacs provides functionality for moving buffers in
