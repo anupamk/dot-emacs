@@ -896,6 +896,9 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
         (humongous
          :default-height 160)
 
+        (humongous
+         :default-height 160)
+
         (presentation
          :default-height 200)))
 
