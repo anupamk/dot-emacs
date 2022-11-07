@@ -2233,6 +2233,7 @@ latest version of =flymake= is installed. This is best documented
 (setq eldoc-echo-area-use-multiline-p nil)
 
 (use-package eglot
+  :ensure t
   :config
 
   ;; ---------------------------------------------------------------------------
@@ -2243,10 +2244,6 @@ latest version of =flymake= is installed. This is best documented
                                             :hoverProvider                ; documentation on hover
                                             :signatureHelpProvider        ; function-signature help
                                             ))
-
-  :hook
-  (c-mode   . eglot-ensure)
-  (c++-mode . eglot-ensure)
   )
 
 #+end_src
@@ -2351,6 +2348,11 @@ Define some utility functions for working with c/c++ sources.
 **** Configuration
 
 #+begin_src emacs-lisp
+
+(use-package eglot
+  :hook
+  (c-mode . eglot-ensure)
+  (c++-mode . eglot-ensure))
 
 (use-package clang-format+
   )
