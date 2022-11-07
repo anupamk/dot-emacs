@@ -418,7 +418,7 @@ much better.
 
   ;; -------------------------------------------------------------------------
   ;; max number of bytes to read from a process in a single chunk. 8m
-  ;; is reasonable for lsp based c/c++ programming...
+  ;; is reasonable for lsp based programming...
   (setq read-process-output-max (* 8 1024 1024))
 
   ;; -------------------------------------------------------------------------
@@ -2319,6 +2319,13 @@ latest version of =flymake= is installed. This is best documented
                                             :hoverProvider                ; documentation on hover
                                             :signatureHelpProvider        ; function-signature help
                                             ))
+
+  :bind
+  (:map eglot-mode-map
+              ("C-c l a" . eglot-code-actions)
+              ("C-c l r" . eglot-rename)
+              ("C-c l f" . eglot-format)
+              ("C-c l d" . eldoc))
   )
 
 #+end_src
