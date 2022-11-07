@@ -43,8 +43,19 @@ places
 projects
 url/*
 eln-cache/*
-straight/*
 history
 save-point-place
 *custom.el
 session*
+
+# ------------------------------------------------------------------------------
+# for 'straight' we don't care about either the 'repos' or the 'build'
+# sub-directories.
+#
+# the 'version' sub-directory however contains pinned versions (see
+# 'straight/versions/default.el') of various packages that we use, and
+# for config reproduceability etc. we want that to be checked-in with
+# other user configuration.
+straight/repos/*
+straight/build/*
+straight/build-cache.el
