@@ -125,6 +125,14 @@
     When you use the :commands keyword, it creates autoloads for those
     commands and defers loading of the module until they are used.
 
+  + =:demand=
+
+    The keywords :commands, et al, provide "triggers" that cause a
+    package to be loaded when certain events occur. The presence of
+    triggers can be overridden using =:demand t= to force immediately
+    loading anyway.
+
+
 ** Emacs Lisp
 + In Emacs Lisp, if =foo= is a symbol, then ='foo= and =#'foo= are
   completely equivalent. The latter form (with =#'=) is preferred when
@@ -1845,6 +1853,7 @@ What does it have to do with hippies ? No idea.
 
 (use-package magit
   :delight
+  :demand t
   :config
 
   ;; ---------------------------------------------------------------------------
@@ -2312,6 +2321,7 @@ latest version of =flymake= is installed. This is best documented
 
 (use-package eglot
   :ensure t
+  :demand t
   :config
 
   ;; ---------------------------------------------------------------------------
@@ -2443,6 +2453,7 @@ Define some utility functions for working with c/c++ sources.
   )
 
 (use-package cc-mode
+  :demand t
   :functions (anupamk:cc/c-mode-common-hook
               anupamk:cc/c++-mode-hook
               anupamk:cc/c-mode-hook)
