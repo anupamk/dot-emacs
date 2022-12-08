@@ -11,7 +11,6 @@
 ;; restore original gc values
 (defun startup/reset-gc()
   (progn
-    (message "restoring original gc values")
     (setq gc-cons-threshold gc-cons-threshold-original)
     (setq gc-cons-percentage gc-cons-percentage-original)))
 

@@ -680,7 +680,6 @@ Potential speedup of cursor operations
 (defun anupamk:utils/unbold-all-faces ()
   "unbold all faces in emacs"
   (interactive)
-  (message "unbolding all faces")
   (mapc (lambda (face)
           (when (eq (face-attribute face :weight) 'bold)
             (set-face-attribute face nil :weight 'normal)))
@@ -1043,13 +1042,13 @@ miscellaneous odds and ends.
 
   ;; ---------------------------------------------------------------------------
   ;; minimalize syntax highlighting
-  (set-face-attribute 'font-lock-keyword-face nil :foreground nil)
-  (set-face-attribute 'font-lock-type-face nil :foreground nil)
-  (set-face-attribute 'font-lock-variable-name-face nil :foreground nil)
-  (set-face-attribute 'font-lock-constant-face nil :foreground nil)
-  (set-face-attribute 'font-lock-doc-face nil :foreground nil :inherit 'font-lock-comment-face)
-  (set-face-attribute 'font-lock-preprocessor-face nil :foreground nil)
-  (set-face-attribute 'font-lock-builtin-face nil :foreground nil))
+  (set-face-attribute 'font-lock-keyword-face nil)
+  (set-face-attribute 'font-lock-type-face nil)
+  (set-face-attribute 'font-lock-variable-name-face nil)
+  (set-face-attribute 'font-lock-constant-face nil)
+  (set-face-attribute 'font-lock-doc-face nil :inherit 'font-lock-comment-face)
+  (set-face-attribute 'font-lock-preprocessor-face nil)
+  (set-face-attribute 'font-lock-builtin-face nil))
 
 ;; -----------------------------------------------------------------------------
 ;; so, the emacs-init.el is loaded after an initial frame is
@@ -2898,6 +2897,19 @@ and a note taking  strategy called =Zettlekasten=, also called a
 
 #+end_src
 
+
+* End Of Configuration
+
+All of our configuration is now loaded, let the games begin.
+
+#+begin_src emacs-lisp
+
+(defun greet-post-startup-complete ()
+  (message "All configuration is now loaded, have a lot of fun !"))
+
+(add-hook 'emacs-startup-hook #'greet-post-startup-complete)
+
+#+end_src
 
 * Local Variables :noexport:
 
