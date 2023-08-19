@@ -878,31 +878,31 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
 ;; these are the default font heights
 (setq fontaine-presets
       '((tiny
-         :default-height 70)
+         :default-height 80)
 
         (small
-         :default-height 80)
+         :default-height 85)
 
         (regular
          :default-height 90)
 
-        (big
-         :default-height 110)
-
         (large
-         :default-height 120)
+         :default-height 93)
 
         (larger
-         :default-height 130)
+         :default-height 100)
+
+        (larger+1
+         :default-height 110)
+
+        (larger+2
+         :default-height 120)
 
         (largest
-         :default-height 140)
+         :default-height 130)
 
         ;; ---------------------------------------------------------------------
         ;; but wait...there is more !
-        (humongous
-         :default-height 160)
-
         (humongous
          :default-height 160)
 
