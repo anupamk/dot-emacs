@@ -2347,14 +2347,27 @@ latest version of =flymake= is installed. This is best documented
                                             :signatureHelpProvider        ; function-signature help
                                             ))
 
+  ;; ---------------------------------------------------------------------------
+  ;; Inlay hints are small text annotations to specific parts of the
+  ;; whole buffer, not unlike diagnostics, but designed to help
+  ;; readability instead of indicating problems.
+  ;;
+  ;; For example, a C++ LSP server can serve hints about positional
+  ;; parameter names in function calls and a variable's automatically
+  ;; deduced type. Emacs can display these hints in many little
+  ;; 0-length overlays with an 'before-string property, thus helping
+  ;; the user remember those types and parameter names.
+  ;;
+  ;; we disable this explicitly, it is quite annoying honestly.
+  (push ':inlayHintProvider eglot-ignored-server-capabilities)
+
   :bind
   (:map eglot-mode-map
-              ("C-c l a" . eglot-code-actions)
-              ("C-c l r" . eglot-rename)
-              ("C-c l f" . eglot-format)
-              ("C-c l d" . eldoc))
+        ("C-c l a" . eglot-code-actions)
+        ("C-c l r" . eglot-rename)
+        ("C-c l f" . eglot-format)
+        ("C-c l d" . eldoc))
   )
-
 #+end_src
 
 *** C/C++
