@@ -1162,6 +1162,21 @@ limited to!) the following:
   (after-init . (lambda() (telephone-line-mode t))))
 
 #+end_src
+** Directory
+
+#+begin_src emacs-lisp
+
+(use-package dired
+  :straight (:type built-in)
+  :commands (dired dired-jump)
+  :bind ("C-x C-j" . dired-jump)
+  :custom ((dired-listing-switches "-agho --group-directories-first")))
+
+(use-package dired-single
+  :commands (dired dired-jump))
+
+
+#+end_src
 
 
 * Keyboard Configuration
