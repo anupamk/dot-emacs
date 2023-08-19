@@ -132,7 +132,6 @@
     triggers can be overridden using =:demand t= to force immediately
     loading anyway.
 
-
 ** Emacs Lisp
 + In Emacs Lisp, if =foo= is a symbol, then ='foo= and =#'foo= are
   completely equivalent. The latter form (with =#'=) is preferred when
@@ -2101,6 +2100,7 @@ Built in =hideshow= mode makes this quite a seamless experience.
 
 #+end_src
 
+
 * Window Management
 The association list in =display-buffer-alist= describes the rule-set
 for controlling the display of windows within an Emacs frame.
@@ -2539,9 +2539,8 @@ Define some utility functions for working with c/c++ sources.
     (clang-format+-mode t)
 
     ;; -------------------------------------------------------------------------
-    ;; abbrev and subword modes are quite useful, enable those as well
+    ;; abbrev mode is quite useful, enable it
     (abbrev-mode t)
-    (subword-mode t)
     )
 
   ;; ---------------------------------------------------------------------------
