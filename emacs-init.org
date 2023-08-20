@@ -735,31 +735,31 @@ the aforementioned scheme.
 
 #+begin_src emacs-lisp
 
-  ;; -----------------------------------------------------------------------------
-  ;; this function is called to return attribute table specific to a host
-  (defun anupamk:utils/get-host-attribute-table ()
-    "return host specific attribute table"
-    (interactive)
-    (cond ((anupamk:utils/host-name-is "virat") personal-attribute-table)
-          ((anupamk:utils/host-name-is "astra") personal-attribute-table)
-          ((anupamk:utils/host-name-is "pnq-dev-01") tarana-attributes-table)
-          ((anupamk:utils/host-name-is "aws-devel-01") tarana-attributes-table)
-          ((anupamk:utils/host-name-is "mbp-01.local") personal-attribute-table)
-          (t nil)))
+;; -----------------------------------------------------------------------------
+;; this function is called to return attribute table specific to a
+;; host.
+;;
+;; by *default* we return the 'personal-attribute-table'
+(defun anupamk:utils/get-host-attribute-table ()
+  "return host specific attribute table"
+  (interactive)
+  (cond ((anupamk:utils/host-name-is "pnq-dev-01") tarana-attributes-table)
+        ((anupamk:utils/host-name-is "aws-devel-01") tarana-attributes-table)
+        (t personal-attribute-table)))
 
-  ;; -----------------------------------------------------------------------------
-  ;; this function is called to return the value of a host-specific attribute
-  (defun anupamk:utils/get-attribute-value (attr-name)
-    "return value of a host-specific attribute"
-    (gethash attr-name (anupamk:utils/get-host-attribute-table)))
+;; -----------------------------------------------------------------------------
+;; this function is called to return the value of a host-specific attribute
+(defun anupamk:utils/get-attribute-value (attr-name)
+  "return value of a host-specific attribute"
+  (gethash attr-name (anupamk:utils/get-host-attribute-table)))
 
-  ;; -----------------------------------------------------------------------------
-  ;; this function is called to display value of an attribute. mostly useful for
-  ;; debugging.
-  (defun anupamk:utils/display-attribute-value (attr-name)
-    "display value of an attribute"
-    (interactive)
-    (message (format "attr:'%s' == '%s'" attr-name (anupamk:utils/get-attribute-value attr-name))))
+;; -----------------------------------------------------------------------------
+;; this function is called to display value of an attribute. mostly useful for
+;; debugging.
+(defun anupamk:utils/display-attribute-value (attr-name)
+  "display value of an attribute"
+  (interactive)
+  (message (format "attr:'%s' == '%s'" attr-name (anupamk:utils/get-attribute-value attr-name))))
 
 #+end_src
 
