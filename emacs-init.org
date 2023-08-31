@@ -2165,12 +2165,9 @@ completion counterpart of the Vertico minibuffer UI.
   ;; optionally use <TAB> for cycling, default is `corfu-complete'
   :bind (:map corfu-map
               ("M-SPC"      . corfu-insert-separator)
-              ("TAB"        . corfu-next)
-              ([tab]        . corfu-next)
-              ("S-TAB"      . corfu-previous)
-              ([backtab]    . corfu-previous)
-              ("S-<return>" . corfu-insert)
-              ("RET"        . nil))
+              ("TAB"        . corfu-insert)
+              ([tab]        . corfu-insert))
+
 
   :init
 
