@@ -2412,6 +2412,20 @@ Enable auto-fill for comments in =prog-mode= buffers
 
 (add-hook 'prog-mode-hook #'anupamk:utils/auto-fill-comments)
 
+;; -----------------------------------------------------------------------------
+;; recenter the display after `xref-find-definitions' and
+;; `xref-go-back'.
+;;
+;; much more conducive to keeping yourself focussed...
+(defun anupamk:utils/recenter ()
+  (recenter))
+
+(defadvice xref-find-definitions (after anupamk:utils/recenter activate)
+  (anupamk:utils/recenter))
+
+(defadvice xref-go-back (after anupamk:utils/recenter activate)
+  (anupamk:utils/recenter))
+
 #+end_src
 
 *** Eglot LSP client
