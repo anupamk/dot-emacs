@@ -2222,30 +2222,28 @@ experience.
   :custom
   (display-buffer-alist
    '(
+
      ;; ------------------------------------------------------------------------
      ;; left-side window configuration
 
      ;; ------------------------------------------------------------------------
      ;; right-side window configuration
 
-     ;; ------------------------------------------------------------------------
-     ;; magit and related windows
+     ;; help/man/faces/colors/...
+     ("\\*\\(Man\\|Help\\|Faces\\|Colors\\|Apropos\\).*"
+      (display-buffer-in-side-window)
+      (dedicated . nil)
+      (window-width . 0.5)
+      (side . right)
+      (slot . 0))
+
+     ;; magit
      ("\\magit.*"
       (display-buffer-in-side-window)
       (dedicated . nil)
-      (window-width . 0.50)
+      (window-width . 0.5)
       (side . right)
-      (slot . 0)
-      (window-parameters . ((mode-line-format . (" "
-                                                 mode-line-buffer-identification)))))
-
-     ("\\*\\(Help\\|Faces\\|Colors\\|Apropos\\).*"
-      (display-buffer-in-side-window)
-      (window-width . 0.40)
-      (side . right)
-      (slot . 0)
-      (window-parameters . ((mode-line-format . (" "
-                                                 mode-line-buffer-identification)))))
+      (slot . 0))
 
      ;; ------------------------------------------------------------------------
      ;; top-side window configuration
@@ -2253,74 +2251,22 @@ experience.
      ;; ------------------------------------------------------------------------
      ;; bottom-side window configuration
 
-     ;; ------------------------------------------------------------------------
-     ;; magit stash
-     ("\\*~stash.*"
-      (display-buffer-in-side-window)
-      (window-width . 0.50)
-      (side . bottom)
-      (slot . 0)
-      (window-parameters . ((mode-line-format . (" "
-                                                 mode-line-buffer-identification)))))
-
-     ;; ------------------------------------------------------------------------
-     ;; code searches via ripgrep, xref etc.
-     ("\\*\\(rg\\|xref\\).*"
-      (display-buffer-in-side-window)
-      (window-width . 0.50)
-      (side . bottom)
-      (slot . 0)
-      (window-parameters . ((mode-line-format . (" "
-                                                 mode-line-buffer-identification)))))
-
-     ;; ------------------------------------------------------------------------
-     ;; bottom-side window (right of `rg' ∵ 'slot == 1')
-     ("\\*compilation*"
+     ;; `compilation' buffer
+     ("\\*compilation\\*"
       (display-buffer-in-side-window)
       (window-width . 0.30)
       (side . bottom)
-      (slot . 1)
-      (window-parameters . ((mode-line-format . (" "
-                                                 mode-line-buffer-identification)))))
+      (slot . 0))
 
-     ;; ------------------------------------------------------------------------
-     ;; this is the Emacs byte compilation
-     ("\\*\\(Compile-Log\\).*"
+     ;; code searches via `ripgrep' || `xref' || `deadgrep' || ...
+     ("\\*\\(rg\\|xref\\|deadgrep\.*\\)\\*"
       (display-buffer-in-side-window)
-      (window-width . 0.20)
-      (dedicated . t)
+      (window-width . 0.30)
       (side . bottom)
-      (slot . 0)
-      (window-parameters . ((mode-line-format . (" "
-                                                 mode-line-buffer-identification)))))
+      (slot . 0))
      ))
 
   (even-window-sizes 'height-only)
-
-  :hook
-  ((help-mode . visual-line-mode)
-   (custom-mode . visual-line-mode))
-  )
-
-(use-package emacs
-  :functions (anupamk:window-utils/display-buffer-at-bottom)
-
-  :config
-
-  ;; ---------------------------------------------------------------------------
-  ;; move current buffer to bottom of the frame.
-  (defun anupamk:window-utils/display-buffer-at-bottom ()
-    "move current buffer to the bottom of the frame. this is useful to take a
-              buffer out of a side window."
-    (interactive)
-    (let ((buffer (current-buffer)))
-      (with-current-buffer buffer
-        (delete-window)
-        (display-buffer-at-bottom buffer `((window-parameters . ((mode-line-format . (" "
-                                                                                      mode-line-buffer-identification)))))))))
-
-  :bind
-  (("C-c b" . anupamk:window-utils/display-buffer-at-bottom))
 
   )
 
