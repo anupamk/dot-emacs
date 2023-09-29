@@ -744,7 +744,7 @@ the aforementioned scheme.
   "return host specific attribute table"
   (interactive)
   (cond ((anupamk:utils/host-name-is "pnq-dev-01") tarana-attributes-table)
-        ((anupamk:utils/host-name-is "aws-devel-01") tarana-attributes-table)
+        ((anupamk:utils/host-name-is "aws-devel-02") tarana-attributes-table)
         (t personal-attribute-table)))
 
 ;; -----------------------------------------------------------------------------
@@ -913,6 +913,15 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
 (add-to-list 'fontaine-presets
              (cond
 
+              ;; ---------------------------------------------------------------
+              ;; dirac
+              ((anupamk:utils/host-name-is "dirac")
+               '(t
+                 :default-family "Terminus"
+                 :default-weight regular
+                 :default-height 120))
+
+              ;; ---------------------------------------------------------------
               ;; virat
               ((anupamk:utils/host-name-is "virat")
                '(t
@@ -920,13 +929,15 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
                  :default-weight regular
                  :default-height 90))
 
-              ;; aws-devel-01
-              ((anupamk:utils/host-name-is "aws-devel-01")
+              ;; ---------------------------------------------------------------
+              ;; aws-devel-02
+              ((anupamk:utils/host-name-is "aws-devel-02")
                '(t
                  :default-family "Go Mono"
                  :default-weight regular
                  :default-height 90))
 
+              ;; ---------------------------------------------------------------
               ;; mbp-01.local
               ((anupamk:utils/host-name-is "mbp-01.local")
                '(t
@@ -934,6 +945,7 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
                  :default-weight regular
                  :default-height 200))
 
+              ;; ---------------------------------------------------------------
               ;; everything else
               (t
                 '(t
@@ -2206,6 +2218,7 @@ A few more useful configurations
   (setq tab-always-indent 'complete))
 
 #+end_src
+
 
 * Window Management
 The association list in =display-buffer-alist= describes the rule-set
