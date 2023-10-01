@@ -1878,6 +1878,10 @@ What does it have to do with hippies ? No idea.
 
 #+begin_src emacs-lisp
 
+(use-package magit-section
+  :delight
+  :demand t)
+
 (use-package magit
   :delight
   :demand t
