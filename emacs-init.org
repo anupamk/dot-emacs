@@ -893,6 +893,7 @@ This section contains work environment configuration items
                                                "--completion-style=detailed"
                                                "--pch-storage=memory"
                                                "--log=error")
+           "cc-mode:clang-format-executable"   "/twbuild/anupam.kapoor/local/usr/bin/clang-format"
            ))
   )
 
@@ -2629,9 +2630,6 @@ Define some utility functions for working with c/c++ sources.
   (c-mode . eglot-ensure)
   (c++-mode . eglot-ensure))
 
-(use-package clang-format+
-  )
-
 (use-package cc-mode
   :demand t
   :functions (anupamk:cc/c-mode-common-hook
@@ -2641,9 +2639,12 @@ Define some utility functions for working with c/c++ sources.
   :init
 
   (defconst cc-lang-server-cmdline (anupamk:utils/get-attribute-value "cc-mode:clangd-with-args"))
+  (defconst cc-clang-format-executable (anupamk:utils/get-attribute-value "cc-mode:clang-format-executable"))
 
   :config
 
+  ;; ---------------------------------------------------------------------------
+  ;; c/c++ mode common hook
   (defun anupamk:cc/c-mode-common-hook ()
     (message "loading c-mode-common customizations")
 
@@ -2698,12 +2699,6 @@ Define some utility functions for working with c/c++ sources.
     (c-set-offset 'case-label '+)
     (c-set-offset 'access-label '/)
     (c-set-offset 'label '/)
-
-    ;; -------------------------------------------------------------------------
-    ;; set the file mode to clang-format+-mode so that clang-format is
-    ;; used for formatting all c/c++ sources
-    (clang-format+-mode t)
-
     ;; -------------------------------------------------------------------------
     ;; abbrev mode is quite useful, enable it
     (abbrev-mode t)
@@ -2765,9 +2760,42 @@ Also apply host specific keybindings
 
 #+begin_src emacs-lisp
 
-  ;; ---------------------------------------------------------------------------
-  ;; host specific keybindings
-  (funcall (anupamk:utils/get-attribute-value "GLOBAL-KEYBINDINGS-FUNC"))
+;; ---------------------------------------------------------------------------
+;; host specific keybindings
+(funcall (anupamk:utils/get-attribute-value "GLOBAL-KEYBINDINGS-FUNC"))
+
+#+end_src
+
+**** Clang Format
+
+Format =c-mode= or =c++-mode= buffers with =clang-format= when
+available. This whole thing can be optimized a bit I think.
+
+#+begin_src emacs-lisp
+
+(use-package clang-format
+  :ensure t
+
+  :config
+  (setq clang-format-executable cc-clang-format-executable)
+  )
+
+(defun anupamk:cc/clang-fmtbuf-on-save ()
+  "hook to apply 'clang-format-buffer' to a buffer before saving it"
+  (add-hook 'before-save-hook (lambda ()
+                                (when (locate-dominating-file "." ".clang-format")
+                                  (clang-format-buffer))
+                                ;; ---------------------------------------------
+                                ;; continue to save
+                                nil)
+            nil
+            ;; -----------------------------------------------------------------
+            ;; make it buffer-local
+            t))
+
+;; Run this for each mode you want to use the hook.
+(add-hook 'c-mode-hook (lambda () (anupamk:cc/clang-fmtbuf-on-save)))
+(add-hook 'c++-mode-hook (lambda () (anupamk:cc/clang-fmtbuf-on-save)))
 
 #+end_src
 
