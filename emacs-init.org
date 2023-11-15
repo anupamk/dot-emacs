@@ -1822,7 +1822,7 @@ What does it have to do with hippies ? No idea.
 #+begin_src emacs-lisp
 
 (use-package emacs
-  (require 'hippie-exp)
+  :config
   (global-set-key (kbd "M-/") #'hippie-expand)
 
   (setq hippie-expand-try-functions-list
@@ -2195,11 +2195,6 @@ completion counterpart of the Vertico minibuffer UI.
   ;; ---------------------------------------------------------------------------
   ;; enable it globally everywhere, rather than in a few modes.
   (global-corfu-mode)
-
-  ;; ---------------------------------------------------------------------------
-  ;; remembers selected candidates and sorts the candidates by their
-  ;; history position
-  (corfu-history-mode)
 
   )
 
