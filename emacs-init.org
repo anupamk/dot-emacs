@@ -564,6 +564,20 @@ Potential speedup of cursor operations
 
 #+end_src
 
+** Tab Bar
+
+Tab bars are effectively tabbed window configurations, and a great
+addition to Emacs. Lets set that up to something sane
+
+#+begin_src emacs-lisp
+
+(custom-set-variables '(tab-bar-format '(tab-bar-format-history
+                                         tab-bar-format-tabs
+                                         tab-bar-format-tabs-groups
+                                         tab-bar-separator
+                                         tab-bar-format-add-tab)))
+
+#+end_src
 
 * Utility Functions
 ** Commonly used utility functions
