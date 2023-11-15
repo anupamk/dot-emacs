@@ -154,6 +154,30 @@
 
 
 * Base Settings
+** Enable Lexical Binding
+
+For reasons unbeknownst to me, the =#+PROPERTY= stanza at the begining
+of this file seems to have no effect. The more targeted, source-block
+specific =#+begin_ src emacs-lisp :lexical t= does not seem to produce
+anything useful.
+
+This stanza:
+
+#+begin_src emacs-lisp
+
+;; -*- lexical-binding: t; -*-
+
+#+end_src
+
+however, seems to do the trick just fine, only constraint being that
+it *must* be the first one that is 'tangled'.
+
+This is _probably_ because, =org-babel-load-file= in =init.el= exports
+the source code using 'org-babel-tangle', and then loads the resulting
+file using 'load-file'.
+
+Which is OK.
+
 ** Encoding
 
 #+begin_src emacs-lisp
@@ -2220,6 +2244,7 @@ A few more useful configurations
 
 
 * Window Management
+
 The association list in =display-buffer-alist= describes the rule-set
 for controlling the display of windows within an Emacs frame.
 
@@ -2230,62 +2255,86 @@ experience.
 #+begin_src emacs-lisp
 
 ;; -----------------------------------------------------------------------------
-;; override, display-buffer-alist to better manage appearance of popup
-;; windows in an emacs-frame.
-(use-package emacs
-  :custom
-  (display-buffer-alist
-   '(
+;; load up 'window.el'
+(require 'window)
+(setq even-window-heights t)
 
-     ;; ------------------------------------------------------------------------
-     ;; left-side window configuration
+;; -----------------------------------------------------------------------------
+;; '*NOTE*' '*NOTE*' '*NOTE*'
+;;    for this to work, 'lexical-binding' *must* be enabled.
+;;
+;; this helper function, returns a function that matches against a
+;; list of 'major-mode's.
+;;
+;; it is used in the a backquoted form to create a matcher that checks
+;; if a buffer's major mode is 'derived-mode-p' from a list of
+;; 'major-modes'.
+;;
+;; quite handy when we cannot rely on the name of a buffer f.e. when a
+;; major mode has a large range of buffer names etc.
+;;
+;; from: https://www.masteringemacs.org/article/demystifying-emacs-window-manager
+(defun make-display-buffer-matcher-function (major-modes)
+  (lambda (buffer-name action)
+    (with-current-buffer buffer-name (apply #'derived-mode-p major-modes))))
 
-     ;; ------------------------------------------------------------------------
-     ;; right-side window configuration
+;; -----------------------------------------------------------------------------
+;; first just nuke the whole 'display-buffer-alist' and then start afresh...
+(setq display-buffer-alist nil)
 
-     ;; help/man/faces/colors/...
-     ("\\*\\(Man\\|Help\\|Faces\\|Colors\\|Apropos\\).*"
-      (display-buffer-in-side-window)
-      (dedicated . nil)
-      (window-width . 0.5)
-      (side . right)
-      (slot . 0))
+;; -----------------------------------------------------------------------------
+;; all '*Help*', '*Colors*', '*Apropos*', '*Man.*\\*' windows must:
+;;    - first 'display-buffer-reuse-window' i.e. find an existing
+;;      window and reuse that one, and
+;;
+;;    - next, try 'display-buffer-in-direction' and pop up a new
+;;      window with the buffer
+(add-to-list 'display-buffer-alist
+             '("\\*\\(Help\\|Colors\\|Apropos\\|Man.*\\)\\*"
+               (display-buffer-in-side-window)
 
-     ;; magit
-     ("\\magit.*"
-      (display-buffer-in-side-window)
-      (dedicated . nil)
-      (window-width . 0.5)
-      (side . right)
-      (slot . 0))
+               (side         . right)
+               (slot         . 0)
+               (window-width . 0.33)
+               (dedicated    . nil)
+               (window-parameters (no-delete-other-windows . nil))
+               ))
 
-     ;; ------------------------------------------------------------------------
-     ;; top-side window configuration
+;; -----------------------------------------------------------------------------
+;; for all 'magit-mode' derived buffers, use a specialized display routine.
+(setq magit-display-buffer-function #'display-buffer)
+(add-to-list 'display-buffer-alist
+          `(,(make-display-buffer-matcher-function '(magit-mode))
+            (display-buffer-reuse-mode-window
+             display-buffer-in-direction)
 
-     ;; ------------------------------------------------------------------------
-     ;; bottom-side window configuration
+            (mode magit-mode)
+            (window       . root)
+            (window-width . 0.5)
+            (direction    . right)))
 
-     ;; `compilation' buffer
-     ("\\*compilation\\*"
-      (display-buffer-in-side-window)
-      (window-width . 0.30)
-      (side . bottom)
-      (slot . 0))
+;; -----------------------------------------------------------------------------
+;; all '*compilation*', '*rg*', '*xref*', '*deadgrep.*' buffers follow this
+(add-to-list 'display-buffer-alist
+             `(,(make-display-buffer-matcher-function '(deadgrep-mode
+                                                        rg-mode
+                                                        compilation-mode
+                                                        xref--xref-buffer-mode))
 
-     ;; code searches via `ripgrep' || `xref' || `deadgrep' || ...
-     ("\\*\\(rg\\|xref\\|deadgrep\.*\\)\\*"
-      (display-buffer-in-side-window)
-      (window-width . 0.30)
-      (side . bottom)
-      (slot . 0))
-     ))
+               (display-buffer-reuse-mode-window
+                display-buffer-in-direction)
 
-  (even-window-sizes 'height-only)
+               (mode deadgrep-mode
+                     rg-mode
+                     compilation-mode
+                     xref--xref-buffer-mode)
 
-  )
+               (window        . root)
+               (window-height . 0.2)
+               (direction     . bottom)
+               ))
 
 #+end_src
-
 
 
 * Programming
@@ -3015,6 +3064,7 @@ All of our configuration is now loaded, let the games begin.
 (add-hook 'emacs-startup-hook #'greet-post-startup-complete)
 
 #+end_src
+
 
 * Local Variables :noexport:
 
