@@ -516,6 +516,17 @@ Default mouse behavior in Emacs can be augmented with some saner defaults.
     ;; <CTRL> key is held, change the size of text in the buffer
     (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)
                                         ((control) . text-scale)))
+
+    ;; -------------------------------------------------------------------------
+    ;; When enabled, this minor mode allows you to scroll the display
+    ;; precisely, according to the turning of the mouse wheel.
+    (setq pixel-scroll-precision-mode t)
+
+    ;; -------------------------------------------------------------------------
+    ;; Whether frames should be resized implicitly ? when 't' frame
+    ;; resize is inhibited
+    (setq frame-inhibit-implied-resize t)
+
     )
 
 #+end_src
@@ -578,6 +589,7 @@ addition to Emacs. Lets set that up to something sane
                                          tab-bar-format-add-tab)))
 
 #+end_src
+
 
 * Utility Functions
 ** Commonly used utility functions
