@@ -984,9 +984,9 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
               ;; aws-devel-02
               ((anupamk:utils/host-name-is "aws-devel-02")
                '(t
-                 :default-family "Go Mono"
+                 :default-family "Terminus"
                  :default-weight regular
-                 :default-height 90))
+                 :default-height 40))
 
               ;; ---------------------------------------------------------------
               ;; mbp-01.local
@@ -1045,7 +1045,7 @@ interactions with Emacs. Lets set that up here.
   :init
   ;; ---------------------------------------------------------------------------
   ;; this looks nice !
-  (setq default-frame-alist '((cursor-color . "gold")))
+  (setq default-frame-alist '((cursor-color . "orange red")))
 
   :config
   (load-theme 'zenburn :no-confirm)
@@ -1584,10 +1584,9 @@ Where is the point at ?
 
   ;; ---------------------------------------------------------------------------
   ;; setup project root for `project.el'
-  (setq consult-project-root-function
-        (lambda ()
-          (when-let (project (project-current))
-            (project-root project))))
+  (setq project-root-dir (lambda ()
+                           (when-let (project (project-current))
+                             (project-root project))))
 
   ;; ---------------------------------------------------------------------------
   ;; use plocate as the locate backend, ignoring case, and limiting to 100
@@ -1789,9 +1788,9 @@ search results, specifying custom query commands etc. etc.
     ;; -------------------------------------------------------------------------
     ;; select a root-search directory. project-root or
     ;; current directory
-    :dir (let ((vc (vc-root-dir)))
-           (if vc
-               vc
+    :dir (let ((project-root-dir (anupamk:project-utils/locate-project-root)))
+           (if project-root-dir
+               project-root-dir
              default-directory))
 
     ;; -------------------------------------------------------------------------
@@ -2253,6 +2252,7 @@ A few more useful configurations
   (setq tab-always-indent 'complete))
 
 #+end_src
+
 
 
 * Window Management
