@@ -1833,7 +1833,45 @@ search results, specifying custom query commands etc. etc.
 
 #+end_src
 
+** Deadgrep
 
+Similar to =ripgrep= but seems to be fasta !
+
+#+begin_src emacs-lisp
+
+(use-package deadgrep
+  :ensure t
+
+  :bind
+  (("M-s r" . deadgrep))
+  )
+
+(defadvice deadgrep-search-items (after anupamk:utils/recenter activate)
+  (anupamk:utils/recenter))
+
+#+end_src
+
+** Protobuf
+
+#+begin_src emacs-lisp
+
+(use-package protobuf-mode
+  :if (anupamk:utils/host-name-is "aws-devel-02")
+  :ensure t
+  )
+
+#+end_src
+
+** Bazel
+
+#+begin_src emacs-lisp
+
+(use-package bazel
+  :if (anupamk:utils/host-name-is "aws-devel-02")
+  :ensure t
+  )
+
+#+end_src
 
 
 * Application and utilities
