@@ -1361,58 +1361,6 @@ keybindings. These are all defined here.
   )
 
 #+end_src
-** Window movement
-
-Emacs already has =windmove= package which provides a set of routines
-to for selection of windows in a frame geometrically.
-
-Thus, for example, =windmove-left= will select a window immediately to
-the left of the current selected window etc.
-
-FWIW, =julia-assange= (yes, /that/ one) had
-=change-windows-intuitively.el= which predated this !
-
-#+begin_src emacs-lisp
-
-(use-package emacs
-  :init
-  (require 'windmove)
-
-  ;; ---------------------------------------------------------------------------
-  ;; movement that falls-of-the-edge of the frame will wrap around to
-  ;; find the window on the opposite side of the frame.
-  (setq windmove-wrap-around t)
-
-  :commands
-  (windmove-up windmove-down windmove-left windmove-right)
-
-  :bind
-  (("C-<M-up>"    . windmove-up)
-   ("C-<M-down>"  . windmove-down)
-   ("C-<M-left>"  . windmove-left)
-   ("C-<M-right>" . windmove-right)))
-
-#+end_src
-
-** Buffer movement
-
-With =buffer-move= Emacs provides functionality for moving buffers in
-various windows more easily than the usual =C-x b=.
-
-#+begin_src emacs-lisp
-
-(use-package buffer-move
-  :delight
-  :commands
-  (buf-move-up buf-move-down buf-move-left buf-move-right)
-
-  :bind
-  (("C-c <C-S-up>"     . buf-move-up)
-   ("C-c <C-S-down>"   . buf-move-down)
-   ("C-c <C-S-left>"   . buf-move-left)
-   ("C-c <C-S-right>"  . buf-move-right)))
-
-#+end_src
 
 
 * History & State
@@ -1434,18 +1382,6 @@ visting files that were operated on recently.
 ;; the process)
 (setq recentf-max-saved-items 300)
 (setq recentf-exclude '(".gz" ".xz" ".zip" "/elpa/" "/ssh:" "/sudo:"))
-
-#+end_src
-
-** Window configuration
-=winner-mode= is a builtin global minor mode that records the changes
-in window configuration so that changes can be undone using the
-=winner-undo= command.
-
-#+begin_src emacs-lisp
-
-  (require 'winner)
-  (winner-mode t)
 
 #+end_src
 
@@ -2255,8 +2191,73 @@ A few more useful configurations
 
 
 
-* Window Management
+* Window / Frame Management
 
+** Window history
+=winner-mode= is a builtin global minor mode that records the changes
+in window configuration so that changes can be undone using the
+=winner-undo= command.
+
+#+begin_src emacs-lisp
+
+  (require 'winner)
+  (winner-mode t)
+
+#+end_src
+
+** Window movement
+Emacs already has =windmove= package which provides a set of routines
+to for selection of windows in a frame geometrically.
+
+Thus, for example, =windmove-left= will select a window immediately to
+the left of the current selected window etc.
+
+FWIW, =julia-assange= (yes, /that/ one) had
+=change-windows-intuitively.el= which predated this !
+
+#+begin_src emacs-lisp
+
+(use-package emacs
+  :init
+  (require 'windmove)
+
+  ;; ---------------------------------------------------------------------------
+  ;; movement that falls-of-the-edge of the frame will wrap around to
+  ;; find the window on the opposite side of the frame.
+  (setq windmove-wrap-around t)
+
+  :commands
+  (windmove-up windmove-down windmove-left windmove-right)
+
+  :bind
+  (("C-<M-up>"    . windmove-up)
+   ("C-<M-down>"  . windmove-down)
+   ("C-<M-left>"  . windmove-left)
+   ("C-<M-right>" . windmove-right)))
+
+#+end_src
+
+** Buffer movement
+
+With =buffer-move= Emacs provides functionality for moving buffers in
+various windows more easily than the usual =C-x b=.
+
+#+begin_src emacs-lisp
+
+(use-package buffer-move
+  :delight
+  :commands
+  (buf-move-up buf-move-down buf-move-left buf-move-right)
+
+  :bind
+  (("C-c <C-S-up>"     . buf-move-up)
+   ("C-c <C-S-down>"   . buf-move-down)
+   ("C-c <C-S-left>"   . buf-move-left)
+   ("C-c <C-S-right>"  . buf-move-right)))
+
+#+end_src
+
+** Manage Display Buffers
 The association list in =display-buffer-alist= describes the rule-set
 for controlling the display of windows within an Emacs frame.
 
