@@ -504,6 +504,15 @@ much better.
   ;; control. with `t', vc follows the link and visits the real file
   ;; (telling about it in the echo area)
   (setf vc-follow-symlinks t)
+
+  ;; ---------------------------------------------------------------------------
+  ;; Completion ignores file names ending in any string in this
+  ;; list. It does not ignore them if all possible completions end in
+  ;; one of these strings or when displaying a list of completions. It
+  ;; ignores directory names if they match any string in this list
+  ;; which ends in a slash.
+  (setq completion-ignored-extensions '("^.git/"))
+
   )
 
 #+end_src
