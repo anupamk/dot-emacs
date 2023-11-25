@@ -88,7 +88,7 @@
 
     #+end_src
 
-    Note that in the =:hook= section above, we have just used
+    *Note* that in the =:hook= section above, we have just used
     =c-mode-common= and not =c-mode-common-hook= !
 
   + =:if, :when, :unless=
@@ -131,6 +131,22 @@
     package to be loaded when certain events occur. The presence of
     triggers can be overridden using =:demand t= to force immediately
     loading anyway.
+
+  + =:ensure=
+
+    The keyword, =:ensure= causes the package(s) to be installed
+    automatically if not already present on your system. Thus, for
+    example, the following snippet
+
+    #+begin_src emacs-lisp :tangle no
+
+    (use-package magit
+      :ensure t)
+
+    #+end_src
+
+    Will cause the package =magit= to be installed if it was not
+    present on the system
 
 ** Emacs Lisp
 + In Emacs Lisp, if =foo= is a symbol, then ='foo= and =#'foo= are
