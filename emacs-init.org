@@ -1749,7 +1749,7 @@ search results, specifying custom query commands etc. etc.
     ;; -------------------------------------------------------------------------
     ;; select a root-search directory. project-root or
     ;; current directory
-    :dir (let ((project-root-dir (anupamk:project-utils/locate-project-root)))
+    :dir (let ((project-root-dir (anupamk:project-utils/get-project-root-dirname)))
            (if project-root-dir
                project-root-dir
              default-directory))
@@ -1790,24 +1790,6 @@ search results, specifying custom query commands etc. etc.
   :bind
   (("M-s r" . anupamk:ripgrep-search/rg-vc-or-dir)
    ("M-s d" . anupamk:ripgrep-search/rg-ref-in-pwd)))
-
-#+end_src
-
-** Deadgrep
-
-Similar to =ripgrep= but seems to be fasta !
-
-#+begin_src emacs-lisp
-
-(use-package deadgrep
-  :ensure t
-
-  :bind
-  (("M-s r" . deadgrep))
-  )
-
-(defadvice deadgrep-search-items (after anupamk:utils/recenter activate)
-  (anupamk:utils/recenter))
 
 #+end_src
 
@@ -2282,7 +2264,8 @@ various windows more easily than the usual =C-x b=.
 
 #+end_src
 
-** Manage Display Buffers
+** Manage
+Display Buffers
 The association list in =display-buffer-alist= describes the rule-set
 for controlling the display of windows within an Emacs frame.
 
@@ -2352,24 +2335,23 @@ experience.
             (direction    . right)))
 
 ;; -----------------------------------------------------------------------------
-;; all '*compilation*', '*rg*', '*xref*', '*deadgrep.*' buffers follow this
+;; all '*compilation*', '*rg*', '*xref*'buffers follow this
 (add-to-list 'display-buffer-alist
-             `(,(make-display-buffer-matcher-function '(deadgrep-mode
-                                                        rg-mode
+             `(,(make-display-buffer-matcher-function '(rg-mode
                                                         compilation-mode
                                                         xref--xref-buffer-mode))
 
                (display-buffer-reuse-mode-window
                 display-buffer-in-direction)
 
-               (mode deadgrep-mode
-                     rg-mode
+               (mode rg-mode
                      compilation-mode
                      xref--xref-buffer-mode)
 
                (window        . root)
                (window-height . 0.2)
                (direction     . bottom)
+               (dedicated . t)
                ))
 
 #+end_src
