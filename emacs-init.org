@@ -1070,7 +1070,7 @@ interactions with Emacs. Lets set that up here.
   :init
   ;; ---------------------------------------------------------------------------
   ;; this looks nice !
-  (setq default-frame-alist '((cursor-color . "orange red")))
+  (setq default-frame-alist '((cursor-color . "#8faf9f")))
 
   :config
   (load-theme 'zenburn :no-confirm)
@@ -1325,7 +1325,7 @@ keybindings. These are all defined here.
 
   ;; ---------------------------------------------------------------------------
   ;; create a new scratch buffer
-  (define-key anupamk/global-keymap (kbd "C-c s") #'anupamk:utils/create-new-scratch-buffer)
+  (define-key anupamk/global-keymap (kbd "C-c C-s C-n") #'anupamk:utils/create-new-scratch-buffer)
 
   ;; ---------------------------------------------------------------------------
   ;; rename current buffer
