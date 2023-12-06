@@ -2425,6 +2425,15 @@ Lets set that up.
                                       ".git")))
       (anupamk:project-utils/do-locate-project-root dirname project-root-markers)))
 
+  ;; ---------------------------------------------------------------------------
+  ;; get the root directory only, instead of the alist that is
+  ;; returned
+  (defun anupamk:project-utils/get-project-root-dirname (&optional dirname)
+    "return the root directory name a project"
+    (unless dirname (setq dirname default-directory))
+    (alist-get 'vc (list (anupamk:project-utils/locate-project-root dirname))))
+
+
   :bind
   (("C-c p f" . project-find-file)
    ("C-c p r" . project-find-regexp))
