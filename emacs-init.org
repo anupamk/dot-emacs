@@ -295,20 +295,6 @@ any utility for me.
 
 #+end_src
 
-** Delight
-Edit / Rename / Remove (most often) modeline lighters for different
-packages.
-
-#+begin_src emacs-lisp
-
-(use-package delight
-  :after use-package)
-
-(use-package gcmh
-  :delight)
-
-#+end_src
-
 ** Whitespaces
 Highlight trailing space-like characters f.e. tabs, empty lines,
 trailing spaces etc.
@@ -615,6 +601,101 @@ addition to Emacs. Lets set that up to something sane
 
 #+end_src
 
+** Project Configuration
+
+Since about version =25= or thereabouts, Emacs introduced native
+project management via =project.el=. The built in LSP client =eglot=
+use that for its interactions.
+
+Lets set that up.
+
+#+begin_src emacs-lisp
+
+(use-package project
+  :config
+
+  ;; ---------------------------------------------------------------------------
+  ;; list of marker-filenames that define project-root
+  (setq anupamk-project-root-markers '("Cargo.toml"
+                                       "WORKSPACE"
+                                       "compile_commands.json"
+                                       "compile_flags.txt"
+                                       ".git"
+                                       ))
+
+  ;; ---------------------------------------------------------------------------
+  ;; return project-root-directory
+  ;;
+  ;; presence of *one* of marker files (returned from
+  ;; `anupamk-make-project-root-markers') marks a directory as
+  ;; project-root.
+  ;;
+  ;; search recursively, starting from `dirname' looking for these
+  ;; marker files, and return project-rootdir or nil (when no marker
+  ;; file exists)
+  (defun anupamk-do-locate-project-root (dirname all-marker-list)
+    "find project-root-directory by recursively searching starting from
+    DIRNAME for project-root markers defined in ALL-MARKER-LISTS"
+
+    (when all-marker-list
+      (let ((project-rootdir (locate-dominating-file dirname (car
+                                                              all-marker-list))))
+        (if project-rootdir
+            ;; -----------------------------------------------------------------
+            ;; found a live one. `transient' because, this project was
+            ;; detected via our function.
+            (cons 'transient project-rootdir)
+
+          ;; -------------------------------------------------------------------
+          ;; keep looking
+          (anupamk-do-locate-project-root dirname (cdr all-marker-list)))
+        )))
+
+  ;; ---------------------------------------------------------------------------
+  ;; just a wrapper over the real thaang
+  (defun anupamk-locate-project-root (dirname)
+    (anupamk-do-locate-project-root dirname anupamk-project-root-markers))
+
+  ;; ---------------------------------------------------------------------------
+  ;; get the root directory only, instead of the alist that is
+  ;; returned
+  (defun anupamk-locate-project-root-dirname (&optional dirname)
+    "return the root directory name a project"
+    (unless dirname (setq dirname default-directory))
+    (alist-get 'vc (list (anupamk-locate-project-root dirname))))
+
+  ;; ---------------------------------------------------------------------------
+  ;; cannot use `hook' because `project-find-functions' does not end
+  ;; in `-hook'. also, must be defined in the `:config' section (of use-package)
+  ;; because otherwise, 'project-find-functions' is not yet initialized.
+  (add-hook 'project-find-functions #'anupamk-locate-project-root)
+
+  :bind
+  (("C-c p n" . project-switch-project)
+   ("C-c p f" . project-find-file)
+   ("C-c p r" . project-find-regexp))
+  )
+
+#+end_src
+
+** Delight
+
+Makes the modeline less busy. Delight can be used to edit / rename /
+remove (more often) modeline lighters for different packages.
+
+#+begin_src emacs-lisp
+
+(use-package delight
+  :ensure
+  :after
+  (use-package))
+
+(use-package gcmh
+  :ensure
+  :delight)
+
+#+end_src
+
 
 * Utility Functions
 ** Commonly used utility functions
@@ -863,13 +944,15 @@ This section defines personal preference for various attributes.
            "cc-mode:fill-column"              80
            "cc-mode:comment-column"           80
            "cc-mode:clangd-with-args"         ("clangd"
-                                               "-j=4"
+                                               "--sync"
                                                "--all-scopes-completion=1"
                                                "--background-index=1"
+                                               "--background-index-priority=normal"
                                                "--limit-results=128"
-                                               "--cross-file-rename"
                                                "--completion-style=detailed"
-                                               "--pch-storage=memory"
+                                               "--pch-storage=disk"
+                                               "--include-ineligible-results"
+                                               "--malloc-trim"
                                                "--log=error")
            ))
   )
@@ -1544,12 +1627,6 @@ Where is the point at ?
   (setq consult-line-numbers-widen t)
 
   ;; ---------------------------------------------------------------------------
-  ;; setup project root for `project.el'
-  (setq project-root-dir (lambda ()
-                           (when-let (project (project-current))
-                             (project-root project))))
-
-  ;; ---------------------------------------------------------------------------
   ;; use plocate as the locate backend, ignoring case, and limiting to 100
   ;; results
   (setq consult-locate-args "plocate --ignore-case --limit 100")
@@ -1702,6 +1779,7 @@ search results, specifying custom query commands etc. etc.
 #+begin_src emacs-lisp
 
 (use-package rg
+
   :after
   (wgrep)
 
@@ -1731,6 +1809,7 @@ search results, specifying custom query commands etc. etc.
   (rg-default-alias-fallback "all")
 
   :config
+
   ;; ---------------------------------------------------------------------------
   ;; ripgrep in project root
   (rg-define-search anupamk:ripgrep-search/rg-vc-or-dir
@@ -1749,7 +1828,7 @@ search results, specifying custom query commands etc. etc.
     ;; -------------------------------------------------------------------------
     ;; select a root-search directory. project-root or
     ;; current directory
-    :dir (let ((project-root-dir (anupamk:project-utils/get-project-root-dirname)))
+    :dir (let ((project-root-dir (anupamk-locate-project-root-dirname)))
            (if project-root-dir
                project-root-dir
              default-directory))
@@ -2361,69 +2440,6 @@ experience.
 This section is all about configuring packages that deal with
 programming languages and 'stuff'.
 
-** Project Configuration
-
-Since about version =25= or thereabouts, Emacs introduced native
-project management via =project.el=. The built in LSP client =eglot=
-use that for its interactions.
-
-Lets set that up.
-
-#+begin_src emacs-lisp
-
-(use-package emacs
-  :init
-
-  :functions
-  (anupamk:project-utils/locate-project-root
-   anupamk:project-utils/do-locate-project-root)
-
-  :config
-  ;; ---------------------------------------------------------------------------
-  ;; find project root-dir by searching (recursively) through a list of
-  ;; project-root-markers.
-  (defun anupamk:project-utils/do-locate-project-root (dirname all-marker-lists)
-    "find project root directory (starting from DIRNAME) by searching
-       for markers defined in ALL-MARKER-LISTS"
-
-    (when all-marker-lists
-      (let ((anupamk:project-root (locate-dominating-file dirname (car all-marker-lists))))
-        (if (not anupamk:project-root)
-            ;; -----------------------------------------------------------------
-            ;; keep looking ...
-            (anupamk:project-utils/do-locate-project-root dirname (cdr all-marker-lists))
-
-          ;; -------------------------------------------------------------------
-          ;; we got a live one
-          (cons 'vc anupamk:project-root)))))
-
-  ;; ---------------------------------------------------------------------------
-  ;; just a wrapper over the real thaang
-  (defun anupamk:project-utils/locate-project-root (dirname)
-    (let ((project-root-markers (list "Cargo.toml"
-                                      "WORKSPACE"
-                                      "compile_commands.json"
-                                      "compile_flags.txt"
-                                      ".git")))
-      (anupamk:project-utils/do-locate-project-root dirname project-root-markers)))
-
-  ;; ---------------------------------------------------------------------------
-  ;; get the root directory only, instead of the alist that is
-  ;; returned
-  (defun anupamk:project-utils/get-project-root-dirname (&optional dirname)
-    "return the root directory name a project"
-    (unless dirname (setq dirname default-directory))
-    (alist-get 'vc (list (anupamk:project-utils/locate-project-root dirname))))
-
-
-  :bind
-  (("C-c p f" . project-find-file)
-   ("C-c p r" . project-find-regexp))
-
-  :hook
-  (project-find-functions #'anupamk:project-utils/locate-project-root))
-
-#+end_src
 
 ** Programming Languages
 *** CMake
