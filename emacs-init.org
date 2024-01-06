@@ -2864,102 +2864,7 @@ Using =racket-mode= for programming in scheme.
 *** Python
 
 + The default package =python.el= provides =python-mode= which is the
-major-mode for python.
-
-#+begin_src emacs-lisp
-
-(use-package python
-  :straight (:type built-in)
-
-  :config
-
-  ;; ---------------------------------------------------------------------------
-  ;; remove guess indent python message
-  (setq python-indent-guess-indent-offset-verbose nil)
-
-  :custom
-  (python-shell-interpreter "ipython")
-  (python-shell-interpreter-args "-i --simple-prompt")
-  (python-indent-guess-indent-offset-verbose nil)
-
-  :bind
-  ( :map python-mode-map
-    ("C-c r" . python-indent-shift-right)
-    ("C-c l" . python-indent-shift-left))
-
-  )
-
-#+end_src
-
-+ For inferior python processes hide the modeline.
-
-#+begin_src emacs-lisp
-
-(use-package hide-mode-line
-  :ensure t
-  :defer t
-
-  :hook
-  (inferior-python-mode . hide-mode-line-mode))
-
-#+end_src
-
-+ I use poetry to manage python environments, let's set that up.
-
-#+begin_src emacs-lisp
-
-(use-package poetry
-  :ensure t
-  :defer t
-
-  :config
-  ;; ---------------------------------------------------------------------------
-  ;; checks for the correct virtualenv, which is a better strategy
-  ;; because the default one is quite slow
-  (setq poetry-tracking-strategy 'switch-buffer)
-
-  :hook
-  (python-mode . poetry-tracking-mode))
-
-#+end_src
-
-+ Formatting python buffers is under the aegis of [[https://github.com/psf/black][black]].
-
-#+begin_src emacs-lisp
-
-(use-package blacken
-  :ensure t
-  :defer t
-
-  :commands blacken-mode blacken-buffer
-
-  :custom
-  (blacken-allow-py36 t)
-  (blacken-skip-string-normalization t)
-
-  :hook
-  (python-mode-hook . blacken-mode))
-
-#+end_src
-
-+ Use numpy style docstrings for python.
-
-#+begin_src emacs-lisp
-
-(use-package numpydoc
-  :ensure t
-  :defer t
-
-  :custom
-  (numpydoc-insert-examples-block nil)
-  (numpydoc-template-long nil)
-
-  :bind
-  (:map python-mode-map  ("C-c C-n" . numpydoc-generate)))
-
-#+end_src
-
-+ And ofcourse, all of this integrated with eglot
+major-mode for python. Integrate this with eglot.
 
 #+begin_src emacs-lisp
 
@@ -2967,12 +2872,39 @@ major-mode for python.
 
   :config
   ;; ---------------------------------------------------------------------------
-  ;; install pyright (as root) with
-  ;;    'npm install -g pyright'
-  (add-to-list 'eglot-server-programs '(python-mode . ("pyright-langserver" "--stdio")))
+  ;; first install 'pylsp'
+  (add-to-list 'eglot-server-programs '(python-mode . ("pylsp")))
+
+  :bind
+  (:map eglot-mode-map
+        ("C-c C-d" . eldoc)
+        ("C-c C-e" . eglot-rename)
+        ("C-c C-o" . python-sort-imports)
+        ("C-c C-f" . eglot-format-buffer))
 
   :hook
-  (python-mode . eglot-ensure))
+  ((python-mode . eglot-ensure)
+   (python-mode . flyspell-prog-mode)
+   (python-mode . superword-mode)
+   (python-mode . hs-minor-mode))
+
+  )
+
+#+end_src
+
+
+#+begin_src emacs-lisp
+
+
+(use-package eglot
+
+  :bind
+  (:map eglot-mode-map
+
+  :config
+  ;; ---------------------------------------------------------------------------
+
+  :hook
 
 #+end_src
 
