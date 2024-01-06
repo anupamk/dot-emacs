@@ -621,6 +621,7 @@ Lets set that up.
                                        "compile_commands.json"
                                        "compile_flags.txt"
                                        ".git"
+                                       "go.mod"
                                        ))
 
   ;; ---------------------------------------------------------------------------
@@ -2892,19 +2893,28 @@ major-mode for python. Integrate this with eglot.
 
 #+end_src
 
+*** Go(lang)
 
 #+begin_src emacs-lisp
 
+(use-package go-mode
+  :ensure)
 
 (use-package eglot
 
   :bind
   (:map eglot-mode-map
+        ("C-c C-f" . eglot-format-buffer))
 
   :config
   ;; ---------------------------------------------------------------------------
+  ;; first install 'gopls' for the language server
+  (add-to-list 'eglot-server-programs '(go-mode . ("gopls")))
 
   :hook
+  ((go-mode . eglot-ensure))
+
+  )
 
 #+end_src
 
