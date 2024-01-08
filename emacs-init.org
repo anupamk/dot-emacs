@@ -621,6 +621,8 @@ Lets set that up.
                                        "compile_flags.txt"
                                        ".git"
                                        "go.mod"
+                                       ".ccls"
+                                       ".project.el"
                                        ))
 
   ;; ---------------------------------------------------------------------------
@@ -964,17 +966,7 @@ This section defines personal preference for various attributes.
            "cc-mode:tab-width"                8
            "cc-mode:fill-column"              80
            "cc-mode:comment-column"           80
-           "cc-mode:clangd-with-args"         ("clangd"
-                                               "--sync"
-                                               "--all-scopes-completion=1"
-                                               "--background-index=1"
-                                               "--background-index-priority=normal"
-                                               "--limit-results=128"
-                                               "--completion-style=detailed"
-                                               "--pch-storage=disk"
-                                               "--include-ineligible-results"
-                                               "--malloc-trim"
-                                               "--log=error")
+           "cc-mode:lsp-server-with-args"     ("ccls")
            ))
   )
 
@@ -1013,16 +1005,8 @@ This section contains work environment configuration items
            "cc-mode:tab-width"                2
            "cc-mode:fill-column"              80
            "cc-mode:comment-column"           80
-           "cc-mode:clangd-with-args"         ("/usr/bin/clangd-11"
-                                               "-j=16"
-                                               "--all-scopes-completion=1"
-                                               "--background-index=1"
-                                               "--limit-results=128"
-                                               "--cross-file-rename"
-                                               "--completion-style=detailed"
-                                               "--pch-storage=memory"
-                                               "--log=error")
-           "cc-mode:clang-format-executable"   "/twbuild/anupam.kapoor/local/usr/bin/clang-format"
+           "cc-mode:lsp-server-with-args"     ("/twbuild/anupam.kapoor/local/usr/bin/ccls")
+           "cc-mode:clang-format-executable"  "/twbuild/anupam.kapoor/local/usr/bin/clang-format"
            ))
   )
 
@@ -2189,7 +2173,7 @@ Built in =hideshow= mode makes this quite a seamless experience.
 
 #+begin_src emacs-lisp
 
-  (add-hook 'prog-mode-hook #'hs-minor-mode)
+(add-hook 'prog-mode-hook #'hs-minor-mode)
 
 #+end_src
 ** PDF Tools
@@ -2528,7 +2512,8 @@ latest version of =flymake= is installed. This is best documented
 
 #+begin_src emacs-lisp
 
-(straight-use-package 'flymake)
+(use-package flymake
+  )
 
 #+end_src
 
@@ -2690,7 +2675,7 @@ Define some utility functions for working with c/c++ sources.
 
   :init
 
-  (defconst cc-lang-server-cmdline (anupamk:utils/get-attribute-value "cc-mode:clangd-with-args"))
+  (defconst cc-lang-server-cmdline (anupamk:utils/get-attribute-value "cc-mode:lsp-server-with-args"))
   (defconst cc-clang-format-executable (anupamk:utils/get-attribute-value "cc-mode:clang-format-executable"))
 
   :config
