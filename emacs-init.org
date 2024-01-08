@@ -1097,9 +1097,9 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
               ;; dirac
               ((anupamk:utils/host-name-is "dirac")
                '(t
-                 :default-family "Terminus"
+                 :default-family "PragmataPro Mono"
                  :default-weight regular
-                 :default-height 120))
+                 :default-height 110))
 
               ;; ---------------------------------------------------------------
               ;; virat
@@ -1108,6 +1108,14 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
                  :default-family "PragmataPro Mono"
                  :default-weight regular
                  :default-height 90))
+
+              ;; ---------------------------------------------------------------
+              ;; virat
+              ((anupamk:utils/host-name-is "kashi")
+               '(t
+                 :default-family "PragmataPro Mono"
+                 :default-weight regular
+                 :default-height 110))
 
               ;; ---------------------------------------------------------------
               ;; aws-devel-02
@@ -1131,7 +1139,7 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
                 '(t
                   :default-family "PragmataPro Mono"
                   :default-weight regular
-                  :default-height 90))))
+                  :default-height 100))))
 
 ;; Recover last preset or fall back to desired style from `fontaine-presets'.
 (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
@@ -1165,6 +1173,7 @@ interactions with Emacs. Lets set that up here.
 #+begin_src emacs-lisp
 
 (use-package zenburn-theme
+  :disabled
 
   :custom-face
   (diff-added    ((t :foreground "green"   :underline nil)))
@@ -1189,25 +1198,59 @@ From Protesilaos Stavrou
 #+begin_src emacs-lisp
 
 (use-package modus-themes
-  :disabled
-
-  :custom
-  (modus-themes-italic-constructs nil)
-  (modus-themes-bold-constructs nil)
-  (modus-themes-region '(accented bg-only no-extend))
-
-  :custom-face
-  (diff-added    ((t :foreground "green"   :underline nil)))
-  (diff-removed  ((t :foreground "red"     :underline nil)))
-  (highlight     ((t :background "#a9a9a9" :underline nil)))
-
-  :init
-  ;; ---------------------------------------------------------------------------
-  ;; load theme files before enabling a theme
-  (modus-themes-load-themes)
+  :ensure
+  :demand
 
   :config
-  (modus-themes-load-operandi)
+  (require 'modus-themes)
+
+  ;; ---------------------------------------------------------------------------
+  ;; some minor tweaks
+  (setq modus-themes-italic-constructs nil
+        modus-themes-bold-constructs nil
+        modus-themes-mixed-fonts nil)
+
+  ;; ---------------------------------------------------------------------------
+  ;; some color customizations
+  (setq modus-themes-prompts '(bold))
+  (setq modus-themes-org-blocks 'gray-background)
+
+  ;; ---------------------------------------------------------------------------
+  ;; overall steps (for customizing specific colors) are as follows:
+  ;;
+  ;;    1. place point at character whose color needs modification,
+  ;;    and issue a 'M-x describe-char'
+  ;;
+  ;;    2. scroll to bottom of help-buffer (from 1), and find the
+  ;;    'face' property, it would look something like
+  ;;    'font-lock-<face-name>-face'
+  ;;
+  ;;    3. next find what color corresponds to that face in the
+  ;;    current theme via a 'M-x modus-themes-list-colors-current'
+  ;;
+  ;;    4. find a color you like or any other color, and add the face
+  ;;    into the 'modus-operandi-palette-overrides' below
+  ;;
+  ;;    5. reload theme
+  (setq modus-operandi-palette-overrides
+        '(
+          ;; -------------------------------------------------------------------
+          ;; dimmer backgrounds are better
+          (bg-main "#dcdcdc")
+
+          ;; -------------------------------------------------------------------
+          ;; face specific configuration
+          (type "#000088")
+          (string "#006600")
+          (fnname "#660000")
+          (bg-hl-line "#c3c3c3")
+        ))
+
+  :hook
+  ;; ---------------------------------------------------------------------------
+  ;; load the theme 'modus-operandi'
+  (after-init . (lambda() (load-theme 'modus-operandi :no-confirm)))
+
   )
 
 #+end_src
