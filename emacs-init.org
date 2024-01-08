@@ -302,7 +302,6 @@ trailing spaces etc.
 #+begin_src emacs-lisp
 
 (use-package whitespace
-  :delight
 
   :hook
   (prog-mode   . whitespace-mode)
@@ -679,23 +678,44 @@ Lets set that up.
 
 #+end_src
 
-** Delight
+** Modeline
 
-Makes the modeline less busy. Delight can be used to edit / rename /
-remove (more often) modeline lighters for different packages.
+Make the modeline less busy, by purging bunch of major/minor-modes
+information from there.
 
 #+begin_src emacs-lisp
 
-(use-package delight
-  :ensure
-  :after
-  (use-package))
+(use-package emacs
+  :config
+  ;; -----------------------------------------------------------------------------
+  ;; disable a bunch of minor/major modes, otherwise the modeline look
+  ;; too busy
+  (defvar anupamk-hidden-minor-modes '(auto-fill-function
+                                       which-key-mode
+                                       whitespace-mode
+                                       highlight-parentheses-mode
+                                       gcmh-mode
+                                       flymake-mode
+                                       flyspell-mode
+                                       wucuo-mode
+                                       hs-minor-mode
+                                       eldoc-mode
+                                       abbrev-mode
+                                       git-gutter-mode))
 
-(use-package gcmh
-  :ensure
-  :delight)
+  (defun anupamk-purge-minor-modes ()
+    (dolist (ith-mm anupamk-hidden-minor-modes nil)
+      (let ((hidden-mm (cdr (assoc ith-mm minor-mode-alist))))
+        (when hidden-mm
+          (setcar hidden-mm "")))))
+
+  :hook
+  (after-change-major-mode . anupamk-purge-minor-modes)
+
+  )
 
 #+end_src
+
 
 
 * Utility Functions
@@ -1281,7 +1301,6 @@ limited to!) the following:
 ;; -----------------------------------------------------------------------------
 ;; enable highlighting on current line as well as current line on all windows.
 (require 'hl-line)
-(custom-set-variables '(global-hl-line-sticky-flag t))
 (global-hl-line-mode 1)
 
 ;; -----------------------------------------------------------------------------
@@ -1308,31 +1327,6 @@ limited to!) the following:
 
 #+end_src
 ** Modeline customizations
-
-#+begin_src emacs-lisp
-
-(use-package telephone-line
-  :delight
-
-  :init
-  (telephone-line-defsegment anupamk/telephone-line-segment-clock ()
-    "display current time"
-    (format-time-string "[%H:%M %m/%d]"))
-
-  ;; ---------------------------------------------------------------------------
-  ;; lhs of modeline
-  (setq telephone-line-lhs '((nil . (telephone-line-buffer-segment
-                                     telephone-line-vc-segment
-                                     telephone-line-position-segment))))
-
-  ;; ---------------------------------------------------------------------------
-  ;; rhs of modeline
-  (setq telephone-line-rhs '((accent . (anupamk/telephone-line-segment-clock))))
-
-  :hook
-  (after-init . (lambda() (telephone-line-mode t))))
-
-#+end_src
 ** Directory
 
 #+begin_src emacs-lisp
@@ -1990,11 +1984,9 @@ What does it have to do with hippies ? No idea.
 #+begin_src emacs-lisp
 
 (use-package magit-section
-  :delight
   :demand t)
 
 (use-package magit
-  :delight
   :demand t
   :config
 
@@ -2075,8 +2067,6 @@ added/deleted/modified blocks in a buffer.
 #+begin_src emacs-lisp
 
 (use-package bookmark
-  :delight
-
   :functions
   (anupamk:bookmark/quick-save-bookmark)
 
@@ -2332,7 +2322,6 @@ various windows more easily than the usual =C-x b=.
 #+begin_src emacs-lisp
 
 (use-package buffer-move
-  :delight
   :commands
   (buf-move-up buf-move-down buf-move-left buf-move-right)
 
@@ -2541,6 +2530,7 @@ latest version of =flymake= is installed. This is best documented
         ("C-c l f" . eglot-format)
         ("C-c l d" . eldoc))
   )
+
 #+end_src
 
 *** C/C++
