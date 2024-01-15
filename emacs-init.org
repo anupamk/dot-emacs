@@ -1256,10 +1256,10 @@ From Protesilaos Stavrou
 
   :hook
   ;; ---------------------------------------------------------------------------
-  ;; load the theme 'modus-operandi-tinted'
+  ;; load the theme 'modus-operandi
   (after-init . (lambda()
                   (progn
-                    (load-theme 'modus-operandi-tinted :no-confirm)
+                    (load-theme 'modus-operandi :no-confirm)
                     (anupamk:utils/unbold-all-faces))))
 
   )
