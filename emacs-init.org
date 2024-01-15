@@ -774,6 +774,7 @@ information from there.
 
 ;; -----------------------------------------------------------------------------
 ;; hostname predicate
+;;;###autoload
 (defun anupamk:utils/host-name-is (host_name)
   "return true if host-name is `host_name'"
   (string-equal (system-name) host_name))
