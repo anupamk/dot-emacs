@@ -1106,9 +1106,9 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
               ;; aws-devel-02
               ((anupamk:utils/host-name-is "aws-devel-02")
                '(t
-                 :default-family "Terminus"
+                 :default-family "PragmataPro Mono"
                  :default-weight regular
-                 :default-height 40))
+                 :default-height 90))
 
               ;; ---------------------------------------------------------------
               ;; mbp-01.local
@@ -1124,7 +1124,7 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
                 '(t
                   :default-family "PragmataPro Mono"
                   :default-weight regular
-                  :default-height 100))))
+                  :default-height 10))))
 
 ;; Recover last preset or fall back to desired style from `fontaine-presets'.
 (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
@@ -1158,7 +1158,10 @@ interactions with Emacs. Lets set that up here.
 #+begin_src emacs-lisp
 
 (use-package zenburn-theme
-  :disabled
+  :unless (anupamk:utils/host-name-is "dirac")
+
+  :ensure
+  :demand
 
   :custom-face
   (diff-added    ((t :foreground "green"   :underline nil)))
@@ -1170,8 +1173,13 @@ interactions with Emacs. Lets set that up here.
   ;; this looks nice !
   (setq default-frame-alist '((cursor-color . "#8faf9f")))
 
-  :config
-  (load-theme 'zenburn :no-confirm)
+  :hook
+  ;; ---------------------------------------------------------------------------
+  ;; load the theme 'zenburn'
+  (after-init . (lambda()
+                  (progn
+                    (load-theme 'zenburn :no-confirm)
+                    (anupamk:utils/unbold-all-faces))))
   )
 
 #+end_src
@@ -1183,6 +1191,8 @@ From Protesilaos Stavrou
 #+begin_src emacs-lisp
 
 (use-package modus-themes
+  :if (anupamk:utils/host-name-is "dirac")
+
   :ensure
   :demand
 
@@ -1217,6 +1227,9 @@ From Protesilaos Stavrou
   ;;    into the 'modus-operandi-palette-overrides' below
   ;;
   ;;    5. reload theme
+
+  ;; ---------------------------------------------------------------------------
+  ;; modus-operandi-palette customizations
   (setq modus-operandi-palette-overrides
         '(
           ;; -------------------------------------------------------------------
@@ -1229,12 +1242,25 @@ From Protesilaos Stavrou
           (string "#006600")
           (fnname "#660000")
           (bg-hl-line "#c3c3c3")
-        ))
+          ))
+
+  ;; ---------------------------------------------------------------------------
+  ;; modus-operandi-tinted-palette customizations
+  (setq modus-operandi-tinted-palette-overrides
+        '(
+          ;; -------------------------------------------------------------------
+          ;; dimmer backgrounds are better
+          (bg-main bg-dim)
+          (comment "#696969")
+          ))
 
   :hook
   ;; ---------------------------------------------------------------------------
-  ;; load the theme 'modus-operandi'
-  (after-init . (lambda() (load-theme 'modus-operandi :no-confirm)))
+  ;; load the theme 'modus-operandi-tinted'
+  (after-init . (lambda()
+                  (progn
+                    (load-theme 'modus-operandi-tinted :no-confirm)
+                    (anupamk:utils/unbold-all-faces))))
 
   )
 
@@ -1880,7 +1906,6 @@ search results, specifying custom query commands etc. etc.
     :dir default-directory
     :confirm prefix
     :flags ("--no-hidden -g '!*.patch' -g '!*.patch.*' -g '!*.savehist'"))
-
 
   (defun anupamk:ripgrep-search/save-search-as-name ()
     "Save `rg' buffer, naming it after the current search query.
