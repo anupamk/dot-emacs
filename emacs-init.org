@@ -1234,14 +1234,16 @@ From Protesilaos Stavrou
         '(
           ;; -------------------------------------------------------------------
           ;; dimmer backgrounds are better
-          (bg-main "#dcdcdc")
+          (bg-main "#fdf8e8")
+          (fg-main "#3a484d")
+          (bg-hl-line bg-ochre)
+          (cursor red-faint)
 
           ;; -------------------------------------------------------------------
           ;; face specific configuration
           (type "#000088")
           (string "#006600")
           (fnname "#660000")
-          (bg-hl-line "#c3c3c3")
           ))
 
   ;; ---------------------------------------------------------------------------
