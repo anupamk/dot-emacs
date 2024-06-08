@@ -88,7 +88,7 @@
 
     #+end_src
 
-    Note that in the =:hook= section above, we have just used
+    *Note* that in the =:hook= section above, we have just used
     =c-mode-common= and not =c-mode-common-hook= !
 
   + =:if, :when, :unless=
@@ -132,6 +132,22 @@
     triggers can be overridden using =:demand t= to force immediately
     loading anyway.
 
+  + =:ensure=
+
+    The keyword, =:ensure= causes the package(s) to be installed
+    automatically if not already present on your system. Thus, for
+    example, the following snippet
+
+    #+begin_src emacs-lisp :tangle no
+
+    (use-package magit
+      :ensure t)
+
+    #+end_src
+
+    Will cause the package =magit= to be installed if it was not
+    present on the system
+
 ** Emacs Lisp
 + In Emacs Lisp, if =foo= is a symbol, then ='foo= and =#'foo= are
   completely equivalent. The latter form (with =#'=) is preferred when
@@ -154,6 +170,30 @@
 
 
 * Base Settings
+** Enable Lexical Binding
+
+For reasons unbeknownst to me, the =#+PROPERTY= stanza at the begining
+of this file seems to have no effect. The more targeted, source-block
+specific =#+begin_ src emacs-lisp :lexical t= does not seem to produce
+anything useful.
+
+This stanza:
+
+#+begin_src emacs-lisp
+
+;; -*- lexical-binding: t; -*-
+
+#+end_src
+
+however, seems to do the trick just fine, only constraint being that
+it *must* be the first one that is 'tangled'.
+
+This is _probably_ because, =org-babel-load-file= in =init.el= exports
+the source code using 'org-babel-tangle', and then loads the resulting
+file using 'load-file'.
+
+Which is OK.
+
 ** Encoding
 
 #+begin_src emacs-lisp
@@ -255,20 +295,6 @@ any utility for me.
 
 #+end_src
 
-** Delight
-Edit / Rename / Remove (most often) modeline lighters for different
-packages.
-
-#+begin_src emacs-lisp
-
-(use-package delight
-  :after use-package)
-
-(use-package gcmh
-  :delight)
-
-#+end_src
-
 ** Whitespaces
 Highlight trailing space-like characters f.e. tabs, empty lines,
 trailing spaces etc.
@@ -276,7 +302,6 @@ trailing spaces etc.
 #+begin_src emacs-lisp
 
 (use-package whitespace
-  :delight
 
   :hook
   (prog-mode   . whitespace-mode)
@@ -464,6 +489,15 @@ much better.
   ;; control. with `t', vc follows the link and visits the real file
   ;; (telling about it in the echo area)
   (setf vc-follow-symlinks t)
+
+  ;; ---------------------------------------------------------------------------
+  ;; Completion ignores file names ending in any string in this
+  ;; list. It does not ignore them if all possible completions end in
+  ;; one of these strings or when displaying a list of completions. It
+  ;; ignores directory names if they match any string in this list
+  ;; which ends in a slash.
+  (setq completion-ignored-extensions '("^.git/"))
+
   )
 
 #+end_src
@@ -492,6 +526,17 @@ Default mouse behavior in Emacs can be augmented with some saner defaults.
     ;; <CTRL> key is held, change the size of text in the buffer
     (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)
                                         ((control) . text-scale)))
+
+    ;; -------------------------------------------------------------------------
+    ;; When enabled, this minor mode allows you to scroll the display
+    ;; precisely, according to the turning of the mouse wheel.
+    (setq pixel-scroll-precision-mode t)
+
+    ;; -------------------------------------------------------------------------
+    ;; Whether frames should be resized implicitly ? when 't' frame
+    ;; resize is inhibited
+    (setq frame-inhibit-implied-resize t)
+
     )
 
 #+end_src
@@ -539,6 +584,140 @@ Potential speedup of cursor operations
 (setq auto-window-vscroll nil)
 
 #+end_src
+
+** Tab Bar
+
+Tab bars are effectively tabbed window configurations, and a great
+addition to Emacs. Lets set that up to something sane
+
+#+begin_src emacs-lisp
+
+(custom-set-variables '(tab-bar-format '(tab-bar-format-history
+                                         tab-bar-format-tabs
+                                         tab-bar-format-tabs-groups
+                                         tab-bar-separator
+                                         tab-bar-format-add-tab)))
+
+#+end_src
+
+** Project Configuration
+
+Since about version =25= or thereabouts, Emacs introduced native
+project management via =project.el=. The built in LSP client =eglot=
+use that for its interactions.
+
+Lets set that up.
+
+#+begin_src emacs-lisp
+
+(use-package project
+  :config
+
+  ;; ---------------------------------------------------------------------------
+  ;; list of marker-filenames that define project-root
+  (setq anupamk-project-root-markers '("Cargo.toml"
+                                       "WORKSPACE"
+                                       "compile_commands.json"
+                                       "compile_flags.txt"
+                                       ".git"
+                                       "go.mod"
+                                       ".ccls"
+                                       ".project.el"
+                                       ))
+
+  ;; ---------------------------------------------------------------------------
+  ;; return project-root-directory
+  ;;
+  ;; presence of *one* of marker files (returned from
+  ;; `anupamk-make-project-root-markers') marks a directory as
+  ;; project-root.
+  ;;
+  ;; search recursively, starting from `dirname' looking for these
+  ;; marker files, and return project-rootdir or nil (when no marker
+  ;; file exists)
+  (defun anupamk-do-locate-project-root (dirname all-marker-list)
+    "find project-root-directory by recursively searching starting from
+    DIRNAME for project-root markers defined in ALL-MARKER-LISTS"
+
+    (when all-marker-list
+      (let ((project-rootdir (locate-dominating-file dirname (car
+                                                              all-marker-list))))
+        (if project-rootdir
+            ;; -----------------------------------------------------------------
+            ;; found a live one. `transient' because, this project was
+            ;; detected via our function.
+            (cons 'transient project-rootdir)
+
+          ;; -------------------------------------------------------------------
+          ;; keep looking
+          (anupamk-do-locate-project-root dirname (cdr all-marker-list)))
+        )))
+
+  ;; ---------------------------------------------------------------------------
+  ;; just a wrapper over the real thaang
+  (defun anupamk-locate-project-root (dirname)
+    (anupamk-do-locate-project-root dirname anupamk-project-root-markers))
+
+  ;; ---------------------------------------------------------------------------
+  ;; get the root directory only, instead of the alist that is
+  ;; returned
+  (defun anupamk-locate-project-root-dirname (&optional dirname)
+    "return the root directory name a project"
+    (unless dirname (setq dirname default-directory))
+    (alist-get 'vc (list (anupamk-locate-project-root dirname))))
+
+  ;; ---------------------------------------------------------------------------
+  ;; cannot use `hook' because `project-find-functions' does not end
+  ;; in `-hook'. also, must be defined in the `:config' section (of use-package)
+  ;; because otherwise, 'project-find-functions' is not yet initialized.
+  (add-hook 'project-find-functions #'anupamk-locate-project-root)
+
+  :bind
+  (("C-c p n" . project-switch-project)
+   ("C-c p f" . project-find-file)
+   ("C-c p r" . project-find-regexp))
+  )
+
+#+end_src
+
+** Modeline
+
+Make the modeline less busy, by purging bunch of major/minor-modes
+information from there.
+
+#+begin_src emacs-lisp
+
+(use-package emacs
+  :config
+  ;; -----------------------------------------------------------------------------
+  ;; disable a bunch of minor/major modes, otherwise the modeline look
+  ;; too busy
+  (defvar anupamk-hidden-minor-modes '(auto-fill-function
+                                       which-key-mode
+                                       whitespace-mode
+                                       highlight-parentheses-mode
+                                       gcmh-mode
+                                       flymake-mode
+                                       flyspell-mode
+                                       wucuo-mode
+                                       hs-minor-mode
+                                       eldoc-mode
+                                       abbrev-mode
+                                       git-gutter-mode))
+
+  (defun anupamk-purge-minor-modes ()
+    (dolist (ith-mm anupamk-hidden-minor-modes nil)
+      (let ((hidden-mm (cdr (assoc ith-mm minor-mode-alist))))
+        (when hidden-mm
+          (setcar hidden-mm "")))))
+
+  :hook
+  (after-change-major-mode . anupamk-purge-minor-modes)
+
+  )
+
+#+end_src
+
 
 
 * Utility Functions
@@ -595,6 +774,7 @@ Potential speedup of cursor operations
 
 ;; -----------------------------------------------------------------------------
 ;; hostname predicate
+;;;###autoload
 (defun anupamk:utils/host-name-is (host_name)
   "return true if host-name is `host_name'"
   (string-equal (system-name) host_name))
@@ -744,7 +924,7 @@ the aforementioned scheme.
   "return host specific attribute table"
   (interactive)
   (cond ((anupamk:utils/host-name-is "pnq-dev-01") tarana-attributes-table)
-        ((anupamk:utils/host-name-is "aws-devel-01") tarana-attributes-table)
+        ((anupamk:utils/host-name-is "aws-devel-02") tarana-attributes-table)
         (t personal-attribute-table)))
 
 ;; -----------------------------------------------------------------------------
@@ -787,15 +967,7 @@ This section defines personal preference for various attributes.
            "cc-mode:tab-width"                8
            "cc-mode:fill-column"              80
            "cc-mode:comment-column"           80
-           "cc-mode:clangd-with-args"         ("clangd"
-                                               "-j=4"
-                                               "--all-scopes-completion=1"
-                                               "--background-index=1"
-                                               "--limit-results=128"
-                                               "--cross-file-rename"
-                                               "--completion-style=detailed"
-                                               "--pch-storage=memory"
-                                               "--log=error")
+           "cc-mode:lsp-server-with-args"     ("ccls")
            ))
   )
 
@@ -834,15 +1006,8 @@ This section contains work environment configuration items
            "cc-mode:tab-width"                2
            "cc-mode:fill-column"              80
            "cc-mode:comment-column"           80
-           "cc-mode:clangd-with-args"         ("/usr/bin/clangd-11"
-                                               "-j=16"
-                                               "--all-scopes-completion=1"
-                                               "--background-index=1"
-                                               "--limit-results=128"
-                                               "--cross-file-rename"
-                                               "--completion-style=detailed"
-                                               "--pch-storage=memory"
-                                               "--log=error")
+           "cc-mode:lsp-server-with-args"     ("/twbuild/anupam.kapoor/local/usr/bin/ccls")
+           "cc-mode:clang-format-executable"  "/twbuild/anupam.kapoor/local/usr/bin/clang-format"
            ))
   )
 
@@ -913,6 +1078,15 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
 (add-to-list 'fontaine-presets
              (cond
 
+              ;; ---------------------------------------------------------------
+              ;; dirac
+              ((anupamk:utils/host-name-is "dirac")
+               '(t
+                 :default-family "PragmataPro Mono"
+                 :default-weight regular
+                 :default-height 110))
+
+              ;; ---------------------------------------------------------------
               ;; virat
               ((anupamk:utils/host-name-is "virat")
                '(t
@@ -920,13 +1094,23 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
                  :default-weight regular
                  :default-height 90))
 
-              ;; aws-devel-01
-              ((anupamk:utils/host-name-is "aws-devel-01")
+              ;; ---------------------------------------------------------------
+              ;; virat
+              ((anupamk:utils/host-name-is "kashi")
                '(t
-                 :default-family "Go Mono"
+                 :default-family "PragmataPro Mono"
+                 :default-weight regular
+                 :default-height 110))
+
+              ;; ---------------------------------------------------------------
+              ;; aws-devel-02
+              ((anupamk:utils/host-name-is "aws-devel-02")
+               '(t
+                 :default-family "PragmataPro Mono"
                  :default-weight regular
                  :default-height 90))
 
+              ;; ---------------------------------------------------------------
               ;; mbp-01.local
               ((anupamk:utils/host-name-is "mbp-01.local")
                '(t
@@ -934,12 +1118,13 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
                  :default-weight regular
                  :default-height 200))
 
+              ;; ---------------------------------------------------------------
               ;; everything else
               (t
                 '(t
                   :default-family "PragmataPro Mono"
                   :default-weight regular
-                  :default-height 90))))
+                  :default-height 10))))
 
 ;; Recover last preset or fall back to desired style from `fontaine-presets'.
 (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
@@ -973,6 +1158,10 @@ interactions with Emacs. Lets set that up here.
 #+begin_src emacs-lisp
 
 (use-package zenburn-theme
+  :unless (anupamk:utils/host-name-is "dirac")
+
+  :ensure
+  :demand
 
   :custom-face
   (diff-added    ((t :foreground "green"   :underline nil)))
@@ -982,10 +1171,15 @@ interactions with Emacs. Lets set that up here.
   :init
   ;; ---------------------------------------------------------------------------
   ;; this looks nice !
-  (setq default-frame-alist '((cursor-color . "gold")))
+  (setq default-frame-alist '((cursor-color . "#8faf9f")))
 
-  :config
-  (load-theme 'zenburn :no-confirm)
+  :hook
+  ;; ---------------------------------------------------------------------------
+  ;; load the theme 'zenburn'
+  (after-init . (lambda()
+                  (progn
+                    (load-theme 'zenburn :no-confirm)
+                    (anupamk:utils/unbold-all-faces))))
   )
 
 #+end_src
@@ -997,25 +1191,79 @@ From Protesilaos Stavrou
 #+begin_src emacs-lisp
 
 (use-package modus-themes
-  :disabled
+  :if (anupamk:utils/host-name-is "dirac")
 
-  :custom
-  (modus-themes-italic-constructs nil)
-  (modus-themes-bold-constructs nil)
-  (modus-themes-region '(accented bg-only no-extend))
-
-  :custom-face
-  (diff-added    ((t :foreground "green"   :underline nil)))
-  (diff-removed  ((t :foreground "red"     :underline nil)))
-  (highlight     ((t :background "#a9a9a9" :underline nil)))
-
-  :init
-  ;; ---------------------------------------------------------------------------
-  ;; load theme files before enabling a theme
-  (modus-themes-load-themes)
+  :ensure
+  :demand
 
   :config
-  (modus-themes-load-operandi)
+  (require 'modus-themes)
+
+  ;; ---------------------------------------------------------------------------
+  ;; some minor tweaks
+  (setq modus-themes-italic-constructs nil
+        modus-themes-bold-constructs nil
+        modus-themes-mixed-fonts nil)
+
+  ;; ---------------------------------------------------------------------------
+  ;; some color customizations
+  (setq modus-themes-prompts '(bold))
+  (setq modus-themes-org-blocks 'gray-background)
+
+  ;; ---------------------------------------------------------------------------
+  ;; overall steps (for customizing specific colors) are as follows:
+  ;;
+  ;;    1. place point at character whose color needs modification,
+  ;;    and issue a 'M-x describe-char'
+  ;;
+  ;;    2. scroll to bottom of help-buffer (from 1), and find the
+  ;;    'face' property, it would look something like
+  ;;    'font-lock-<face-name>-face'
+  ;;
+  ;;    3. next find what color corresponds to that face in the
+  ;;    current theme via a 'M-x modus-themes-list-colors-current'
+  ;;
+  ;;    4. find a color you like or any other color, and add the face
+  ;;    into the 'modus-operandi-palette-overrides' below
+  ;;
+  ;;    5. reload theme
+
+  ;; ---------------------------------------------------------------------------
+  ;; modus-operandi-palette customizations
+  (setq modus-operandi-palette-overrides
+        '(
+          ;; -------------------------------------------------------------------
+          ;; dimmer backgrounds are better
+          (bg-main "#fdf8e8")
+          (fg-main "#3a484d")
+          (bg-hl-line bg-ochre)
+          (cursor red-faint)
+
+          ;; -------------------------------------------------------------------
+          ;; face specific configuration
+          (type "#000088")
+          (string "#006600")
+          (fnname "#660000")
+          ))
+
+  ;; ---------------------------------------------------------------------------
+  ;; modus-operandi-tinted-palette customizations
+  (setq modus-operandi-tinted-palette-overrides
+        '(
+          ;; -------------------------------------------------------------------
+          ;; dimmer backgrounds are better
+          (bg-main bg-dim)
+          (comment "#696969")
+          ))
+
+  :hook
+  ;; ---------------------------------------------------------------------------
+  ;; load the theme 'modus-operandi
+  (after-init . (lambda()
+                  (progn
+                    (load-theme 'modus-operandi :no-confirm)
+                    (anupamk:utils/unbold-all-faces))))
+
   )
 
 #+end_src
@@ -1109,7 +1357,6 @@ limited to!) the following:
 ;; -----------------------------------------------------------------------------
 ;; enable highlighting on current line as well as current line on all windows.
 (require 'hl-line)
-(custom-set-variables '(global-hl-line-sticky-flag t))
 (global-hl-line-mode 1)
 
 ;; -----------------------------------------------------------------------------
@@ -1136,31 +1383,6 @@ limited to!) the following:
 
 #+end_src
 ** Modeline customizations
-
-#+begin_src emacs-lisp
-
-(use-package telephone-line
-  :delight
-
-  :init
-  (telephone-line-defsegment anupamk/telephone-line-segment-clock ()
-    "display current time"
-    (format-time-string "[%H:%M %m/%d]"))
-
-  ;; ---------------------------------------------------------------------------
-  ;; lhs of modeline
-  (setq telephone-line-lhs '((nil . (telephone-line-buffer-segment
-                                     telephone-line-vc-segment
-                                     telephone-line-position-segment))))
-
-  ;; ---------------------------------------------------------------------------
-  ;; rhs of modeline
-  (setq telephone-line-rhs '((accent . (anupamk/telephone-line-segment-clock))))
-
-  :hook
-  (after-init . (lambda() (telephone-line-mode t))))
-
-#+end_src
 ** Directory
 
 #+begin_src emacs-lisp
@@ -1237,7 +1459,7 @@ keybindings. These are all defined here.
 
   ;; ---------------------------------------------------------------------------
   ;; create a new scratch buffer
-  (define-key anupamk/global-keymap (kbd "C-c s") #'anupamk:utils/create-new-scratch-buffer)
+  (define-key anupamk/global-keymap (kbd "C-c C-s C-n") #'anupamk:utils/create-new-scratch-buffer)
 
   ;; ---------------------------------------------------------------------------
   ;; rename current buffer
@@ -1298,58 +1520,6 @@ keybindings. These are all defined here.
   )
 
 #+end_src
-** Window movement
-
-Emacs already has =windmove= package which provides a set of routines
-to for selection of windows in a frame geometrically.
-
-Thus, for example, =windmove-left= will select a window immediately to
-the left of the current selected window etc.
-
-FWIW, =julia-assange= (yes, /that/ one) had
-=change-windows-intuitively.el= which predated this !
-
-#+begin_src emacs-lisp
-
-(use-package emacs
-  :init
-  (require 'windmove)
-
-  ;; ---------------------------------------------------------------------------
-  ;; movement that falls-of-the-edge of the frame will wrap around to
-  ;; find the window on the opposite side of the frame.
-  (setq windmove-wrap-around t)
-
-  :commands
-  (windmove-up windmove-down windmove-left windmove-right)
-
-  :bind
-  (("C-<M-up>"    . windmove-up)
-   ("C-<M-down>"  . windmove-down)
-   ("C-<M-left>"  . windmove-left)
-   ("C-<M-right>" . windmove-right)))
-
-#+end_src
-
-** Buffer movement
-
-With =buffer-move= Emacs provides functionality for moving buffers in
-various windows more easily than the usual =C-x b=.
-
-#+begin_src emacs-lisp
-
-(use-package buffer-move
-  :delight
-  :commands
-  (buf-move-up buf-move-down buf-move-left buf-move-right)
-
-  :bind
-  (("C-c <C-S-up>"     . buf-move-up)
-   ("C-c <C-S-down>"   . buf-move-down)
-   ("C-c <C-S-left>"   . buf-move-left)
-   ("C-c <C-S-right>"  . buf-move-right)))
-
-#+end_src
 
 
 * History & State
@@ -1371,18 +1541,6 @@ visting files that were operated on recently.
 ;; the process)
 (setq recentf-max-saved-items 300)
 (setq recentf-exclude '(".gz" ".xz" ".zip" "/elpa/" "/ssh:" "/sudo:"))
-
-#+end_src
-
-** Window configuration
-=winner-mode= is a builtin global minor mode that records the changes
-in window configuration so that changes can be undone using the
-=winner-undo= command.
-
-#+begin_src emacs-lisp
-
-  (require 'winner)
-  (winner-mode t)
 
 #+end_src
 
@@ -1518,13 +1676,6 @@ Where is the point at ?
   ;; ---------------------------------------------------------------------------
   ;; show absolute line-numbers when narrowing is active
   (setq consult-line-numbers-widen t)
-
-  ;; ---------------------------------------------------------------------------
-  ;; setup project root for `project.el'
-  (setq consult-project-root-function
-        (lambda ()
-          (when-let (project (project-current))
-            (project-root project))))
 
   ;; ---------------------------------------------------------------------------
   ;; use plocate as the locate backend, ignoring case, and limiting to 100
@@ -1679,6 +1830,7 @@ search results, specifying custom query commands etc. etc.
 #+begin_src emacs-lisp
 
 (use-package rg
+
   :after
   (wgrep)
 
@@ -1708,6 +1860,7 @@ search results, specifying custom query commands etc. etc.
   (rg-default-alias-fallback "all")
 
   :config
+
   ;; ---------------------------------------------------------------------------
   ;; ripgrep in project root
   (rg-define-search anupamk:ripgrep-search/rg-vc-or-dir
@@ -1726,9 +1879,9 @@ search results, specifying custom query commands etc. etc.
     ;; -------------------------------------------------------------------------
     ;; select a root-search directory. project-root or
     ;; current directory
-    :dir (let ((vc (vc-root-dir)))
-           (if vc
-               vc
+    :dir (let ((project-root-dir (anupamk-locate-project-root-dirname)))
+           (if project-root-dir
+               project-root-dir
              default-directory))
 
     ;; -------------------------------------------------------------------------
@@ -1756,7 +1909,6 @@ search results, specifying custom query commands etc. etc.
     :confirm prefix
     :flags ("--no-hidden -g '!*.patch' -g '!*.patch.*' -g '!*.savehist'"))
 
-
   (defun anupamk:ripgrep-search/save-search-as-name ()
     "Save `rg' buffer, naming it after the current search query.
           This function is meant to be mapped to a key in `rg-mode-map'."
@@ -1770,7 +1922,27 @@ search results, specifying custom query commands etc. etc.
 
 #+end_src
 
+** Protobuf
 
+#+begin_src emacs-lisp
+
+(use-package protobuf-mode
+  :if (anupamk:utils/host-name-is "aws-devel-02")
+  :ensure t
+  )
+
+#+end_src
+
+** Bazel
+
+#+begin_src emacs-lisp
+
+(use-package bazel
+  :if (anupamk:utils/host-name-is "aws-devel-02")
+  :ensure t
+  )
+
+#+end_src
 
 
 * Application and utilities
@@ -1809,20 +1981,22 @@ What does it have to do with hippies ? No idea.
 
 #+begin_src emacs-lisp
 
-(require 'hippie-exp)
-(global-set-key (kbd "M-/") #'hippie-expand)
+(use-package emacs
+  :config
+  (global-set-key (kbd "M-/") #'hippie-expand)
 
-(setq hippie-expand-try-functions-list
-      '(try-expand-dabbrev
-        try-expand-dabbrev-all-buffers
-        try-expand-dabbrev-from-kill
-        try-complete-file-name-partially
-        try-complete-file-name
-        try-expand-all-abbrevs
-        try-expand-list
-        try-expand-line
-        try-complete-lisp-symbol-partially
-        try-complete-lisp-symbol))
+  (setq hippie-expand-try-functions-list
+        '(try-expand-dabbrev
+          try-expand-dabbrev-all-buffers
+          try-expand-dabbrev-from-kill
+          try-complete-file-name-partially
+          try-complete-file-name
+          try-expand-all-abbrevs
+          try-expand-list
+          try-expand-line
+          try-complete-lisp-symbol-partially
+          try-complete-lisp-symbol))
+  )
 
 #+end_src
 
@@ -1864,8 +2038,10 @@ What does it have to do with hippies ? No idea.
 
 #+begin_src emacs-lisp
 
+(use-package magit-section
+  :demand t)
+
 (use-package magit
-  :delight
   :demand t
   :config
 
@@ -1946,8 +2122,6 @@ added/deleted/modified blocks in a buffer.
 #+begin_src emacs-lisp
 
 (use-package bookmark
-  :delight
-
   :functions
   (anupamk:bookmark/quick-save-bookmark)
 
@@ -2027,7 +2201,7 @@ Built in =hideshow= mode makes this quite a seamless experience.
 
 #+begin_src emacs-lisp
 
-  (add-hook 'prog-mode-hook #'hs-minor-mode)
+(add-hook 'prog-mode-hook #'hs-minor-mode)
 
 #+end_src
 ** PDF Tools
@@ -2054,56 +2228,96 @@ Built in =hideshow= mode makes this quite a seamless experience.
 
 #+end_src
 ** Completion
-*** Company Mode
+*** Corfu
 
-Company is a text completion framework for Emacs. The name stands for
-"complete anything". It uses pluggable back-ends and front-ends to
-retrieve and display completion candidates.
+Corfu i.e. COmpletion in Region FUnction is a small package which
+relies on the Emacs completion facilities and concentrates on
+providing a polished completion UI. Corfu enhances in-buffer
+completion with a small completion popup. The current candidates are
+shown in a popup below or above the point. The candidates can be
+selected by moving up and down. Corfu is the minimalistic in-buffer
+completion counterpart of the Vertico minibuffer UI.
 
 #+begin_src emacs-lisp
 
-(use-package company
-  :disabled
-
-  :ensure t
-  :defer t
-
+(use-package corfu
   :custom
-  ;; ---------------------------------------------------------------------------
-  ;; Search other buffers with the same modes for completion instead
-  ;; of searching all other buffers.
-  (company-dabbrev-other-buffers t)
-  (company-dabbrev-code-other-buffers t)
 
   ;; ---------------------------------------------------------------------------
-  ;; M-<num> to select an option according to its number.
-  (company-show-numbers t)
+  ;; allows cycling through candidates i.e. enable cycling for
+  ;; `corfu-next' / `corfu-previous'
+  (corfu-cycle t)
 
   ;; ---------------------------------------------------------------------------
-  ;; Only 2 letters required for completion to activate.
-  (company-minimum-prefix-length 3)
+  ;; enable auto completion
+  (corfu-auto t)
 
   ;; ---------------------------------------------------------------------------
-  ;; Do not downcase completions by default.
-  (company-dabbrev-downcase nil)
+  ;; start generating completion after '2' characters are typed.
+  (corfu-auto-prefix 2)
 
   ;; ---------------------------------------------------------------------------
-  ;; Even if I write something with the wrong case, provide the correct casing.
-  (company-dabbrev-ignore-case t)
+  ;; the good documentation warns `against' using a short delay
+  ;; f.e. when executing a completion backend is costly. reset to
+  ;; smallish value
+  (corfu-auto-delay 0.3)
 
   ;; ---------------------------------------------------------------------------
-  ;; company completion wait
-  (company-idle-delay 0.2)
+  ;; display candidate documentation or source in a popup next to the
+  ;; candidate menu. don't care enough about it.
+  (corfu-popupinfo-delay nil)
 
   ;; ---------------------------------------------------------------------------
-  ;; No company-mode in shell & eshell
-  (company-global-modes '(not eshell-mode shell-mode))
+  ;; no preview for previous candidates
+  (corfu-preview-current 'insert)
 
   ;; ---------------------------------------------------------------------------
-  ;; for both text and programming modes.
-  :hook
-  ((text-mode . company-mode)
-   (prog-mode . company-mode)))
+  ;; which of the many completions is pre-selected ? choices are:
+  ;;    `prompt'    => always select the prompt
+  ;;    `first'     => always select the first candidate
+  ;;    `valid'     => select the prompt if valid and not equal to the
+  ;;                   first candidate
+  ;;    `directory' => just like `first' but select the prompt if it
+  ;;                   is a directory
+  (corfu-preselect 'first)
+
+  ;; ---------------------------------------------------------------------------
+  ;; don't auto expand temporary snippets
+  (corfu-on-exact-match nil)
+
+  ;; ---------------------------------------------------------------------------
+  ;; optionally use <TAB> for cycling, default is `corfu-complete'
+  :bind (:map corfu-map
+              ("M-SPC"      . corfu-insert-separator)
+              ("TAB"        . corfu-insert)
+              ([tab]        . corfu-insert))
+
+
+  :init
+
+  ;; ---------------------------------------------------------------------------
+  ;; enable it globally everywhere, rather than in a few modes.
+  (global-corfu-mode)
+
+  )
+
+#+end_src
+
+A few more useful configurations
+
+#+begin_src emacs-lisp
+
+(use-package emacs
+  :init
+
+  ;; ---------------------------------------------------------------------------
+  ;; <tab> cycle if there are only few candidates
+  (setq completion-cycle-threshold 3)
+
+  ;; ---------------------------------------------------------------------------
+  ;; enable indentation+completion using the <tab>
+  ;; key. `completion-at-point' is often bound to <m-tab>
+  (setq tab-always-indent 'complete))
 
 #+end_src
 
@@ -2202,7 +2416,74 @@ A few more useful configurations
 
 #+end_src
 
-* Window Management
+
+* Window / Frame Management
+
+** Window history
+=winner-mode= is a builtin global minor mode that records the changes
+in window configuration so that changes can be undone using the
+=winner-undo= command.
+
+#+begin_src emacs-lisp
+
+  (require 'winner)
+  (winner-mode t)
+
+#+end_src
+
+** Window movement
+Emacs already has =windmove= package which provides a set of routines
+to for selection of windows in a frame geometrically.
+
+Thus, for example, =windmove-left= will select a window immediately to
+the left of the current selected window etc.
+
+FWIW, =julia-assange= (yes, /that/ one) had
+=change-windows-intuitively.el= which predated this !
+
+#+begin_src emacs-lisp
+
+(use-package emacs
+  :init
+  (require 'windmove)
+
+  ;; ---------------------------------------------------------------------------
+  ;; movement that falls-of-the-edge of the frame will wrap around to
+  ;; find the window on the opposite side of the frame.
+  (setq windmove-wrap-around t)
+
+  :commands
+  (windmove-up windmove-down windmove-left windmove-right)
+
+  :bind
+  (("C-<M-up>"    . windmove-up)
+   ("C-<M-down>"  . windmove-down)
+   ("C-<M-left>"  . windmove-left)
+   ("C-<M-right>" . windmove-right)))
+
+#+end_src
+
+** Buffer movement
+
+With =buffer-move= Emacs provides functionality for moving buffers in
+various windows more easily than the usual =C-x b=.
+
+#+begin_src emacs-lisp
+
+(use-package buffer-move
+  :commands
+  (buf-move-up buf-move-down buf-move-left buf-move-right)
+
+  :bind
+  (("C-c <C-S-up>"     . buf-move-up)
+   ("C-c <C-S-down>"   . buf-move-down)
+   ("C-c <C-S-left>"   . buf-move-left)
+   ("C-c <C-S-right>"  . buf-move-right)))
+
+#+end_src
+
+** Manage
+Display Buffers
 The association list in =display-buffer-alist= describes the rule-set
 for controlling the display of windows within an Emacs frame.
 
@@ -2213,176 +2494,91 @@ experience.
 #+begin_src emacs-lisp
 
 ;; -----------------------------------------------------------------------------
-;; override, display-buffer-alist to better manage appearance of popup
-;; windows in an emacs-frame.
-(use-package emacs
-  :custom
-  (display-buffer-alist
-   '(
-     ;; ------------------------------------------------------------------------
-     ;; left-side window configuration
+;; load up 'window.el'
+(require 'window)
+(setq even-window-heights t)
 
-     ;; ------------------------------------------------------------------------
-     ;; right-side window configuration
+;; -----------------------------------------------------------------------------
+;; '*NOTE*' '*NOTE*' '*NOTE*'
+;;    for this to work, 'lexical-binding' *must* be enabled.
+;;
+;; this helper function, returns a function that matches against a
+;; list of 'major-mode's.
+;;
+;; it is used in the a backquoted form to create a matcher that checks
+;; if a buffer's major mode is 'derived-mode-p' from a list of
+;; 'major-modes'.
+;;
+;; quite handy when we cannot rely on the name of a buffer f.e. when a
+;; major mode has a large range of buffer names etc.
+;;
+;; from: https://www.masteringemacs.org/article/demystifying-emacs-window-manager
+(defun make-display-buffer-matcher-function (major-modes)
+  (lambda (buffer-name action)
+    (with-current-buffer buffer-name (apply #'derived-mode-p major-modes))))
 
-     ;; ------------------------------------------------------------------------
-     ;; magit and related windows
-     ("\\magit.*"
-      (display-buffer-in-side-window)
-      (dedicated . nil)
-      (window-width . 0.50)
-      (side . right)
-      (slot . 0)
-      (window-parameters . ((mode-line-format . (" "
-                                                 mode-line-buffer-identification)))))
+;; -----------------------------------------------------------------------------
+;; first just nuke the whole 'display-buffer-alist' and then start afresh...
+(setq display-buffer-alist nil)
 
-     ("\\*\\(Help\\|Faces\\|Colors\\|Apropos\\).*"
-      (display-buffer-in-side-window)
-      (window-width . 0.40)
-      (side . right)
-      (slot . 0)
-      (window-parameters . ((mode-line-format . (" "
-                                                 mode-line-buffer-identification)))))
+;; -----------------------------------------------------------------------------
+;; all '*Help*', '*Colors*', '*Apropos*', '*Man.*\\*' windows must:
+;;    - first 'display-buffer-reuse-window' i.e. find an existing
+;;      window and reuse that one, and
+;;
+;;    - next, try 'display-buffer-in-direction' and pop up a new
+;;      window with the buffer
+(add-to-list 'display-buffer-alist
+             '("\\*\\(Help\\|Colors\\|Apropos\\|Man.*\\)\\*"
+               (display-buffer-in-side-window)
 
-     ;; ------------------------------------------------------------------------
-     ;; top-side window configuration
+               (side         . right)
+               (slot         . 0)
+               (window-width . 0.33)
+               (dedicated    . nil)
+               (window-parameters (no-delete-other-windows . nil))
+               ))
 
-     ;; ------------------------------------------------------------------------
-     ;; bottom-side window configuration
+;; -----------------------------------------------------------------------------
+;; for all 'magit-mode' derived buffers, use a specialized display routine.
+(setq magit-display-buffer-function #'display-buffer)
+(add-to-list 'display-buffer-alist
+          `(,(make-display-buffer-matcher-function '(magit-mode))
+            (display-buffer-reuse-mode-window
+             display-buffer-in-direction)
 
-     ;; ------------------------------------------------------------------------
-     ;; magit stash
-     ("\\*~stash.*"
-      (display-buffer-in-side-window)
-      (window-width . 0.50)
-      (side . bottom)
-      (slot . 0)
-      (window-parameters . ((mode-line-format . (" "
-                                                 mode-line-buffer-identification)))))
+            (mode magit-mode)
+            (window       . root)
+            (window-width . 0.5)
+            (direction    . right)))
 
-     ;; ------------------------------------------------------------------------
-     ;; code searches via ripgrep, xref etc.
-     ("\\*\\(rg\\|xref\\).*"
-      (display-buffer-in-side-window)
-      (window-width . 0.50)
-      (side . bottom)
-      (slot . 0)
-      (window-parameters . ((mode-line-format . (" "
-                                                 mode-line-buffer-identification)))))
+;; -----------------------------------------------------------------------------
+;; all '*compilation*', '*rg*', '*xref*'buffers follow this
+(add-to-list 'display-buffer-alist
+             `(,(make-display-buffer-matcher-function '(rg-mode
+                                                        compilation-mode
+                                                        xref--xref-buffer-mode))
 
-     ;; ------------------------------------------------------------------------
-     ;; bottom-side window (right of `rg' ∵ 'slot == 1')
-     ("\\*compilation*"
-      (display-buffer-in-side-window)
-      (window-width . 0.30)
-      (side . bottom)
-      (slot . 1)
-      (window-parameters . ((mode-line-format . (" "
-                                                 mode-line-buffer-identification)))))
+               (display-buffer-reuse-mode-window
+                display-buffer-in-direction)
 
-     ;; ------------------------------------------------------------------------
-     ;; this is the Emacs byte compilation
-     ("\\*\\(Compile-Log\\).*"
-      (display-buffer-in-side-window)
-      (window-width . 0.20)
-      (dedicated . t)
-      (side . bottom)
-      (slot . 0)
-      (window-parameters . ((mode-line-format . (" "
-                                                 mode-line-buffer-identification)))))
-     ))
+               (mode rg-mode
+                     compilation-mode
+                     xref--xref-buffer-mode)
 
-  (even-window-sizes 'height-only)
-
-  :hook
-  ((help-mode . visual-line-mode)
-   (custom-mode . visual-line-mode))
-  )
-
-(use-package emacs
-  :functions (anupamk:window-utils/display-buffer-at-bottom)
-
-  :config
-
-  ;; ---------------------------------------------------------------------------
-  ;; move current buffer to bottom of the frame.
-  (defun anupamk:window-utils/display-buffer-at-bottom ()
-    "move current buffer to the bottom of the frame. this is useful to take a
-              buffer out of a side window."
-    (interactive)
-    (let ((buffer (current-buffer)))
-      (with-current-buffer buffer
-        (delete-window)
-        (display-buffer-at-bottom buffer `((window-parameters . ((mode-line-format . (" "
-                                                                                      mode-line-buffer-identification)))))))))
-
-  :bind
-  (("C-c b" . anupamk:window-utils/display-buffer-at-bottom))
-
-  )
+               (window        . root)
+               (window-height . 0.2)
+               (direction     . bottom)
+               (dedicated . t)
+               ))
 
 #+end_src
-
 
 
 * Programming
 This section is all about configuring packages that deal with
 programming languages and 'stuff'.
 
-** Project Configuration
-
-Since about version =25= or thereabouts, Emacs introduced native
-project management via =project.el=. The built in LSP client =eglot=
-use that for its interactions.
-
-Lets set that up.
-
-#+begin_src emacs-lisp
-
-(use-package emacs
-  :init
-
-  :functions
-  (anupamk:project-utils/locate-project-root
-   anupamk:project-utils/do-locate-project-root)
-
-  :config
-  ;; ---------------------------------------------------------------------------
-  ;; find project root-dir by searching (recursively) through a list of
-  ;; project-root-markers.
-  (defun anupamk:project-utils/do-locate-project-root (dirname all-marker-lists)
-    "find project root directory (starting from DIRNAME) by searching
-       for markers defined in ALL-MARKER-LISTS"
-
-    (when all-marker-lists
-      (let ((anupamk:project-root (locate-dominating-file dirname (car all-marker-lists))))
-        (if (not anupamk:project-root)
-            ;; -----------------------------------------------------------------
-            ;; keep looking ...
-            (anupamk:project-utils/do-locate-project-root dirname (cdr all-marker-lists))
-
-          ;; -------------------------------------------------------------------
-          ;; we got a live one
-          (cons 'vc anupamk:project-root)))))
-
-  ;; ---------------------------------------------------------------------------
-  ;; just a wrapper over the real thaang
-  (defun anupamk:project-utils/locate-project-root (dirname)
-    (let ((project-root-markers (list "Cargo.toml"
-                                      "WORKSPACE"
-                                      "compile_commands.json"
-                                      "compile_flags.txt"
-                                      ".git")))
-      (anupamk:project-utils/do-locate-project-root dirname project-root-markers)))
-
-  :bind
-  (("C-c p f" . project-find-file)
-   ("C-c p r" . project-find-regexp))
-
-  :hook
-  (project-find-functions #'anupamk:project-utils/locate-project-root))
-
-#+end_src
 
 ** Programming Languages
 *** CMake
@@ -2438,7 +2634,8 @@ latest version of =flymake= is installed. This is best documented
 
 #+begin_src emacs-lisp
 
-(straight-use-package 'flymake)
+(use-package flymake
+  )
 
 #+end_src
 
@@ -2483,6 +2680,7 @@ latest version of =flymake= is installed. This is best documented
         ("C-c l f" . eglot-format)
         ("C-c l d" . eldoc))
   )
+
 #+end_src
 
 *** C/C++
@@ -2591,9 +2789,6 @@ Define some utility functions for working with c/c++ sources.
   (c-mode . eglot-ensure)
   (c++-mode . eglot-ensure))
 
-(use-package clang-format+
-  )
-
 (use-package cc-mode
   :demand t
   :functions (anupamk:cc/c-mode-common-hook
@@ -2602,10 +2797,13 @@ Define some utility functions for working with c/c++ sources.
 
   :init
 
-  (defconst cc-lang-server-cmdline (anupamk:utils/get-attribute-value "cc-mode:clangd-with-args"))
+  (defconst cc-lang-server-cmdline (anupamk:utils/get-attribute-value "cc-mode:lsp-server-with-args"))
+  (defconst cc-clang-format-executable (anupamk:utils/get-attribute-value "cc-mode:clang-format-executable"))
 
   :config
 
+  ;; ---------------------------------------------------------------------------
+  ;; c/c++ mode common hook
   (defun anupamk:cc/c-mode-common-hook ()
     (message "loading c-mode-common customizations")
 
@@ -2660,12 +2858,6 @@ Define some utility functions for working with c/c++ sources.
     (c-set-offset 'case-label '+)
     (c-set-offset 'access-label '/)
     (c-set-offset 'label '/)
-
-    ;; -------------------------------------------------------------------------
-    ;; set the file mode to clang-format+-mode so that clang-format is
-    ;; used for formatting all c/c++ sources
-    (clang-format+-mode t)
-
     ;; -------------------------------------------------------------------------
     ;; abbrev mode is quite useful, enable it
     (abbrev-mode t)
@@ -2727,9 +2919,42 @@ Also apply host specific keybindings
 
 #+begin_src emacs-lisp
 
-  ;; ---------------------------------------------------------------------------
-  ;; host specific keybindings
-  (funcall (anupamk:utils/get-attribute-value "GLOBAL-KEYBINDINGS-FUNC"))
+;; ---------------------------------------------------------------------------
+;; host specific keybindings
+(funcall (anupamk:utils/get-attribute-value "GLOBAL-KEYBINDINGS-FUNC"))
+
+#+end_src
+
+**** Clang Format
+
+Format =c-mode= or =c++-mode= buffers with =clang-format= when
+available. This whole thing can be optimized a bit I think.
+
+#+begin_src emacs-lisp
+
+(use-package clang-format
+  :ensure t
+
+  :config
+  (setq clang-format-executable cc-clang-format-executable)
+  )
+
+(defun anupamk:cc/clang-fmtbuf-on-save ()
+  "hook to apply 'clang-format-buffer' to a buffer before saving it"
+  (add-hook 'before-save-hook (lambda ()
+                                (when (locate-dominating-file "." ".clang-format")
+                                  (clang-format-buffer))
+                                ;; ---------------------------------------------
+                                ;; continue to save
+                                nil)
+            nil
+            ;; -----------------------------------------------------------------
+            ;; make it buffer-local
+            t))
+
+;; Run this for each mode you want to use the hook.
+(add-hook 'c-mode-hook (lambda () (anupamk:cc/clang-fmtbuf-on-save)))
+(add-hook 'c++-mode-hook (lambda () (anupamk:cc/clang-fmtbuf-on-save)))
 
 #+end_src
 
@@ -2780,102 +3005,7 @@ Using =racket-mode= for programming in scheme.
 *** Python
 
 + The default package =python.el= provides =python-mode= which is the
-major-mode for python.
-
-#+begin_src emacs-lisp
-
-(use-package python
-  :straight (:type built-in)
-
-  :config
-
-  ;; ---------------------------------------------------------------------------
-  ;; remove guess indent python message
-  (setq python-indent-guess-indent-offset-verbose nil)
-
-  :custom
-  (python-shell-interpreter "ipython")
-  (python-shell-interpreter-args "-i --simple-prompt")
-  (python-indent-guess-indent-offset-verbose nil)
-
-  :bind
-  ( :map python-mode-map
-    ("C-c r" . python-indent-shift-right)
-    ("C-c l" . python-indent-shift-left))
-
-  )
-
-#+end_src
-
-+ For inferior python processes hide the modeline.
-
-#+begin_src emacs-lisp
-
-(use-package hide-mode-line
-  :ensure t
-  :defer t
-
-  :hook
-  (inferior-python-mode . hide-mode-line-mode))
-
-#+end_src
-
-+ I use poetry to manage python environments, let's set that up.
-
-#+begin_src emacs-lisp
-
-(use-package poetry
-  :ensure t
-  :defer t
-
-  :config
-  ;; ---------------------------------------------------------------------------
-  ;; checks for the correct virtualenv, which is a better strategy
-  ;; because the default one is quite slow
-  (setq poetry-tracking-strategy 'switch-buffer)
-
-  :hook
-  (python-mode . poetry-tracking-mode))
-
-#+end_src
-
-+ Formatting python buffers is under the aegis of [[https://github.com/psf/black][black]].
-
-#+begin_src emacs-lisp
-
-(use-package blacken
-  :ensure t
-  :defer t
-
-  :commands blacken-mode blacken-buffer
-
-  :custom
-  (blacken-allow-py36 t)
-  (blacken-skip-string-normalization t)
-
-  :hook
-  (python-mode-hook . blacken-mode))
-
-#+end_src
-
-+ Use numpy style docstrings for python.
-
-#+begin_src emacs-lisp
-
-(use-package numpydoc
-  :ensure t
-  :defer t
-
-  :custom
-  (numpydoc-insert-examples-block nil)
-  (numpydoc-template-long nil)
-
-  :bind
-  (:map python-mode-map  ("C-c C-n" . numpydoc-generate)))
-
-#+end_src
-
-+ And ofcourse, all of this integrated with eglot
+major-mode for python. Integrate this with eglot.
 
 #+begin_src emacs-lisp
 
@@ -2883,12 +3013,48 @@ major-mode for python.
 
   :config
   ;; ---------------------------------------------------------------------------
-  ;; install pyright (as root) with
-  ;;    'npm install -g pyright'
-  (add-to-list 'eglot-server-programs '(python-mode . ("pyright-langserver" "--stdio")))
+  ;; first install 'pylsp'
+  (add-to-list 'eglot-server-programs '(python-mode . ("pylsp")))
+
+  :bind
+  (:map eglot-mode-map
+        ("C-c C-d" . eldoc)
+        ("C-c C-e" . eglot-rename)
+        ("C-c C-o" . python-sort-imports)
+        ("C-c C-f" . eglot-format-buffer))
 
   :hook
-  (python-mode . eglot-ensure))
+  ((python-mode . eglot-ensure)
+   (python-mode . flyspell-prog-mode)
+   (python-mode . superword-mode)
+   (python-mode . hs-minor-mode))
+
+  )
+
+#+end_src
+
+*** Go(lang)
+
+#+begin_src emacs-lisp
+
+(use-package go-mode
+  :ensure)
+
+(use-package eglot
+
+  :bind
+  (:map eglot-mode-map
+        ("C-c C-f" . eglot-format-buffer))
+
+  :config
+  ;; ---------------------------------------------------------------------------
+  ;; first install 'gopls' for the language server
+  (add-to-list 'eglot-server-programs '(go-mode . ("gopls")))
+
+  :hook
+  ((go-mode . eglot-ensure))
+
+  )
 
 #+end_src
 
@@ -3052,6 +3218,7 @@ All of our configuration is now loaded, let the games begin.
 (add-hook 'emacs-startup-hook #'greet-post-startup-complete)
 
 #+end_src
+
 
 * Local Variables :noexport:
 

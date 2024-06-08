@@ -108,6 +108,22 @@
   )
 
 ;; -----------------------------------------------------------------------------
+;; benchmark emacs startup, this is disabled by default.
+;;
+;; to use this, following steps are needed:
+;;    - remove the ':disabled' line :o)
+;;    - start emacs as usual
+;;    - once startup is complete 'M-x benchmark-init/show-durations-tabulated'
+;;    - and then ... have fun !
+(use-package benchmark-init
+  :ensure t
+
+  :config
+  ;; ---------------------------------------------------------------------------
+  ;; disable collection after `init' is done
+  (add-hook 'after-init-hook 'benchmark-init/deactivate))
+
+;; -----------------------------------------------------------------------------
 ;; if native compilation is available, automatically generate compiled
 ;; files when Emacs loads a new .el file. this *will* freeze Emacs for
 ;; a while until it's done.
