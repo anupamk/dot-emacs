@@ -968,6 +968,7 @@ This section defines personal preference for various attributes.
            "cc-mode:fill-column"              80
            "cc-mode:comment-column"           80
            "cc-mode:lsp-server-with-args"     ("ccls")
+           "cc-mode:clang-format-executable"  "clang-format"
            ))
   )
 
@@ -1092,7 +1093,7 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
                '(t
                  :default-family "PragmataPro Mono"
                  :default-weight regular
-                 :default-height 90))
+                 :default-height 120))
 
               ;; ---------------------------------------------------------------
               ;; virat
@@ -2644,6 +2645,15 @@ latest version of =flymake= is installed. This is best documented
 ;; -----------------------------------------------------------------------------
 ;; don't allow long eldoc strings to resize echo area display
 (setq eldoc-echo-area-use-multiline-p nil)
+
+;; -----------------------------------------------------------------------------
+;; ok, so `track-changes' package is one of the many specified by
+;; `eglot' in it's 'Package-Requires: ...' section
+;;
+;; just include it here, and load it.
+(use-package track-changes
+  :ensure t
+  :demand t)
 
 (use-package eglot
   :ensure t
