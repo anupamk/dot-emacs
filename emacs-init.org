@@ -498,6 +498,14 @@ much better.
   ;; which ends in a slash.
   (setq completion-ignored-extensions '("^.git/"))
 
+  ;; ---------------------------------------------------------------------------
+  ;; advice-redefinition is *not* an error. this happens when some
+  ;; advice has been evaluated in advance of $mode itself being defined
+  ;; or loaded.
+  ;;
+  ;; when the function is defined, the existing advice immediately
+  ;; redefines it, and Emacs provides notice that this has happened.
+  (set 'ad-redefinition-action 'accept)
   )
 
 #+end_src
