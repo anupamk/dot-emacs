@@ -2277,8 +2277,12 @@ completion counterpart of the Vertico minibuffer UI.
 #+begin_src emacs-lisp
 
 (use-package corfu
-  :custom
+  :ensure t
 
+  :init
+  (setq tab-always-indent 'complete)
+
+  :custom
   ;; ---------------------------------------------------------------------------
   ;; allows cycling through candidates i.e. enable cycling for
   ;; `corfu-next' / `corfu-previous'
@@ -2328,107 +2332,11 @@ completion counterpart of the Vertico minibuffer UI.
               ("TAB"        . corfu-insert)
               ([tab]        . corfu-insert))
 
-
   :init
 
   ;; ---------------------------------------------------------------------------
   ;; enable it globally everywhere, rather than in a few modes.
   (global-corfu-mode)
-
-  )
-
-#+end_src
-
-A few more useful configurations
-
-#+begin_src emacs-lisp
-
-(use-package emacs
-  :init
-
-  ;; ---------------------------------------------------------------------------
-  ;; <tab> cycle if there are only few candidates
-  (setq completion-cycle-threshold 3)
-
-  ;; ---------------------------------------------------------------------------
-  ;; enable indentation+completion using the <tab>
-  ;; key. `completion-at-point' is often bound to <m-tab>
-  (setq tab-always-indent 'complete))
-
-#+end_src
-
-*** Corfu
-
-Corfu i.e. COmpletion in Region FUnction is a small package which
-relies on the Emacs completion facilities and concentrates on
-providing a polished completion UI. Corfu enhances in-buffer
-completion with a small completion popup. The current candidates are
-shown in a popup below or above the point. The candidates can be
-selected by moving up and down. Corfu is the minimalistic in-buffer
-completion counterpart of the Vertico minibuffer UI.
-
-#+begin_src emacs-lisp
-
-(use-package corfu
-  :custom
-
-  ;; ---------------------------------------------------------------------------
-  ;; allows cycling through candidates i.e. enable cycling for
-  ;; `corfu-next' / `corfu-previous'
-  (corfu-cycle t)
-
-  ;; ---------------------------------------------------------------------------
-  ;; enable auto completion
-  (corfu-auto t)
-
-  ;; ---------------------------------------------------------------------------
-  ;; start generating completion after '2' characters are typed.
-  (corfu-auto-prefix 2)
-
-  ;; nodelay
-  (corfu-auto-delay 0.0)
-
-  ;; ---------------------------------------------------------------------------
-  ;; display candidate documentation or source in a popup next to the
-  ;; candidate menu. don't care enough about it.
-  (corfu-popupinfo-delay nil)
-
-  ;; ---------------------------------------------------------------------------
-  ;; no preview for previous candidates
-  (corfu-preview-current 'insert)
-
-  ;; ---------------------------------------------------------------------------
-  ;; which of the many completions is pre-selected ? choices are:
-  ;;    `prompt'    => always select the prompt
-  ;;    `first'     => always select the first candidate
-  ;;    `valid'     => select the prompt if valid and not equal to the
-  ;;                   first candidate
-  ;;    `directory' => just like `first' but select the prompt if it
-  ;;                   is a directory
-  (corfu-preselect 'first)
-
-  ;; ---------------------------------------------------------------------------
-  ;; don't auto expand temporary snippets
-  (corfu-on-exact-match nil)
-
-  ;; ---------------------------------------------------------------------------
-  ;; optionally use <TAB> for cycling, default is `corfu-complete'
-  :bind (:map corfu-map
-              ("M-SPC"      . corfu-insert-separator)
-              ("TAB"        . corfu-insert)
-              ([tab]        . corfu-insert))
-
-
-  :init
-
-  ;; ---------------------------------------------------------------------------
-  ;; enable it globally everywhere, rather than in a few modes.
-  (global-corfu-mode)
-
-  ;; ---------------------------------------------------------------------------
-  ;; remembers selected candidates and sorts the candidates by their
-  ;; history position
-  (corfu-history-mode)
 
   )
 
