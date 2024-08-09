@@ -623,38 +623,42 @@ Lets set that up.
 
   ;; ---------------------------------------------------------------------------
   ;; list of marker-filenames that define project-root
-  (setq anupamk-project-root-markers '("Cargo.toml"
-                                       "WORKSPACE"
-                                       "compile_commands.json"
-                                       "compile_flags.txt"
-                                       ".git"
-                                       "go.mod"
-                                       ".ccls"
-                                       ".project.el"
+  (setq anupamk-project-root-markers '("Cargo.toml" ; rust-root
+                                       "WORKSPACE"  ; bazel-root
+                                       ".git"       ; git-root
+
+                                       ;; --------------------------------------
+                                       ;; custom root marker
+                                       ".project-root-marker"
                                        ))
 
   ;; ---------------------------------------------------------------------------
-  ;; return project-root-directory
+  ;; return project-root list that is expected of `project-find-functions'
   ;;
-  ;; presence of *one* of marker files (returned from
-  ;; `anupamk-make-project-root-markers') marks a directory as
-  ;; project-root.
+  ;; starting from 'dirname' (and recursively searching up the
+  ;; directory tree), mark the first directory as project-root if it
+  ;; contains project-root-marker as defined in the
+  ;; `anupamk-project-root-markers' list.
   ;;
-  ;; search recursively, starting from `dirname' looking for these
-  ;; marker files, and return project-rootdir or nil (when no marker
-  ;; file exists)
+  ;; when a suitable root-directory is located, the list
+  ;;    ('vc <project-vc-backend> <project-root-directory>)
+  ;; is returned.
+  ;;
+  ;; so, if you are just looking for the 'project-root-directory-name'
+  ;; you need to get the 2nd element from the returned list.
   (defun anupamk-do-locate-project-root (dirname all-marker-list)
     "find project-root-directory by recursively searching starting from
     DIRNAME for project-root markers defined in ALL-MARKER-LISTS"
 
     (when all-marker-list
       (let ((project-rootdir (locate-dominating-file dirname (car
-                                                              all-marker-list))))
+                                                              all-marker-list)))
+            (backend (ignore-errors (vc-responsible-backend project-rootdir))))
+
+        ;; ---------------------------------------------------------------------
+        ;; found a live one.
         (if project-rootdir
-            ;; -----------------------------------------------------------------
-            ;; found a live one. `transient' because, this project was
-            ;; detected via our function.
-            (cons 'transient project-rootdir)
+            (list 'vc backend project-rootdir)
 
           ;; -------------------------------------------------------------------
           ;; keep looking
@@ -662,17 +666,29 @@ Lets set that up.
         )))
 
   ;; ---------------------------------------------------------------------------
-  ;; just a wrapper over the real thaang
+  ;; just a wrapper over the real thaang.
   (defun anupamk-locate-project-root (dirname)
     (anupamk-do-locate-project-root dirname anupamk-project-root-markers))
 
   ;; ---------------------------------------------------------------------------
-  ;; get the root directory only, instead of the alist that is
-  ;; returned
+  ;; return the project-root-directory name.
   (defun anupamk-locate-project-root-dirname (&optional dirname)
-    "return the root directory name a project"
-    (unless dirname (setq dirname default-directory))
-    (alist-get 'vc (list (anupamk-locate-project-root dirname))))
+    "return a project's root directory name"
+    (interactive)
+    (nth 2 (anupamk-locate-project-root
+            ;; -----------------------------------------------------------------
+            ;; 'dirname' when specified, `default-directory' otherwise.
+            (or dirname default-directory))))
+
+  ;; ---------------------------------------------------------------------------
+  ;; why both 'anupamk-locate-project-root' and
+  ;; 'anupamk-locate-project-root-dirname' are required ?
+  ;;
+  ;; well, 'project-find-functions' expects the whole tamale as
+  ;; returned from 'anupamk-locate-project-root' while, for `ripgrep'
+  ;; (when searching from the 'top-of-project-root-dir' we just care
+  ;; about the project-root-dirname)
+  ;; ---------------------------------------------------------------------------
 
   ;; ---------------------------------------------------------------------------
   ;; cannot use `hook' because `project-find-functions' does not end
