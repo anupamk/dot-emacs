@@ -2518,6 +2518,38 @@ experience.
 
 #+end_src
 
+** Session Management
+This is a lighter weight session manager for Emacs that can persist
+and restore file editing buffers, indirect buffers/clones, Dired
+buffers, windows/splits, the built-in tab-bar (including tabs, their
+buffers, and windows), and Emacs frames.
+
+It seems to be better suited than =desktop.el= which is bulky and slow
+in operation. =desktop.el= weighs in at about =1800= lines, while
+easysession is about =700= !
+
+Lets set it up.
+
+#+begin_src emacs-lisp
+
+(use-package easysession
+  :straight '(easysession :type git
+                          :host github
+                          :repo "jamescherti/easysession.el")
+
+  :ensure t
+
+  :custom
+  (easysession-save-interval (* 10 60))
+
+  :init
+  (add-hook 'emacs-startup-hook #'easysession-load-including-geometry 98)
+  (add-hook 'emacs-startup-hook #'easysession-save-mode 99))
+
+(global-set-key (kbd "C-c l") 'easysession-switch-to)
+(global-set-key (kbd "C-c s") 'easysession-save-as)
+
+#+end_src
 
 * Programming
 This section is all about configuring packages that deal with
