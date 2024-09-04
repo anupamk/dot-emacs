@@ -1,5 +1,6 @@
-personal_ws-1.1 en 81 
+personal_ws-1.1 en 94 
 ADDR
+Ahluwalia
 Bazel
 COmpletion
 DNS
@@ -17,9 +18,11 @@ Mirae
 Modus
 Muratori's
 Muratoris
+Murthy
 PNB
 PPF
 PRELOAD
+Pandev
 Parag
 Parikh
 Protesilaos
@@ -39,22 +42,29 @@ Wgrep
 abcd
 addr
 alsamixer
+american
 amixer
 arg
 asm
+cflags
+cpp
 cpu
 customizations
+cython
+debian
 defg
 dired
 dsites
 elisp
 executables
+gcc
 iff
 incr
 iow
 ipv
 kbd
 libc
+libs
 linux
 logitech
 minimalistic
@@ -65,6 +75,7 @@ ofcourse
 proxchains
 proxied
 proxying
+py
 rfc
 sendmmsg
 solaar
@@ -76,7 +87,9 @@ tbd
 tds
 udp
 unoptimized
+veth
 virat
+vm
 wirelessly
 xbindkeys
 xmodmap

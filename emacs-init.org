@@ -91,6 +91,10 @@
     *Note* that in the =:hook= section above, we have just used
     =c-mode-common= and not =c-mode-common-hook= !
 
+    Since this is EMacs, we can ofcourse configure this. Setting the
+    variable =use-package-hook-name-suffix= to =nil= we can go back to
+    our old wayward ways.
+
   + =:if, :when, :unless=
 
     With these keywords packages can be conditionally loaded. This is
@@ -1151,18 +1155,20 @@ Fonts are configured using [[https://github.com/protesilaos/fontaine][fontaine]]
                   :default-weight regular
                   :default-height 10))))
 
+;; -----------------------------------------------------------------------------
 ;; Recover last preset or fall back to desired style from `fontaine-presets'.
 (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
 
+;; -----------------------------------------------------------------------------
 ;; the other side of 'fontaine-restore-latest-preset
 (add-hook 'kill-emacs-hook #'fontaine-store-latest-preset)
 
+;; -----------------------------------------------------------------------------
 ;; fontaine does not define any key bindings.  This is just a sample that
 ;; respects the key binding conventions.  Evaluate:
 ;;
 ;;     (info "(elisp) Key Binding Conventions")
 (define-key global-map (kbd "C-c f") #'fontaine-set-preset)
-(define-key global-map (kbd "C-c F") #'fontaine-set-face-font)
 
 #+end_src
 
@@ -1419,8 +1425,8 @@ limited to!) the following:
   :custom ((dired-listing-switches "-agho --group-directories-first")))
 
 (use-package dired-single
+  :ensure t
   :commands (dired dired-jump))
-
 
 #+end_src
 
@@ -1594,15 +1600,15 @@ think of.
                                       bookmark-history
                                       file-name-history))
 
-(put 'minibuffer-history         'history-length 1000)
-(put 'file-name-history          'history-length 1000)
-(put 'set-variable-value-history 'history-length 1000)
-(put 'custom-variable-history    'history-length 1000)
-(put 'query-replace-history      'history-length 1000)
-(put 'read-expression-history    'history-length 1000)
-(put 'read-char-history          'history-length 1000)
-(put 'face-name-history          'history-length 1000)
-(put 'bookmark-history           'history-length 1000)
+(put 'minibuffer-history         'history-length 10000)
+(put 'file-name-history          'history-length 10000)
+(put 'set-variable-value-history 'history-length 10000)
+(put 'custom-variable-history    'history-length 10000)
+(put 'query-replace-history      'history-length 10000)
+(put 'read-expression-history    'history-length 10000)
+(put 'read-char-history          'history-length 10000)
+(put 'face-name-history          'history-length 10000)
+(put 'bookmark-history           'history-length 10000)
 
 ;; -----------------------------------------------------------------------------
 ;; no duplicates in history
@@ -2542,8 +2548,13 @@ Lets set it up.
   :custom
   (easysession-save-interval (* 10 60))
 
+  :config
+  ;; ---------------------------------------------------------------------------
+  ;; persist savehist additional variables as well
+  ;; https://github.com/jamescherti/easysession.el?tab=readme-ov-file#how-to-only-persist-and-restore-visible-buffers
+  (add-to-list 'savehist-additional-variables 'easysession--current-session-name)
+
   :init
-  (add-hook 'emacs-startup-hook #'easysession-load-including-geometry 98)
   (add-hook 'emacs-startup-hook #'easysession-save-mode 99))
 
 (global-set-key (kbd "C-c l") 'easysession-switch-to)
@@ -2633,6 +2644,17 @@ latest version of =flymake= is installed. This is best documented
 (use-package eglot
   :ensure t
   :demand t
+
+  :custom
+  (fset #'jsonrpc--log-event #'ignore)
+  (eglot-events-buffer-size 0)
+  (eglot-sync-connect nil)
+  (eglot-connect-timeout nil)
+  (eglot-autoshutdown t)
+  (eglot-send-changes-idle-time 3)
+  (flymake-no-changes-timeout 5)
+  (eldoc-echo-area-use-multiline-p nil)
+
   :config
 
   ;; ---------------------------------------------------------------------------
@@ -2666,6 +2688,17 @@ latest version of =flymake= is installed. This is best documented
         ("C-c l d" . eldoc))
   )
 
+;; -----------------------------------------------------------------------------
+;; use native eglot booster
+(use-package eglot-booster
+  :ensure t
+  :straight
+  (:type git :host github :repo "jdtsmith/eglot-booster")
+
+  :after eglot
+
+  :config
+  (eglot-booster-mode))
 #+end_src
 
 *** C/C++
@@ -2771,6 +2804,8 @@ Define some utility functions for working with c/c++ sources.
 
 (use-package eglot
   :hook
+  ;; ---------------------------------------------------------------------------
+  ;; this is repetitive, but it's OK.
   (c-mode . eglot-ensure)
   (c++-mode . eglot-ensure))
 
@@ -2781,12 +2816,10 @@ Define some utility functions for working with c/c++ sources.
               anupamk:cc/c-mode-hook)
 
   :init
-
   (defconst cc-lang-server-cmdline (anupamk:utils/get-attribute-value "cc-mode:lsp-server-with-args"))
   (defconst cc-clang-format-executable (anupamk:utils/get-attribute-value "cc-mode:clang-format-executable"))
 
   :config
-
   ;; ---------------------------------------------------------------------------
   ;; c/c++ mode common hook
   (defun anupamk:cc/c-mode-common-hook ()
@@ -2843,9 +2876,7 @@ Define some utility functions for working with c/c++ sources.
     (c-set-offset 'case-label '+)
     (c-set-offset 'access-label '/)
     (c-set-offset 'label '/)
-    ;; -------------------------------------------------------------------------
-    ;; abbrev mode is quite useful, enable it
-    (abbrev-mode t)
+
     )
 
   ;; ---------------------------------------------------------------------------
