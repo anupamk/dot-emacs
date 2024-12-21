@@ -1,0 +1,3835 @@
+#+TITLE: GNU Emacs Configuration
+#+AUTHOR: Anupam Kapoor
+#+EMAIL: anupam.kapoor@gmail.com
+#+options: ':t toc:nil num:t author:t email:t
+#+startup: content indent
+This is re-write (once again ? sigh !) of my literate Emacs
+configuration. It is loosely based on my previous configuration, and
+more accumulated wisdom.
+
+Typical setups, and if truth be told my own as well, start Emacs
+through a generic =early-init.el= and =init.el=
+combination. Ultimately though, =init.el= loads the Org configuration
+document through ~org-babel-load-file~ function. Unfortunately, this
+method is quite slow. Loading Org mode during startup is quite
+expensive.
+
+In the current incarnation, my entire Emacs configuration appears
+here. The function ~org-babel-tangle~ typically bound to =C-c C-v C-t=
+generates the entire configuration, and this is then loaded by
+Emacs. So, generating the configuration, and subsequently using it are
+now split up.
+
+* Use Package Syntax Reminder & Sundry Notes
+** Use Package
+  The =use-package= macro is used to install, configure and load
+  packages that we are using in our configuration.
+
+  This is just a quick syntax reminder for its day-to-day usage. For
+  way more information, see [[https://github.com/jwiegley/use-package#getting-started][this]] or [[https://jwiegley.github.io/use-package/keywords/][this]].
+
+  + =:config= and =:init=
+
+    The =:config= and =:init= keywords define code that is run right
+    after or right before a package is loaded /respectively/.
+
+    Thus if a package =foo= offers a configuration option
+    =conf-foo-doo= we can do this
+
+    #+begin_src emacs-lisp
+      (use-package foo
+        ;; ---------------------------------------------------------------------
+        ;; execute code before package is loaded
+        :init
+        (setq conf-foo-doo nil)
+
+        ;; ---------------------------------------------------------------------
+        ;; execute code after package is loaded
+        :config
+        (foo-mode))
+    #+end_src
+
+  + =:bind=
+
+    Adds keybindings after a module is loaded. For example, to use
+    =consult-buffer= instead of the canonical =switch-to-buffer= after
+    =consult= is loaded, do this:
+
+    #+begin_src emacs-lisp
+      (use-package consult
+        :bind
+        ("C-x b" . consult-buffer))
+    #+end_src
+
+  + =:custom=
+
+    This allows customizations of a package's custom variables. Thus
+    for example, doing this:
+
+    #+begin_src emacs-lisp
+      (use-package straight
+        :custom
+        (straight-use-package-by-default t))
+    #+end_src
+
+    sets `straight-use-package-by-default' after loading straight.el
+
+  + =:hook=
+
+    This allows adding functions onto package hooks. When using the
+    =:hook= we must /remember/ to *omit* the =-hook= suffix, as this
+    is appended by default.
+
+    Thus for example, when adding some customizations for =cc-mode=
+    we need to do this
+
+    #+begin_src emacs-lisp
+      (use-package cc-mode
+        :hook
+        (c-mode-common . exec-c-mode-common-hook-func))
+    #+end_src
+
+    *Note* that in the =:hook= section above, we have just used
+    =c-mode-common= and not =c-mode-common-hook= !
+
+    Since this is EMacs, we can ofcourse configure this. Setting the
+    variable =use-package-hook-name-suffix= to =nil= we can go back to
+    our old wayward ways.
+
+  + =:if, :when, :unless=
+
+    With these keywords packages can be conditionally loaded. This is
+    quite handy for example when some packages make sense to be loaded
+    in some environments only.
+
+    Thus, suppose we want to load a package / configuration on host
+    'astra' and a different one on host 'aws-devel-01' we can do the
+    following:
+
+    #+begin_src emacs-lisp
+      (use-package emacs
+        :if (anupamk:utils/host-name-is "astra")
+        :init
+        (message "now running on 'astra'"))
+    #+end_src
+
+    Once this snippet of code is loaded, you will see the following in
+    the =*Messages*= buffers
+
+    #+begin_src emacs-lisp
+       now running on 'astra'
+    #+end_src
+
+  + =:commands=
+
+    When you use the :commands keyword, it creates autoloads for those
+    commands and defers loading of the module until they are used.
+
+  + =:demand=
+
+    The keywords :commands, et al, provide "triggers" that cause a
+    package to be loaded when certain events occur. The presence of
+    triggers can be overridden using =:demand t= to force immediately
+    loading anyway.
+
+  + =:ensure=
+
+    The keyword, =:ensure= causes the package(s) to be installed
+    automatically if not already present on your system. Thus, for
+    example, the following snippet
+
+    #+begin_src emacs-lisp
+      (use-package magit
+        :ensure t)
+    #+end_src
+
+    Will cause the package =magit= to be installed if it was not
+    present on the system
+
+** Emacs Lisp
++ In Emacs Lisp, if =foo= is a symbol, then ='foo= and =#'foo= are
+  completely equivalent. The latter form (with =#'=) is preferred when
+  =foo= is a function, as it documents the fact that it is intended to
+  be funcalled.
+
++ "Backquote" constructs allow you to quote a list, but selectively
+  evaluate elements within that list. This gives us the following:
+
+#+begin_src emacs-lisp
+
+(setq a "a value")
+(setq b "b value")
+(setq c "c value")
+
+'(a b c)            ; => (a b c)
+`(,a b c)           ; => ("a value" b c)
+
+#+end_src
+
+
+* Early initialization (=early-init.el=)
+:PROPERTIES:
+:CUSTOM_ID: h:9d280e80-a93c-4f80-b22c-2a746827bbc5
+:END:
+
+This is the first file that Emacs reads during startup. The difference
+between the =early-init.el= file and the =init.el= file is that the
+former is loaded much earlier during the startup process (than the
+latter), so you can use it to customize some things that are
+initialized before loading the regular init file.
+
+** File =early-init.el= header
+
+#+begin_src emacs-lisp :tangle "early-init.el"
+
+  ;;; early-init.el --- Early Init -*- no-byte-compile: t; lexical-binding: t; -*-
+
+#+end_src
+
+** Remove unused GUI toolkit elements
+:PROPERTIES:
+:CUSTOM_ID: h:6c2eda2d-42f9-4077-a66e-a79db00f9f9f
+:END:
+
+#+begin_src emacs-lisp :tangle "early-init.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; remove unused gui toolkit components. these components have limited
+  ;; use for me.
+  (blink-cursor-mode -1)
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+  (horizontal-scroll-bar-mode -1)
+
+#+end_src
+
+** Set frame parameters
+:PROPERTIES:
+:CUSTOM_ID: h:eb988aa2-7553-47bd-819c-482a9c555903
+:END:
+
+#+begin_src emacs-lisp :tangle "early-init.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; add many items to a list
+  (defun anupam-init:add-many-to-list (L &rest items)
+    (dolist (item items)
+      (add-to-list L item))
+    (eval L))
+
+  ;; -----------------------------------------------------------------------------
+  ;; parameters defined in `initial-frame-alist' affect the *first*
+  ;; frame created after processing early-init.el
+  ;;
+  ;; while parameters in `default-frame-alist' affect the appearance of
+  ;; all subsequent frames.
+  ;;
+  ;; just define them to be the same
+  (setq initial-frame-alist nil)
+  (anupam-init:add-many-to-list 'initial-frame-alist
+                                '(width                      . (text-pixels . 800))
+                                '(height                     . (text-pixels . 900))
+                                '(vertical-scroll-bars       . nil)
+                                '(horizontal-scroll-bar-mode . nil))
+
+  (setq default-frame-alist nil)
+  (anupam-init:add-many-to-list 'default-frame-alist
+                                '(width                      . (text-pixels . 800))
+                                '(height                     . (text-pixels . 900))
+                                '(vertical-scroll-bars       . nil)
+                                '(horizontal-scroll-bar-mode . nil))
+
+  ;; -----------------------------------------------------------------------------
+  ;; sane defaults
+  (setq
+   ;; -----------------------------------------------------------------------
+   ;; don't round a frame's dimensions to current values of
+   ;; `frame-char-height' and `frame-char-width'
+   frame-resize-pixelwise t
+
+   ;; -----------------------------------------------------------------------
+   ;; don't resize frame on setting font, menu-bar, tool-bar
+   ;; etc. resizing of the frame is done to preserve the number of
+   ;; columns+lines it displays
+   frame-inhibit-implied-resize t
+
+   ;; -----------------------------------------------------------------------
+   ;; same as `mode-line-format' and used to display a frame's
+   ;; title. '%b' implies use the buffer-name.
+   frame-title-format '("%b")
+
+   ;; -----------------------------------------------------------------------
+   ;; no-bell !
+   ring-bell-function 'ignore
+
+   ;; -----------------------------------------------------------------------
+   ;; when `use-dialog-box' is nil, don't use dialog boxes to ask
+   ;; questions when mouse is clicked.
+   ;;
+   ;; when `use-file-dialog' is nil, don't use file-dialog to ask
+   ;; for files.
+   use-dialog-box nil
+   use-file-dialog nil
+
+   ;; -----------------------------------------------------------------------
+   ;; `yes-or-no-p' uses short answers "y" or "n"
+   use-short-answers t
+
+   ;; -----------------------------------------------------------------------
+   ;; inhibit splash + startup screens
+   inhibit-splash-screen t
+   inhibit-startup-screen t
+
+   ;; -----------------------------------------------------------------------
+   ;; don't use X-resources for decorating Emacs
+   inhibit-x-resources t
+
+   ;; -----------------------------------------------------------------------
+   ;; Non-nil inhibits the initial startup echo area message.
+   inhibit-startup-echo-area-message user-login-name
+
+   ;; -----------------------------------------------------------------------
+   ;; Non-nil inhibits display of buffer list when more than 2
+   ;; files are loaded
+   inhibit-startup-buffer-menu t)
+
+#+end_src
+
+** Garbage collection & file handling hacks for faster startup
+:PROPERTIES:
+:CUSTOM_ID: h:4e1fb465-62b2-4589-8192-9e9753f5624c
+:END:
+
+This configuration is just collected over the course of Emacs usage,
+without a modicum of understanding of the innards.
+
+#+begin_src emacs-lisp :tangle "early-init.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; Defer garbage collection to later, and set a 'proper' scheme via
+  ;; the gcmh
+  (setq gc-cons-threshold most-positive-fixnum)
+  (setq gc-cons-percentage 0.5)
+
+  ;; -----------------------------------------------------------------------------
+  ;; make startup faster.
+  ;;
+  ;; some background: the variable `file-name-handler-alist' specifies
+  ;; an alist of elements (regexp . handler) for file names handled
+  ;; specially. if a file name matches the regexp, all i/o on that file
+  ;; is done by calling the handler.
+  ;;
+  ;; during startup we don't care about these. once startup is
+  ;; over, we restore things back.
+  (defvar startup/file-name-handler-alist file-name-handler-alist)
+  (defvar startup/vc-handled-backends vc-handled-backends)
+
+  (setq file-name-handler-alist nil
+        vc-handled-backends nil)
+
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              file-name-handler-alist startup/file-name-handler-alist
+              vc-handled-backends startup/vc-handled-backends))
+
+#+end_src
+
+** Native compilation tweaks
+:PROPERTIES:
+:CUSTOM_ID: h:2e17640b-1c08-432b-963b-64b990f548ff
+:END:
+
+Setup native compilation. My custom build of Emacs always has native
+compilation enabled, things are slightly less convoluted here.
+
+#+begin_src emacs-lisp :tangle "early-init.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; compile loaded .elc files asynchronously.
+  (setq native-comp-jit-compilation t)
+
+  ;; -----------------------------------------------------------------------------
+  ;; natively compile packages as part of their *installation* as
+  ;; opposed to native compilation when they are *loaded* for the first time.
+  (setq package-native-compile t)
+
+  ;; -----------------------------------------------------------------------------
+  ;; silence compiler warnings
+  (setq warning-minimum-level :emergency)
+  (setq warning-suppress-types '((comp)))
+  (setq native-comp-async-report-warnings-errors 'silent)
+  (setq byte-compile-warnings '(not free-vars unresolved noruntime lexical make-local cl-functions))
+
+#+end_src
+
+** Initialize package cache
+:PROPERTIES:
+:CUSTOM_ID: h:93977b91-8f29-4adf-93b4-0e9c2a9685a1
+:END:
+
+#+begin_src emacs-lisp :tangle "early-init.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; starting with emacs-27.1, and early-init is now required to control
+  ;; things with greater precision.
+  ;;
+  ;; concretely, these changes are due to how emacs initializes the
+  ;; package manager. before emacs-27.1, init.el was responsible for
+  ;; that task, via `package-initialize'. from emacs-27.1 onwards, the
+  ;; default behvior is to start the package-manager before loading the
+  ;; users init file.
+  ;; -----------------------------------------------------------------------------
+  (setq package-enable-at-startup t)
+
+#+end_src
+
+** Miscellaneous tweaks for improved startup
+:PROPERTIES:
+:CUSTOM_ID: h:087fe7c4-afd7-407c-878c-41b71c299755
+:END:
+
+#+begin_src emacs-lisp :tangle "early-init.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; once the config is loaded settings from our configuration will make
+  ;; x-resources redundant. ignore it.
+  (advice-add #'x-apply-session-resources :override #'ignore)
+
+  ;; -----------------------------------------------------------------------------
+  ;; Emacs "updates" its ui more often than it needs to, so we slow it
+  ;; down slightly from 0.5s
+  (setq which-func-update-delay 1.0)
+
+  ;; -----------------------------------------------------------------------------
+  ;; don't want a mode line while loading init.
+  (setq mode-line-format nil)
+
+  ;; -----------------------------------------------------------------------------
+  ;; Disable bidirectional text scanning for a modest performance
+  ;; boost. I've set this to `nil' in the past, but the
+  ;; `bidi-display-reordering's docs say that is an undefined state and
+  ;; suggest this to be just as good:
+  (setq-default bidi-display-reordering 'left-to-right
+                bidi-paragraph-direction 'left-to-right)
+
+  ;; -----------------------------------------------------------------------------
+  ;; Disabling the BPA makes redisplay faster, but might produce
+  ;; incorrect display reordering of bidirectional text with embedded
+  ;; parentheses and other bracket characters whose 'paired-bracket'
+  ;; Unicode property is non-nil.
+  (setq bidi-inhibit-bpa t)
+
+  ;; -----------------------------------------------------------------------------
+  ;; miscellaneous optimizations
+  (setq-default cursor-in-non-selected-windows nil)
+  (setq highlight-nonselected-windows nil)
+  (setq fast-but-imprecise-scrolling t)
+
+#+end_src
+
+
+* Main initialization (=init.el=)
+:PROPERTIES:
+:CUSTOM_ID: h:0671bc29-002b-4f12-b040-751722155575
+:END:
+
+** File =init.el= header
+:PROPERTIES:
+:CUSTOM_ID: h:ed42cf6c-0d01-4998-afda-7f145d7252a3
+:END:
+
+#+begin_src emacs-lisp :tangle "init.el"
+
+  ;;; init.el --- Emacs Init -*- no-byte-compile: t; lexical-binding: t; -*-
+
+#+end_src
+
+** Backups and lockfiles
+:PROPERTIES:
+:CUSTOM_ID: h:06628ee2-8d04-4ac7-b216-5567a8de1ba8
+:END:
+
+Configure how Emacs backs the files up
+
+#+begin_src emacs-lisp :tangle "init.el"
+
+  (setq backup-directory-alist       ; File name patterns and backup directory names.
+        `(("." . ,(expand-file-name "backups" user-emacs-directory)))
+        make-backup-files t          ; Backup of a file the first time it is saved.
+        vc-make-backup-files nil     ; No backup of files under version control
+        backup-by-copying t          ; Don't clobber symlinks
+        version-control t            ; Version numbers for backup files
+        delete-old-versions t        ; Delete excess backup files silently
+        kept-old-versions 6          ; Number of old versions to keep
+        kept-new-versions 9          ; Number of new versions to keep
+        delete-by-moving-to-trash t) ; Delete files to trash
+
+#+end_src
+
+** Load user customization after init
+:PROPERTIES:
+:CUSTOM_ID: h:b0f3f080-6878-49e3-b449-136716a9678c
+:END:
+
+Store all user customizations in a separate disposable location for
+sane behavior.
+
+#+begin_src emacs-lisp :tangle "init.el"
+
+  (use-package emacs
+    :ensure nil
+    :demand t
+
+    :config
+    (setq custom-file (expand-file-name "anupam-emacs-custom.el" user-emacs-directory))
+
+    :hook
+    ;; ---------------------------------------------------------------------------
+    ;; load customizations once initialization is complete
+    (after-init . (lambda ()
+                    (when (file-exists-p custom-file)
+                      (load-file custom-file)))))
+
+#+end_src
+
+** Always start with a scratch buffer
+:PROPERTIES:
+:CUSTOM_ID: h:4dcf0bc0-2df9-4291-8086-eb8562a6e5ac
+:END:
+
+#+begin_src emacs-lisp :tangle "init.el"
+
+  (use-package emacs
+    :ensure nil
+    :demand t
+    :config
+    ;; ---------------------------------------------------------------------------
+    ;; show an initial buffer after startup
+    (setq initial-buffer-choice t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; for which the we want to use the lisp major-mode
+    (setq initial-major-mode 'lisp-interaction-mode)
+
+    ;; ---------------------------------------------------------------------------
+    ;; documentation displayed in *scratch* buffer at startup
+    (setq initial-scratch-message
+          (format ";; This is `%s'.  Use `%s' to evaluate and print results.\n\n"
+                  'lisp-interaction-mode
+                  (propertize
+                   (substitute-command-keys "\\<lisp-interaction-mode-map>\\[eval-print-last-sexp]")
+                   'face 'help-key-binding)))
+    )
+
+#+end_src
+
+** Setup Emacs load paths for packages / modules that are used
+:PROPERTIES:
+:CUSTOM_ID: h:d902f71f-3d02-4475-9863-73357efa56c4
+:END:
+
+Add =anupam-lisp= and =anupam-emacs-modules= to the ~load-path~. Any
+Emacs lisp file inside these directories can be loaded.
+
+#+begin_src emacs-lisp :tangle "init.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; expand the `load-path' to include subdirs where we place our
+  ;; packages and lisp hacks
+  (mapc
+   (lambda (dirname)
+     (add-to-list 'load-path
+                  (locate-user-emacs-file dirname)))
+   '("anupam-lisp" "anupam-emacs-module"))
+
+#+end_src
+
+** Setup the package archive
+:PROPERTIES:
+:CUSTOM_ID: h:c9721bcf-1a12-4592-b456-301a522453d9
+:END:
+
+Use the builtin =package.el= rather than fancier package managers
+like =straight.el= / =elpaca= etc. I don't really have any need for
+them.
+
+#+begin_src emacs-lisp :tangle "init.el"
+
+  (setq package-vc-register-as-project nil)
+
+  (add-hook 'package-menu-mode-hook #'hl-line-mode)
+
+  (setq package-archives
+        '(("gnu-elpa" . "https://elpa.gnu.org/packages/")
+          ("nongnu"   . "https://elpa.nongnu.org/nongnu/")
+          ("melpa"    . "https://melpa.org/packages/")))
+
+  ;; Highest number gets priority (what is not mentioned has priority 0)
+  (setq package-archive-priorities
+        '(("gnu-elpa" . 3)
+          ("melpa"    . 2)
+          ("nongnu"   . 1)))
+
+  ;; -----------------------------------------------------------------------------
+  ;; don't suggest packages to be upgraded (via the package archive)
+  (setq package-install-upgrade-built-in nil)
+
+  ;; -----------------------------------------------------------------------------
+  ;; initialize and refresh package contents if needed
+  (package-initialize)
+    (unless package-archive-contents
+      (package-refresh-contents))
+
+  ;; Install use-package if necessary
+  (unless (package-installed-p 'use-package)
+    (package-install 'use-package))
+
+  ;; Ensure use-package is available at compile time
+  (eval-when-compile
+    (require 'use-package))
+
+#+end_src
+
+** All themes are safe
+:PROPERTIES:
+:CUSTOM_ID: h:fccb6795-1433-4691-acd6-7cc12e112d5c
+:END:
+
+#+begin_src emacs-lisp :tangle "init.el"
+
+  (setq custom-safe-themes t)
+
+#+end_src
+
+** Load individual module
+:PROPERTIES:
+:CUSTOM_ID: h:6807ae5c-4625-481f-a909-697e1252502d
+:END:
+
+The entire configuration is split into multiple module, each catering
+to one specific functionality. Makes it easier to manage it.
+
+I generally seem to like it much better. Makes for a /clean/ overall
+organization.
+
+#+begin_src emacs-lisp :tangle "init.el"
+
+  (require 'anupam-common-lib)
+  (require 'anupam-host-customizations)
+  (require 'anupam-emacs-theme)
+  (require 'anupam-emacs-unannoy)
+  (require 'anupam-emacs-window)
+  (require 'anupam-emacs-utilities)
+  (require 'anupam-emacs-completion)
+  (require 'anupam-emacs-search)
+  (require 'anupam-emacs-dired)
+  (require 'anupam-emacs-version-control)
+  (require 'anupam-cc-mode-lib)
+  (require 'anupam-emacs-langs)
+
+  ;; -----------------------------------------------------------------------------
+  ;; last one always
+  (require 'anupam-emacs-config-end)
+
+#+end_src
+
+
+* Custom routines for my Emacs configuration
+** Common functions library =anupam-common.el=
+:PROPERTIES:
+:CUSTOM_ID: h:48bad3bf-82f0-4330-8ffb-bc898ddf3c25
+:END:
+
+Utility functions used throughout the configuration. Just define them
+here.
+
+#+begin_src emacs-lisp :tangle "anupam-lisp/anupam-common-lib.el" :mkdirp yes
+  ;;; anupam-common-lib.el -- commonly used functions for my configuration -*- lexical-binding:t -*-
+
+  ;; -----------------------------------------------------------------------------
+  ;; hostname predicate
+  ;;;###autoload
+  (defun anupam-common:host-name-is (host_name)
+    "return true if host-name is `host_name'"
+    (string-equal (system-name) host_name))
+
+  ;; -----------------------------------------------------------------------------
+  ;; set all font families (default/fixed/variable) by name
+  ;;;###autoload
+  (defun anupam-common:setup-all-font-families-by-name (font-name)
+    "setup all font families, we don't particularly care about it too much for now"
+    (progn
+      (set-face-attribute 'default nil :family font-name)
+      (set-face-attribute 'fixed-pitch nil :family font-name)
+      (set-face-attribute 'variable-pitch nil :family font-name)))
+
+  ;; -----------------------------------------------------------------------------
+  ;; did vi(m) get anything right ? paren matching probably...
+  ;;;###autoload
+  (defun anupam-common:vi-match-paren (arg)
+    "Go to the matching paren if on a paren; otherwise insert %."
+    (interactive "p")
+    (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
+          ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
+          (t (self-insert-command (or arg 1)))))
+
+  ;; -----------------------------------------------------------------------------
+  ;; fill current line with '-' upto '80' columns, let the user have the
+  ;; satisfaction of inserting a newline
+  ;;;###autoload
+  (defun anupam-common:fill-to-end ()
+    (interactive)
+    (progn
+      (insert-char ?- (- 80 (current-column)))))
+
+  ;; -----------------------------------------------------------------------------
+  ;; copy file name to clipboard
+  ;;;###autoload
+  (defun anupam-common:copy-file-name-to-clipboard ()
+    "Copy the current buffer file name to the clipboard."
+    (interactive)
+    (let ((filename (if (equal major-mode 'dired-mode)
+                        default-directory
+                      (buffer-file-name))))
+      (when filename
+        (kill-new filename)
+        (message "Copied buffer file name '%s' to the clipboard." filename))))
+
+  ;; -----------------------------------------------------------------------------
+  ;; toggle display of invisible characters
+  ;;;###autoload
+  (defun anupam-common:toggle-invisibles ()
+    "toggle display of invisible characters"
+    (interactive)
+    (if (bound-and-true-p whitespace-mode)
+        (whitespace-mode -1)
+      (whitespace-mode)))
+
+  ;; -----------------------------------------------------------------------------
+  ;; toggle display of line-numbers
+  ;;;###autoload
+  (defun anupam-common:toggle-line-numbers ()
+    "toggle display of line-numbers in all buffers"
+    (interactive)
+    (if (bound-and-true-p display-line-numbers-mode)
+        (display-line-numbers-mode -1)
+      (display-line-numbers-mode)))
+
+  ;; -----------------------------------------------------------------------------
+  ;; open file as root with sudo
+  ;;;###autoload
+  (defun anupam-common:edit-file-with-sudo (&optional arg)
+    "Edit currently visited file as root.
+  With a prefix ARG prompt for a file to visit.
+  Will also prompt for a file to visit if current
+  buffer is not visiting a file."
+    (interactive "P")
+    (if (or arg (not buffer-file-name))
+        (find-file (concat "/sudo:root@localhost:"
+                           (ido-read-file-name "Find file(as root): ")))
+      (find-alternate-file (concat "/sudo:root@localhost:" buffer-file-name))))
+
+  ;; -----------------------------------------------------------------------------
+  ;; add many items to a list
+  ;;;###autoload
+  (defun anupam-common:add-many-to-list (L &rest items)
+    (dolist (item items)
+      (add-to-list L item))
+    (eval L))
+
+  ;; -----------------------------------------------------------------------------
+  ;; insert current date
+  ;;;###autoload
+  (defun anupam-common:insert-current-date (iso)
+    " Insert the current date at point.
+            When ISO is non-nil, insert the date in ISO 8601 format.
+            Otherwise insert the date as Mar 04, 2014.
+          "
+    (interactive "P")
+    (insert (format-time-string (if iso "%F" "%b %d, %Y"))))
+
+  ;; -----------------------------------------------------------------------------
+  ;; rename current buffer to the desired name. the current name is copied
+  ;; so you can just modify it, rather than typing it from scratch
+  ;;;###autoload
+  (defun anupam-common:rename-current-buffer-file ()
+    "Renames current buffer and file it is visiting."
+    (interactive)
+    (let ((name (buffer-name))
+          (filename (buffer-file-name)))
+      (if (not (and filename (file-exists-p filename)))
+          (error "Buffer '%s' is not visiting a file!" name)
+        (let ((new-name (read-file-name "New name: " filename)))
+          (if (get-buffer new-name)
+              (error "A buffer named '%s' already exists!" new-name)
+            (rename-file filename new-name 1)
+            (rename-buffer new-name)
+            (set-visited-file-name new-name)
+            (set-buffer-modified-p nil)
+            (message "File '%s' successfully renamed to '%s'"
+                     name (file-name-nondirectory new-name)))))))
+
+  ;; -----------------------------------------------------------------------------
+  ;; Original idea:
+  ;; <https://writequit.org/articles/emacs-org-mode-generate-ids.html>.
+  ;;;###autoload
+  (defun anupam-common:org-id-get-or-create ()
+    "Get the CUSTOM_ID of the current entry if it exists.
+  Otherwise, just create a new one."
+    (interactive)
+    (let* ((pos (point))
+           (id (org-entry-get pos "CUSTOM_ID")))
+      (if (and id (stringp id) (string-match-p "\\S-" id))
+          id
+        (setq id (org-id-new "h"))
+        (org-entry-put pos "CUSTOM_ID" id)
+        id)))
+
+  ;; -----------------------------------------------------------------------------
+  ;; 'compute' bookmark name based on location of point (line+column)
+  ;; and buffer name. saves us the hassele of coming up with something
+  ;; pertinent everytime.
+  (defun anupam-common:quick-bookmark ()
+    "Save bookmark with name as 'buffer:row:col'"
+    (interactive)
+    (bookmark-set (format "%s:%s:line %s:column %s"
+                          (thing-at-point 'symbol)
+                          (buffer-name)
+                          (line-number-at-pos)
+                          (current-column)))
+    (message "Bookmarked saved at current position"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; clear the minibuffer
+  (defun anupam-common:clear-minibuffer-messages ()
+    "clear minibuffer messages"
+    (message ""))
+
+  ;; -----------------------------------------------------------------------------
+  ;; truncate lines silently
+  ;;;###autoload
+  (defun anupam-common:truncate-lines-silently ()
+    "Toggle line truncation without printing messages."
+    (let ((inhibit-message t))
+      (toggle-truncate-lines t)))
+
+  ;; -----------------------------------------------------------------------------
+  ;; which minor modes are active ?
+  (defun anupam-common:which-active-modes ()
+    "Give a message of which minor modes are enabled in the current buffer."
+    (interactive)
+    (let ((active-modes))
+      (mapc (lambda (mode) (condition-case nil
+                               (if (and (symbolp mode) (symbol-value mode))
+                                   (add-to-list 'active-modes mode))
+                             (error nil) ))
+            minor-mode-list)
+      (message "Active modes are %s" active-modes)))
+
+  ;; -----------------------------------------------------------------------------
+  ;; anupam-common-lib.el ends here
+  (provide 'anupam-common-lib)
+
+#+end_src
+** Prefix maps library =anupam-prefix.el=
+:PROPERTIES:
+:CUSTOM_ID: h:bedbf047-1440-4fd4-84de-e2d135b290a1
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-lisp/anupam-prefix.el"
+
+  ;;; anupam-prefix.el --- keymaps for my dotemacs -*- lexical-binding: t -*-
+
+  ;; -----------------------------------------------------------------------------
+  ;; for a keymap the `repeat' property can be enabled, which makes it
+  ;; easy to repeat commands.
+  ;;
+  ;; this is done with a
+  ;;    `:repeat t'
+  ;; section in a keymap for example:
+  ;;
+  ;; ```
+  ;; ,----
+  ;; | (defvar-keymap foo-mode-map
+  ;; |   :doc "a demo mode keymap"
+  ;; |   :name "a demo mode"
+  ;; |   :prefix 'foo-mode
+  ;; |   :repeat t <=== set repeat mode
+  ;; `----
+  ;; -----------------------------------------------------------------------------
+
+
+  ;; -----------------------------------------------------------------------------
+  ;; minor mode toggles
+  (defvar-keymap anupam-toggle-mode-map
+    :doc "Prefix keymap for minor mode toggles."
+    :name "minor mode toggle"
+    :prefix 'anupam-toggle-mode
+    "f" #'flymake-mode
+    "h" #'hl-line-mode
+    "l" #'display-line-numbers-mode
+    )
+
+  ;; -----------------------------------------------------------------------------
+  ;; buffer action keymap
+  (defvar-keymap anupam-buffer-mode-map
+    :doc "Prefix keymap for buffer mode."
+    :name "buffer actions"
+    :prefix 'anupam-buffer-mode
+    "r"      #'recenter
+    "b"      #'anupam-common:quick-bookmark
+    "<end>"  #'end-of-buffer
+    "<home>" #'beginning-of-buffer
+    )
+
+  ;; -----------------------------------------------------------------------------
+  ;; file action keymap
+  (defvar-keymap anupam-prefix-file-map
+    :doc "Prefix keymaps for files."
+    :name "file actions"
+    :prefix 'anupam-prefix-file
+    "f" #'find-file
+    "F" #'find-file-other-window
+    "b" #'bookmark-jump
+    "d" #'dired
+    "l" #'find-library
+    "r" #'anupam-common:rename-current-buffer-file
+    "m" #'man)
+
+  ;; -----------------------------------------------------------------------------
+  ;; window actions keymap.
+  (defvar-keymap anupam-prefix-window-map
+    :doc "Prefix keymap for windows."
+    :name "window actions"
+    :prefix 'anupam-prefix-window
+    "b"       #'balance-windows-area
+    "d"       #'toggle-window-dedicated
+    "0"       #'delete-window
+    "1"       #'delete-other-windows
+    "^"       #'tear-off-window)
+
+  ;; -----------------------------------------------------------------------------
+  ;; final keymap of keymaps
+  (defvar-keymap anupam-prefix-map
+    :doc "prefix keymap with multiple sub-keymaps"
+    :name "Anupam Prefix"
+    :prefix 'anupam-prefix
+    "b" (cons "buffer actions"      'anupam-buffer-mode)
+    "m" (cons "minor mode toggles"  'anupam-toggle-mode)
+    "f" (cons "file actions"        'anupam-prefix-file)
+    "w" (cons "window actions"      'anupam-prefix-window)
+    )
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (provide 'anupam-prefix)
+
+#+end_src
+
+
+* Host specific customization
+:PROPERTIES:
+:CUSTOM_ID: h:ACB00412-E7E5-4BD1-9486-126DAADF6316
+:END:
+
+Per $HOST configuration.
+
+** Prologue
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-host-customizations.el" :mkdirp yes
+
+  ;;; anupam-host-customizations.el -- host specific customizations -*- lexical-binding:t -*-
+
+  (defun anupam:load-user-config-file (file-name)
+    (load (expand-file-name file-name user-emacs-directory)))
+
+  (if (anupam-common:host-name-is "shakti")
+      (anupam:load-user-config-file "anupam-emacs-module/anupam-emacs-host-shakti-customizations.el"))
+
+  (if (anupam-common:host-name-is "axon")
+      (anupam:load-user-config-file "anupam-emacs-module/anupam-emacs-host-axon-customizations.el"))
+
+  (if (anupam-common:host-name-is "aws-devel-01")
+      (anupam:load-user-config-file "anupam-emacs-module/anupam-emacs-host-aws-devel-01-customizations.el"))
+
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (provide 'anupam-host-customizations)
+
+#+end_src
+
+** Host =shakti=
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-shakti-customizations.el" :mkdirp yes
+
+
+  ;;; anupam-emacs-host-shakti-customizations.el -- shakti-host specific customizations -*- lexical-binding:t -*-
+
+  ;; -----------------------------------------------------------------------------
+  ;; host specific theme+font customizations
+  (defconst anupam-theme-name "zenburn")
+  (anupam-common:setup-all-font-families-by-name "PragmataPro Mono")
+
+  ;; -----------------------------------------------------------------------------
+  ;; language server protocol (lsp) server, we use ccls on this machine.
+  (defconst anupam-lsp-server-with-args (executable-find "ccls"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; where is `clang-format-executable' ?
+  (custom-set-variables '(clang-format-executable "clang-format"))
+
+  ;; ---------------------------------------------------------------------------
+  ;; we run a local dictionary server on this host, no need to go to the
+  ;; canonical `dict.org' for lookups
+  (defconst anupam-dictionary-server-host "localhost")
+
+  ;; =============================================================================
+  ;; c/c++ mode customizations
+  ;; =============================================================================
+
+  (defun anupam-cc-mode-hook ()
+    ;; ---------------------------------------------------------------------------
+    ;; default styles, and then our configuration overriding it.
+    (add-to-list 'c-default-style '(c-mode . "linux"))
+    (add-to-list 'c-default-style '(c++-mode . "Stroustrup"))
+
+    ;; ---------------------------------------------------------------------------
+    ;; Distance between tab stops (for display of tab characters), in
+    ;; columns.
+    (setq tab-width 8)
+
+    ;; ----------------------------------------------------------------------------
+    ;; column beyond which automatic line-wrapping should happen.
+    (setq fill-column 80)
+
+    ;; ---------------------------------------------------------------------------
+    ;; column to indent right-margin comments to...
+    (setq comment-column 80)
+
+    ;; ---------------------------------------------------------------------------
+    ;; Specifies how M-x indent-for-comment should handle comment-only
+    ;; lines. When this variable is non-nil, comment-only lines are
+    ;; indented according to syntactic analysis via
+    ;; `c-offsets-alist'. Otherwise, the comment is indented as if it
+    ;; was preceded by code. Note that this variable does not affect how
+    ;; the normal line indentation treats comment-only lines.
+    (setq c-indent-comments-syntactically-p t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; comment syntax
+    (setq comment-start "///")
+    (setq comment-end "")
+
+    ;; ---------------------------------------------------------------------------
+    ;; '_' is not a modifier anymore
+    (modify-syntax-entry ?_ "w")
+
+    ;; ---------------------------------------------------------------------------
+    ;; amount of basic offset used by `+' and `-' symbols in `c-offsets-alist'
+    (setq c-basic-offset 8)
+
+    ;; ---------------------------------------------------------------------------
+    ;; syntax help
+    ;;  +   c-basic-offset times 1
+    ;;  -   c-basic-offset times -1
+    ;;  ++  c-basic-offset times 2
+    ;;  --  c-basic-offset times -2
+    ;;  *   c-basic-offset times 0.5
+    ;;  /   c-basic-offset times -0.5
+    (c-set-offset 'case-label '+)
+    (c-set-offset 'access-label '/)
+    (c-set-offset 'label '/)
+
+    ;; ---------------------------------------------------------------------------
+    ;; some useful bindings
+    (define-key c-mode-map (kbd "RET")  #'newline-and-indent)
+    (define-key c-mode-map (kbd "C-<ret>") #'recompile)
+
+    ;; ---------------------------------------------------------------------------
+    ;; jump directly to source when we see compilation errors
+    (add-to-list 'compilation-search-path (getenv "PWD")))
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line just see if things are setup ok.
+  (princ (format "=shakti config loaded="))
+
+#+end_src
+
+** Host =axon=
+:PROPERTIES:
+:CUSTOM_ID: h:68590E4D-0108-4CD5-AE9A-2C07523E923F
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-axon-customizations.el" :mkdirp yes
+
+  ;;; anupam-emacs-host-axon-customizations.el -- axon-host specific customizations -*- lexical-binding:t -*-
+
+  ;; -----------------------------------------------------------------------------
+  ;; host specific theme+font customizations
+  (defconst anupam-theme-name "modus-operandi")
+  (anupam-common:setup-all-font-families-by-name "Go Mono")
+
+  ;; -----------------------------------------------------------------------------
+  ;; language server protocol (lsp) server, we use ccls on this machine.
+  (defconst anupam-lsp-server-with-args (executable-find "ccls"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; where is `clang-format-executable' ?
+  (custom-set-variables '(clang-format-executable "clang-format-mp-18"))
+
+  ;; ---------------------------------------------------------------------------
+  ;; resort to the canonical `dict.org' for lookups
+  (defconst anupam-dictionary-server-host "dict.org")
+
+  ;; =============================================================================
+  ;; c/c++ mode customizations
+  ;; =============================================================================
+
+  (defun anupam-cc-mode-hook ()
+    ;; ---------------------------------------------------------------------------
+    ;; default styles, and then our configuration overriding it.
+    (add-to-list 'c-default-style '(c-mode . "linux"))
+    (add-to-list 'c-default-style '(c++-mode . "Stroustrup"))
+
+    ;; ---------------------------------------------------------------------------
+    ;; Distance between tab stops (for display of tab characters), in
+    ;; columns.
+    (setq tab-width 8)
+
+    ;; ----------------------------------------------------------------------------
+    ;; column beyond which automatic line-wrapping should happen.
+    (setq fill-column 80)
+
+    ;; ---------------------------------------------------------------------------
+    ;; column to indent right-margin comments to...
+    (setq comment-column 80)
+
+    ;; ---------------------------------------------------------------------------
+    ;; Specifies how M-x indent-for-comment should handle comment-only
+    ;; lines. When this variable is non-nil, comment-only lines are
+    ;; indented according to syntactic analysis via
+    ;; `c-offsets-alist'. Otherwise, the comment is indented as if it
+    ;; was preceded by code. Note that this variable does not affect how
+    ;; the normal line indentation treats comment-only lines.
+    (setq c-indent-comments-syntactically-p t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; comment syntax
+    (setq comment-start "///")
+    (setq comment-end "")
+
+    ;; ---------------------------------------------------------------------------
+    ;; '_' is not a modifier anymore
+    (modify-syntax-entry ?_ "w")
+
+    ;; ---------------------------------------------------------------------------
+    ;; amount of basic offset used by `+' and `-' symbols in `c-offsets-alist'
+    (setq c-basic-offset 8)
+
+    ;; ---------------------------------------------------------------------------
+    ;; syntax help
+    ;;  +   c-basic-offset times 1
+    ;;  -   c-basic-offset times -1
+    ;;  ++  c-basic-offset times 2
+    ;;  --  c-basic-offset times -2
+    ;;  *   c-basic-offset times 0.5
+    ;;  /   c-basic-offset times -0.5
+    (c-set-offset 'case-label '+)
+    (c-set-offset 'access-label '/)
+    (c-set-offset 'label '/)
+
+    ;; ---------------------------------------------------------------------------
+    ;; some useful bindings
+    (define-key c-mode-map (kbd "RET")  #'newline-and-indent)
+    (define-key c-mode-map (kbd "C-<ret>") #'recompile)
+
+    ;; ---------------------------------------------------------------------------
+    ;; jump directly to source when we see compilation errors
+    (add-to-list 'compilation-search-path (getenv "PWD")))
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line just see if things are setup ok.
+  (princ (format "=axon config loaded="))
+
+#+end_src
+
+** Host =aws-devel-01=
+:PROPERTIES:
+:CUSTOM_ID: h:A2306D1A-CA5B-4AB7-BA3A-8FFA25997451
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-aws-devel-01-customizations.el" :mkdirp yes
+
+  ;;; anupam-emacs-host-aws-devel-01-customizations.el -- aws-devel-01 specific customizations -*- lexical-binding:t -*-
+
+  (use-package bazel
+    :ensure t)
+
+  (use-package protobuf-mode
+    :ensure t)
+
+  ;; -----------------------------------------------------------------------------
+  ;; host specific theme+font customizations
+  (defconst anupam-theme-name "zenburn")
+  (anupam-common:setup-all-font-families-by-name "Go Mono")
+
+  ;; -----------------------------------------------------------------------------
+  ;; language server protocol (lsp) server, we use ccls on this machine.
+  (defconst anupam-lsp-server-with-args (executable-find "ccls"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; where is `clang-format-executable' ?
+  (custom-set-variables '(clang-format-executable "/twbuild/anupam.kapoor/local/usr/bin/clang-format"))
+
+  ;; ---------------------------------------------------------------------------
+  ;; resort to the canonical `dict.org' for lookups
+  (defconst anupam-dictionary-server-host "dict.org")
+
+  ;; =============================================================================
+  ;; c/c++ mode customizations
+  ;; =============================================================================
+
+  (defun anupam-cc-mode-hook ()
+    ;; ---------------------------------------------------------------------------
+    ;; default styles, and then our configuration overriding it.
+    (add-to-list 'c-default-style '(c-mode . "linux"))
+    (add-to-list 'c-default-style '(c++-mode . "Stroustrup"))
+
+    (setq c-basic-offset 2)
+
+    ;; ---------------------------------------------------------------------------
+    ;; Distance between tab stops (for display of tab characters), in
+    ;; columns.
+    (setq tab-width 2)
+
+    ;; ----------------------------------------------------------------------------
+    ;; column beyond which automatic line-wrapping should happen.
+    (setq fill-column 80)
+
+    ;; ---------------------------------------------------------------------------
+    ;; column to indent right-margin comments to...
+    (setq comment-column 80)
+
+    ;; ---------------------------------------------------------------------------
+    ;; Specifies how M-x indent-for-comment should handle comment-only
+    ;; lines. When this variable is non-nil, comment-only lines are
+    ;; indented according to syntactic analysis via
+    ;; `c-offsets-alist'. Otherwise, the comment is indented as if it
+    ;; was preceded by code. Note that this variable does not affect how
+    ;; the normal line indentation treats comment-only lines.
+    (setq c-indent-comments-syntactically-p t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; comment syntax
+    (setq comment-start "///")
+    (setq comment-end "")
+
+    ;; ---------------------------------------------------------------------------
+    ;; '_' is not a modifier anymore
+    (modify-syntax-entry ?_ "w")
+
+    ;; ---------------------------------------------------------------------------
+    ;; syntax help
+    ;;  +   c-basic-offset times 1
+    ;;  -   c-basic-offset times -1
+    ;;  ++  c-basic-offset times 2
+    ;;  --  c-basic-offset times -2
+    ;;  *   c-basic-offset times 0.5
+    ;;  /   c-basic-offset times -0.5
+    (c-set-offset 'case-label '+)
+    (c-set-offset 'access-label '/)
+    (c-set-offset 'label '/)
+
+    ;; ---------------------------------------------------------------------------
+    ;; some useful bindings
+    (define-key c-mode-map (kbd "RET")  #'newline-and-indent)
+    (define-key c-mode-map (kbd "C-<ret>") #'recompile)
+
+    ;; ---------------------------------------------------------------------------
+    ;; jump directly to source when we see compilation errors
+    (add-to-list 'compilation-search-path (getenv "PWD")))
+
+  ;; -----------------------------------------------------------------------------
+  ;; some keybindings
+  (global-set-key (kbd "C-<f2>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.b10.1xx")))
+  (global-set-key (kbd "C-<f3>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.r10.xxx")))
+  (global-set-key (kbd "C-<f5>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.h10.1xx")))
+  (global-set-key (kbd "C-<f6>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.h10.2xx")))
+  (global-set-key (kbd "C-<f8>")  (lambda() (interactive) (anupam-cc-mode:verify-with-bazel)))
+  (global-set-key (kbd "C-<f12>") (lambda() (interactive) (anupam-cc-mode:build-everything-with-bazel)))
+
+  ;; -----------------------------------------------------------------------------
+  ;; when connecting from macos to development machines, we cannot use
+  ;; these keys anymore, because they are already used by macos.
+  (global-unset-key (kbd "M-."))
+  (global-unset-key (kbd "M-,"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; define something similar.
+  (global-set-key (kbd "C-M-.") 'xref-find-definitions)
+  (global-set-key (kbd "C-M-,") 'xref-go-back)
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (princ (format "=aws-devel-01 config loaded="))
+
+#+end_src
+
+** Epilogue
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-host-customizations.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (provide 'anupam-host-customizations)
+
+#+end_src
+
+
+* Modules of my Emacs configuration
+:PROPERTIES:
+:CUSTOM_ID: h:be8a40dc-3646-43e0-bba2-60d09d8573c9
+:END:
+
+** Theme =anupam-emacs-theme.el=
+:PROPERTIES:
+:CUSTOM_ID: h:d045e28d-f55a-43e7-894c-13370a4f29c0
+:END:
+
+Make Emacs look aesthetically pleasing. No this is not putting
+lipstick on a pig.
+
+*** Prologue
+:PROPERTIES:
+:CUSTOM_ID: h:64b83c63-a88d-4180-969a-aadf4967fa6c
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-theme.el" :mkdirp yes
+
+  ;;; anupam-emacs-theme.el --- make Emacs pretty -*- lexical-binding: t; -*-
+
+#+end_src
+
+*** Minions
+:PROPERTIES:
+:CUSTOM_ID: h:8085068b-6835-4a00-80cb-38d07566e493
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  (use-package minions
+    :ensure t
+    :hook
+    (after-init . minions-mode))
+
+#+end_src
+
+*** Define & load theme
+:PROPERTIES:
+:CUSTOM_ID: h:edece2bc-8b53-4845-82cd-028606826837
+:END:
+
+**** Modus Operandi theme definition
+:PROPERTIES:
+:CUSTOM_ID: h:6fdb207c-7171-48e3-87ae-35f6e1ef92d9
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-modus-operandi-theme.el"
+
+;; -----------------------------------------------------------------------------
+;; slightly tweaked modus-operandi theme.
+(use-package modus-themes
+  :ensure t
+  :demand t
+
+  :config
+  (require 'modus-themes)
+
+  ;; ---------------------------------------------------------------------------
+  ;; some minor tweaks
+  (setq modus-themes-italic-constructs nil
+        modus-themes-bold-constructs nil
+        modus-themes-mixed-fonts nil)
+
+  ;; ---------------------------------------------------------------------------
+  ;; some color customizations
+  (setq modus-themes-prompts '(bold))
+  (setq modus-themes-org-blocks 'gray-background)
+
+  ;; ---------------------------------------------------------------------------
+  ;; overall steps (for customizing specific colors) are as follows:
+  ;;
+  ;;    1. place point at character whose color needs modification,
+  ;;    and issue a 'M-x describe-char'
+  ;;
+  ;;    2. scroll to bottom of help-buffer (from 1), and find the
+  ;;    'face' property, it would look something like
+  ;;    'font-lock-<face-name>-face'
+  ;;
+  ;;    3. next find what color corresponds to that face in the
+  ;;    current theme via a 'M-x modus-themes-list-colors-current'
+  ;;
+  ;;    4. find a color you like or any other color, and add the face
+  ;;    into the 'modus-operandi-palette-overrides' below
+  ;;
+  ;;    5. reload theme
+
+  ;; ---------------------------------------------------------------------------
+  ;; modus-operandi-palette customizations
+  (setq modus-operandi-palette-overrides
+        '(
+          ;; -------------------------------------------------------------------
+          ;; dimmer backgrounds are better
+          (bg-main "#fdf8e8")
+          (fg-main "#3a484d")
+          (bg-hl-line bg-ochre)
+          (cursor red-faint)
+
+          ;; -------------------------------------------------------------------
+          ;; face specific configuration
+          (type "#000088")
+          (string "#006600")
+          (fnname "#660000")
+          ))
+
+  ;; ---------------------------------------------------------------------------
+  ;; modus-operandi-tinted-palette customizations
+  (setq modus-operandi-tinted-palette-overrides
+        '(
+          ;; -------------------------------------------------------------------
+          ;; dimmer backgrounds are better
+          (bg-main bg-dim)
+          (comment "#696969")
+          ))
+
+  ;; ---------------------------------------------------------------------------
+  ;; finally load the theme
+  (load-theme 'modus-operandi :no-confirm-loading))
+
+;; -----------------------------------------------------------------------------
+;; last line
+(provide 'anupam-emacs-modus-operandi-theme)
+
+#+end_src
+
+**** Zenburn theme definition
+:PROPERTIES:
+:CUSTOM_ID: h:c656db79-caa1-48a3-b764-406b90363340
+:END:
+
+I /really/ love the low-contrast =zenburn= theme for long term
+interactions with Emacs. Lets set that up here.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-zenburn-theme.el"
+
+  (use-package zenburn-theme
+    :ensure t
+    :demand t
+
+    :custom-face
+    (diff-added    ((t :foreground "green"   :underline nil)))
+    (diff-removed  ((t :foreground "red"     :underline nil)))
+    (highlight     ((t :background "#a9a9a9" :underline nil)))
+
+    :init
+    ;; ---------------------------------------------------------------------------
+    ;; this looks nice !
+    (add-to-list 'default-frame-alist '(cursor-color . "#ffd700"))
+
+    :config
+    ;; ---------------------------------------------------------------------------
+    ;; load the theme 'zenburn'
+    (load-theme 'zenburn :no-confirm)
+    )
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (provide 'anupam-emacs-zenburn-theme)
+
+#+end_src
+
+**** Load Theme
+:PROPERTIES:
+:CUSTOM_ID: h:784dcb25-5ee2-4484-8e4c-c9dcaf219c20
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-theme.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; load a named-theme
+  (defun anupam-theme:load-a-theme-by-name (theme-name-string)
+
+    (pcase theme-name-string
+      ("modus-operandi" (require 'anupam-emacs-modus-operandi-theme))
+      ("zenburn" (require 'anupam-emacs-zenburn-theme))
+      ))
+
+  ;; -----------------------------------------------------------------------------
+  ;; load a theme. either `modus-operandi' or `zenburn'. these are
+  ;; slightly tweaked to my tastes
+  (anupam-theme:load-a-theme-by-name anupam-theme-name)
+
+  ;; ---------------------------------------------------------------------------
+  ;; minimize syntax highlighting
+  (set-face-attribute 'font-lock-keyword-face nil)
+  (set-face-attribute 'font-lock-type-face nil)
+  (set-face-attribute 'font-lock-variable-name-face nil)
+  (set-face-attribute 'font-lock-constant-face nil)
+  (set-face-attribute 'font-lock-doc-face nil :inherit 'font-lock-comment-face)
+  (set-face-attribute 'font-lock-preprocessor-face nil)
+  (set-face-attribute 'font-lock-builtin-face nil)
+
+#+end_src
+
+*** Load font
+:PROPERTIES:
+:CUSTOM_ID: h:1be96354-3085-4522-a154-0c6942262696
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-theme.el"
+
+  ;; ------------------------------------------------------------------------------
+  ;; fontaine for font configuration, it takes the pain away !
+  (use-package fontaine
+    :ensure t
+    :if (display-graphic-p)
+
+    :hook
+    ;; ---------------------------------------------------------------------------
+    ;; persist the latest font preset when closing/starting Emacs and
+    ;; while switching between themes.
+    ((after-init . fontaine-mode)
+     (after-init . (lambda ()
+                     ;; Set last preset or fall back to desired style from `fontaine-presets'.
+                     (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular)))))
+
+    :bind (("C-c f" . fontaine-set-preset)
+           ("C-c F" . fontaine-toggle-preset))
+
+    :config
+
+    ;; ---------------------------------------------------------------------------
+    ;; Non-nil means to draw the underline at the same place as the
+    ;; descent line. (If ‘line-spacing’ is in effect, that moves the
+    ;; underline lower by that many pixels.)
+    ;;
+    ;; A value of nil means to draw the underline according to the value
+    ;; of the variable ‘x-use-underline-position-properties’, which is
+    ;; usually at the baseline level.  The default value is nil.
+    (setq x-underline-at-descent-line nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; should text-scaling change the font size of header lines too ?
+    ;; when `t' yes, yes we must.
+    (setq-default text-scale-remap-header-line t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; File to save the latest value of ‘fontaine-set-preset’.
+    ;;
+    ;; This is then used to restore the last value with the function
+    ;; ‘fontaine-restore-latest-preset’
+    (setq fontaine-latest-state-file (locate-user-emacs-file "fontaine-latest-state.eld"))
+
+    ;; ---------------------------------------------------------------------------
+    ;; notice that we are not specifying font names here. these are
+    ;; specified, on a per-host basis, using:
+    ;; `anupam-common:setup-all-font-families-by-name'
+    ;;
+    ;; it might be a good idea to specify the font sizes too i suppose.
+    (setq fontaine-presets
+          '((small
+             :default-height 90)
+
+            (regular) ; like this it uses all the fallback values and is named `regular'
+
+            (medium
+             :default-weight semilight
+             :default-height 115
+             :bold-weight extrabold)
+
+            (large
+             :inherit medium
+             :default-height 150)
+
+            (presentation
+             :default-height 180)
+
+            (jumbo
+             :default-height 260)
+
+            (t
+             ;; ------------------------------------------------------------------
+             ;; just show `all' the properties possible.
+             :default-weight            regular
+             :default-slant             normal
+             :default-width             normal
+             :default-height            100
+
+             :fixed-pitch-weight        nil
+             :fixed-pitch-slant         nil
+             :fixed-pitch-width         nil
+             :fixed-pitch-height        1.0
+
+             :fixed-pitch-serif-family  nil
+             :fixed-pitch-serif-weight  nil
+             :fixed-pitch-serif-slant   nil
+             :fixed-pitch-serif-width   nil
+             :fixed-pitch-serif-height  1.0
+
+             :variable-pitch-weight     nil
+             :variable-pitch-slant      nil
+             :variable-pitch-width      nil
+             :variable-pitch-height     1.0
+
+             :mode-line-active-family   nil
+             :mode-line-active-weight   nil
+             :mode-line-active-slant    nil
+             :mode-line-active-width    nil
+             :mode-line-active-height   1.0
+
+             :mode-line-inactive-family nil
+             :mode-line-inactive-weight nil
+             :mode-line-inactive-slant  nil
+             :mode-line-inactive-width  nil
+             :mode-line-inactive-height 1.0
+
+             :header-line-family        nil
+             :header-line-weight        nil
+             :header-line-slant         nil
+             :header-line-width         nil
+             :header-line-height        1.0
+
+             :line-number-family        nil
+             :line-number-weight        nil
+             :line-number-slant         nil
+             :line-number-width         nil
+             :line-number-height        1.0
+
+             :tab-bar-family            nil
+             :tab-bar-weight            nil
+             :tab-bar-slant             nil
+             :tab-bar-width             nil
+             :tab-bar-height            1.0
+
+             :tab-line-family           nil
+             :tab-line-weight           nil
+             :tab-line-slant            nil
+             :tab-line-width            nil
+             :tab-line-height           1.0
+
+             :bold-family               nil
+             :bold-slant                nil
+             :bold-weight               bold
+             :bold-width                nil
+             :bold-height               1.0
+
+             :italic-family             nil
+             :italic-weight             nil
+             :italic-slant              italic
+             :italic-width              nil
+             :italic-height             1.0
+
+             :line-spacing              nil
+             ))))
+
+  ;; ------------------------------------------------------------------------------
+  ;; preview a font
+  (use-package show-font
+    :ensure t
+    :if (display-graphic-p)
+    :commands (show-font-select-preview show-font-list)
+    :config
+    (setq show-font-pangram "anupam")
+    (setq show-font-character-sample
+          "
+  ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  abcdefghijklmnopqrstuvwxyz
+  0123456789   !@#$¢%^&*~|
+  `'\"‘’“”.,;:  ()[]{}—-_+=<>
+
+  ()[]{}<>«»‹› 6bB8&0ODdoa 1tiIlL|\/
+  !ij c¢ 5$Ss 7Z2z 9gqp nmMNNMW uvvwWuuw
+  x×X .,·°;:¡!¿?`'‘’   ÄAÃÀ TODO
+  "))
+
+  ;; -----------------------------------------------------------------------------
+  ;; unbold all fonts everywhere, stolen from `ether'
+  ;; https://stackoverflow.com/a/20693389
+  (defun remap-faces-default-attributes ()
+    (let ((family (face-attribute 'default :family))
+          (height (face-attribute 'default :height)))
+      (mapcar (lambda (face)
+                (face-remap-add-relative
+                 face :family family :weight 'normal :height height))
+              (face-list))))
+
+  (when (display-graphic-p)
+    (add-hook 'minibuffer-setup-hook 'remap-faces-default-attributes)
+    (add-hook 'change-major-mode-after-body-hook 'remap-faces-default-attributes))
+
+#+end_src
+
+*** Setup fringe
+:PROPERTIES:
+:CUSTOM_ID: h:d2203c72-6e30-4bcb-a76f-689ad48dd27c
+:END:
+
+Fringes are areas on left and right side of an Emacs frame which are
+typically used to show status related feedback.
+
+Default =8= pixel wide fringe on both sides of an Emacs frame is just
+too much for my taste. I just configure it to be =6= pixels wide on
+the left side of the frame, and =0= pixels wide on the right side.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-theme.el"
+
+  (fringe-mode '(6 . 0))
+
+  ;; -----------------------------------------------------------------------------
+  ;; customize line continuation indicator bitmaps (with muted colors)
+  (define-fringe-bitmap 'left-curly-arrow [16 48 112 240 240 112 48 16])
+  (set-fringe-bitmap-face 'left-curly-arrow 'shadow)
+
+  (define-fringe-bitmap 'right-curly-arrow [8 12 14 15 15 14 12 8])
+  (set-fringe-bitmap-face 'right-curly-arrow 'shadow)
+
+  (setq-default fringes-outside-margins nil)
+  (setq-default indicate-buffer-boundaries nil)
+  (setq-default indicate-empty-lines nil)
+  (setq-default overflow-newline-into-fringe t)
+
+#+end_src
+*** Epilogue
+:PROPERTIES:
+:CUSTOM_ID: h:d7b1d407-41ee-4247-8541-17ffe6b8614d
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-theme.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (provide 'anupam-emacs-theme)
+
+#+end_src
+
+** Unannoy =anupam-emacs-unannoy.el=
+:PROPERTIES:
+:CUSTOM_ID: h:3c0a6c28-1fd2-4d65-bae5-775ef9b26180
+:END:
+
+Better defaults, saner keybindings, saner mouse configuration
+etc. etc.
+
+*** Prologue
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el" :mkdirp yes
+
+  ;;; anupam-emacs-unannoy.el -- better defaults aka unannoy Emacs -*- lexical-binding:t -*-
+
+#+end_src
+
+*** Better defaults
+:PROPERTIES:
+:CUSTOM_ID: h:8ef18a1c-ca8c-4eb4-be24-fe9a3ec03123
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  (use-package emacs
+    :ensure nil
+    :demand t
+
+    :config
+
+    ;; ---------------------------------------------------------------------------
+    ;; auto-fill by default ?
+    (auto-fill-mode t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; look ma, nobell
+    (setf ring-bell-function (lambda()))
+
+    ;; -------------------------------------------------------------------------
+    ;; littering is a punishable offence in this and other states.
+    (setf backup-inhibited t
+          auto-save-default nil
+          make-backup-files nil
+          create-lockfiles nil)
+
+    ;; -------------------------------------------------------------------------
+    ;; prefix for generating auto-save-list-file-name
+    (setf auto-save-list-file-prefix (locate-user-emacs-file "local/saves"))
+
+    ;; -------------------------------------------------------------------------
+    ;; echo unfinished commands after 0.1 seconds of pause
+    (setf echo-keystrokes 0.1)
+
+    ;; ---------------------------------------------------------------------------
+    ;; set the default tab-width. mode specific overrides can still
+    ;; happen in individual modes f.e. c/c++ mode buffers etc.
+    (setq-default tab-width 8)
+
+    ;; ---------------------------------------------------------------------------
+    ;; focus on help windows when opened
+    (setq help-window-select t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; allow single character to delete a region
+    (setf delete-active-region nil)
+
+    ;; -------------------------------------------------------------------------
+    ;; write over selected text on input. just like other editors.
+    (delete-selection-mode t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; nullify function that is invoked to handle disabled commands i.e. all
+    ;; commands work normally
+    (setf disabled-command-function nil)
+
+    ;; -------------------------------------------------------------------------
+    ;; prefer loading newer `.el' files over older `.elc'
+    (setf load-prefer-newer t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; enable column numbers
+    (setq column-number-mode t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; merge system and emacs clipboard
+    (setq select-enable-clipboard t)
+    (setq select-enable-primary t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; disable full 'yes' or 'no' (from emacs-28 onwards)
+    (setq use-short-answers t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; no tabs in sources
+    (setq-default indent-tabs-mode nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; with 'complete, <TAB> first tries to indent the current line,
+    ;; and if the line was already indented, then try to complete the
+    ;; thing at point.
+    (setq tab-always-indent 'complete)
+
+    ;; -------------------------------------------------------------------------
+    ;; how should <TAB> behave on FIRST press of the key ?
+    ;;
+    ;; when `word-or-paren-or-punct' complete unless teh next character
+    ;; is part of a word, parenthesis or punctuation.
+    ;;
+    ;; typing <TAB> a second time *always* completes.
+    (setq tab-first-completion 'word-or-paren-or-punct)
+
+    ;; ---------------------------------------------------------------------------
+    ;; display buffer at its previous position
+    (setq switch-to-buffer-preserve-window-point t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; adjust scrolling behavior
+    ;;
+    ;;    - `scroll-margin': number of lines between cursor and vertical
+    ;;    edge of the window.
+    ;;
+    ;;    - `scroll-conservatively': emacs redisplay will always scroll
+    ;;    just enough to bring the point back into view.
+    ;;
+    ;;    - `scroll-up-aggressively': how far to scroll windows upward ?
+    ;;    see man page for more information.
+    ;;
+    ;;    - `scroll-down-aggressively': how far to scroll windows
+    ;;    downward ? see man page for more information.
+    ;;
+    ;;    - `scroll-preserve-screen-position': controls if scroll
+    ;;    commands move point to keep its screen position unchanged
+    ;;
+    ;;    - `auto-window-vscroll': when non-nil, it means to adjust
+    ;;    automatically 'window-vscroll' to view tall lines.
+    (setq scroll-margin 3
+          scroll-conservatively 101
+          scroll-up-aggressively 0.01
+          scroll-down-aggressively 0.01
+          scroll-preserve-screen-position t
+          auto-window-vscroll nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; resize window proportionally
+    (setq-default window-combination-resize t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; when non-nil left and right side windows occupy full height. when
+    ;; 'nil' top and bottom-side windows occupy full frame width.
+    (setq-default window-sides-vertical nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; enable downcase-region and upcase-region
+    (put 'downcase-region 'disabled nil)
+    (put 'upcase-region 'disabled nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; Completion ignores file names ending in any string in this
+    ;; list. It does not ignore them if all possible completions end in
+    ;; one of these strings or when displaying a list of completions. It
+    ;; ignores directory names if they match any string in this list
+    ;; which ends in a slash.
+    (setq completion-ignored-extensions '("^.git/"))
+
+    ;; ---------------------------------------------------------------------------
+    ;; visual feedback for common activities f.e. incrementatl search,
+    ;; query-replace etc.
+    (setq search-highlight t)
+    (setq query-replace-highlight t)
+    (setq transient-mark-mode t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; advice-redefinition is *not* an error. this happens when some
+    ;; advice has been evaluated in advance of $mode itself being defined
+    ;; or loaded.
+    ;;
+    ;; when the function is defined, the existing advice immediately
+    ;; redefines it, and Emacs provides notice that this has happened.
+    (set 'ad-redefinition-action 'accept))
+
+#+end_src
+
+*** Better mouse configuration
+:PROPERTIES:
+:CUSTOM_ID: h:ae973661-eca9-48d0-9f86-ef99c723728d
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  (use-package emacs
+    :ensure nil
+    :demand t
+
+    :config
+    ;; ---------------------------------------------------------------------------
+    ;; 'sloppy' mouse focus aka what is good in FVWM is *also* good in
+    ;; Emacs !
+    (setq mouse-autoselect-window t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; copy to kill-ring upon mouse adjustments of the region.
+    (setq mouse-drag-copy-region t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; how much should we scroll when the mouse-wheel is spun around ? when the
+    ;; <CTRL> key is held, change the size of text in the buffer
+    (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)
+                                        ((control) . text-scale)))
+
+    ;; ---------------------------------------------------------------------------
+    ;; When enabled, this minor mode allows you to scroll the display
+    ;; precisely, according to the turning of the mouse wheel.
+    (setq pixel-scroll-precision-mode t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; resize frames independent of `frame-char-{height,width}'
+    (setq frame-resize-pixelwise t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; Whether frames should be resized implicitly ? when 't' frame
+    ;; resize is inhibited
+    (setq frame-inhibit-implied-resize t))
+
+#+end_src
+
+*** Better keybindings
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  (use-package emacs
+    :ensure nil
+    :demand t
+
+    :bind(
+          :map global-map
+          ;; ---------------------------------------------------------------
+          ;; multi-lingual text input ?!
+          ("<f2>" . toggle-input-method)
+
+          ;; ---------------------------------------------------------------
+          ;; never use these
+          ("<insert>" . nil)
+          ("<menu>"   . nil)
+          ("C-x C-d"  . nil)
+          ("C-x C-v"  . nil)
+          ("C-z"      . nil)
+          ("C-x C-z"  . nil)
+          ("C-h h"    . nil)
+          ("C-x C-c"  . nil)
+          ("M-`"      . nil)
+
+          ;; ---------------------------------------------------------------
+          ;; this is better !
+          ("C-x C-c C-c" . save-buffers-kill-emacs)
+          ("C-x C-c C-r" . restart-emacs)
+          ("M-o"         . delete-blank-lines)
+          ("M-SPC"       . cycle-spacing)
+          ("M-z"         . zap-up-to-char)
+          ("C-h K"       . describe-keymap)
+          ("C-h u"       . apropos-user-option)
+          ("C-h F"       . apropos-function)
+          ("C-h V"       . apropos-variable)
+          ("C-h L"       . apropos-library)
+          ("C-h c"       . describe-char)
+          ))
+
+#+end_src
+
+*** Better keymaps
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  (use-package anupam-prefix
+    :ensure nil
+    :bind-keymap
+    (("C-z" . anupam-prefix)))
+
+#+end_src
+*** Global keymaps
+:PROPERTIES:
+:CUSTOM_ID: h:857b43de-a575-407d-af55-7f4d2e926187
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; vi style parenthesis matching
+  (define-key global-map (kbd "%") #'anupam-common:vi-match-paren)
+
+  ;; -----------------------------------------------------------------------------
+  ;; copy-region-as-kill
+  (define-key global-map (kbd "C-c w") #'copy-region-as-kill)
+
+  ;; -----------------------------------------------------------------------------
+  ;; fill current line from point to 80th column, for visual demarcation
+  ;; in code.
+  (define-key global-map (kbd "C-c e") #'anupam-common:fill-to-end)
+  (define-key global-map (kbd "C-c C-e") #'anupam-common:fill-to-end)
+
+  ;; -----------------------------------------------------------------------------
+  ;; <ESC> to quit from a command
+  (define-key global-map (kbd "<escape>") #'keyboard-escape-quit)
+
+#+end_src
+*** History tracking
+:PROPERTIES:
+:CUSTOM_ID: h:5feab985-4267-44ba-8ece-3b437144159b
+:END:
+
+Track recently visited buffers, history etc. It is quite strange that
+this is not the default. Let's just fix that.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; `recentf' for recently visited files and buffers
+  (use-package emacs-recentf
+    :ensure nil
+    :hook (after-init . recentf-mode)
+    :config
+    (setq recentf-max-saved-items 500)
+    (setq recentf-exclude '(".gz" ".xz" ".zip" "/elpa/" "/ssh:" "/sudo:")))
+
+  ;; -----------------------------------------------------------------------------
+  ;; `savehist' (minibuffer and related histories)
+  (use-package emacs-savehist
+    :ensure nil
+    :hook (after-init . savehist-mode)
+    :config
+    (setq history-delete-duplicates t)
+    (setq savehist-file (expand-file-name "save-hist" user-emacs-directory))
+
+    (setq history-length 10000)
+    (setq kill-ring-max 10000)
+
+    ;; ---------------------------------------------------------------------------
+    ;; no duplicates in history mode
+    (setq history-delete-duplicates t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; List of additional variables to save.
+    ;;
+    ;; Each element is a variable that will be persisted across Emacs
+    ;; sessions that use Savehist.
+    (setq savehist-additional-variables '(kill-ring
+                                          command-history
+                                          set-variable-value-history
+                                          custom-variable-history
+                                          query-replace-history
+                                          read-expression-history
+                                          minibuffer-history
+                                          read-char-history
+                                          face-name-history
+                                          bookmark-history
+                                          file-name-history))
+
+    (put 'minibuffer-history         'history-length 10000)
+    (put 'file-name-history          'history-length 10000)
+    (put 'set-variable-value-history 'history-length 10000)
+    (put 'custom-variable-history    'history-length 10000)
+    (put 'query-replace-history      'history-length 10000)
+    (put 'read-expression-history    'history-length 10000)
+    (put 'read-char-history          'history-length 10000)
+    (put 'face-name-history          'history-length 10000)
+    (put 'bookmark-history           'history-length 10000))
+
+  ;; -----------------------------------------------------------------------------
+  ;; `saveplace' (where is the point at ?)
+  (use-package saveplace
+    :ensure nil
+    :hook (after-init . save-place-mode)
+    :config
+    (setq save-place-file (expand-file-name "save-point" user-emacs-directory))
+    (setq save-place-forget-unreadable-files t))
+
+#+end_src
+*** Auto revert section
+:PROPERTIES:
+:CUSTOM_ID: h:08b59f30-1dfa-40bc-aa25-d107aa3dde31
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  (use-package emacs-autorevert
+    :ensure nil
+    :hook (after-init . global-auto-revert-mode)
+    :config
+    ;; -----------------------------------------------------------------------------
+    ;; don't announce when a buffer is reverted
+    (setq-default auto-revert-verbose nil)
+
+    ;; -----------------------------------------------------------------------------
+    ;; also auto refresh dired buffers
+    (setq global-auto-revert-non-file-buffers t))
+
+#+end_src
+*** Uniquify buffer names
+:PROPERTIES:
+:CUSTOM_ID: h:6dbc2356-d836-46d9-aebe-29de945c46cd
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  (use-package uniquify
+    :ensure nil
+    :config
+    ;; -----------------------------------------------------------------------------
+    ;; forward                       bar/mumble/name    quux/mumble/name
+    ;; reverse                       name\mumble\bar    name\mumble\quux
+    ;; post-forward                  name|bar/mumble    name|quux/mumble
+    ;; post-forward-angle-brackets   name<bar/mumble>   name<quux/mumble>
+    ;; nil                           name               name<2>
+    (setq uniquify-buffer-name-style 'post-forward-angle-brackets)
+    (setq uniquify-separator "•")
+    (setq uniquify-after-kill-buffer-p t)
+    (setq uniquify-ignore-buffers-re "^\\*"))
+
+#+end_src
+
+*** Line highlight
+:PROPERTIES:
+:CUSTOM_ID: h:b3437d5b-9f72-47de-9455-fe0462103c36
+:END:
+
+Highlight line in active windows only please.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  (use-package hl-line
+    :ensure nil
+    :commands (hl-line-mode)
+    :config
+    ;; ---------------------------------------------------------------------------
+    ;; highlight only in selected window.
+    (setq hl-line-sticky-flag t))
+
+  (global-hl-line-mode)
+
+#+end_src
+
+*** Display time
+:PROPERTIES:
+:CUSTOM_ID: h:de87013d-8f52-4ae1-bbb6-c7927fe1717b
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  (use-package time
+    :ensure nil
+    :hook (after-init . display-time-mode)
+    :config
+    (setq display-time-format " %a %e %b, %H:%M ")
+    ;;;; Covered by `display-time-format'
+    ;; (setq display-time-24hr-format t)
+    ;; (setq display-time-day-and-date t)
+    (setq display-time-interval 60)
+    (setq display-time-default-load-average nil)
+
+    ;; I don't need the load average and the mail indicator, so let this
+    ;; be simple:
+    (setq display-time-string-forms
+          '((propertize
+             (format-time-string display-time-format now)
+             'face 'display-time-date-and-time
+             'help-echo (format-time-string "%a %b %e, %Y" now))
+            " ")))
+
+#+end_src
+
+*** CRUX
+:PROPERTIES:
+:CUSTOM_ID: h:05c002be-e800-4006-8398-62bd5230b0ee
+:END:
+Collection of Ridiculously Useful Extensions for Emacs.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  (use-package crux
+    :ensure t
+
+    :bind
+    (("C-a" . crux-move-beginning-of-line)))
+
+#+end_src
+
+*** Try a package
+:PROPERTIES:
+:CUSTOM_ID: h:68451155-C4AF-444B-9761-F7B7B5186670
+:END:
+
+Try a package without installing it.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  (use-package try
+    :ensure t)
+
+#+end_src
+
+*** Epilogue
+:PROPERTIES:
+:CUSTOM_ID: h:ce3a0be4-fbb2-448f-85a0-0f37e475f7fd
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (provide 'anupam-emacs-unannoy)
+
+#+end_src
+
+** Window management =anupam-emacs-module/anupam-emacs-window.el=
+:PROPERTIES:
+:CUSTOM_ID: h:80f671eb-86cc-4515-8082-c4930097ef3a
+:END:
+
+*** Prologue
+:PROPERTIES:
+:CUSTOM_ID: h:16618f11-8a8d-465a-a9b8-8fe9d6afb4e2
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-window.el" :mkdirp yes
+
+  ;;; anupam-emacs-window.el -- window management -*- lexical-binding:t -*-
+
+#+end_src
+
+*** Window history
+:PROPERTIES:
+:CUSTOM_ID: h:9f8a402c-e6d8-4c93-a5fe-5ddc42d5a07a
+:END:
+
+=winner-mode= is a a builtin global minor mode that records the
+changes in window configuration so that changes can be undone using
+the =winner-undo= command.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-window.el"
+
+  (use-package winner
+    :ensure nil
+    :bind
+    (("C-c C-x <right>" . winner-redo)
+     ("C-c C-x <left>"  . winner-undo))
+    :hook
+    (after-init . winner-mode)
+    )
+
+#+end_src
+
+*** Window movement
+:PROPERTIES:
+:CUSTOM_ID: h:5b72a306-bef6-46a8-a19c-96444e29c7ce
+:END:
+
+Infinitely better window movement keybindings
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-window.el"
+
+  (use-package windmove
+    :ensure nil
+    :config
+    ;; ---------------------------------------------------------------------------
+    ;; movement that falls-of-the-edge of the frame will wrap around to
+    ;; find the window on the opposite side of the frame.
+    (setq windmove-wrap-around t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; don't create buffer when you move off the edge
+    (setq windmove-create-window nil)
+
+    :bind
+    (
+     ;; --------------------------------------------------------------------------
+     ;; window movement
+     ("C-<M-up>"    . windmove-up)
+     ("C-<M-down>"  . windmove-down)
+     ("C-<M-left>"  . windmove-left)
+     ("C-<M-right>" . windmove-right)
+
+     ;; --------------------------------------------------------------------------
+     ;; buffer movement
+     ("C-c <C-S-up>"     . windmove-swap-states-up)
+     ("C-c <C-S-down>"   . windmove-swap-states-down)
+     ("C-c <C-S-left>"   . windmove-swap-states-left)
+     ("C-c <C-S-right>"  . windmove-swap-states-right)
+     ))
+
+#+end_src
+
+*** Display buffer
+:PROPERTIES:
+:CUSTOM_ID: h:1b3413ee-bf20-4309-850e-07e01f9adcc1
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-window.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; load up 'window.el'
+  (require 'window)
+  (setq even-window-heights t)
+
+  ;; -----------------------------------------------------------------------------
+  ;; '*NOTE*' '*NOTE*' '*NOTE*'
+  ;;    for this to work, 'lexical-binding' *must* be enabled.
+  ;;
+  ;; this helper function, returns a function that matches against a
+  ;; list of 'major-mode's.
+  ;;
+  ;; it is used in the a backquoted form to create a matcher that checks
+  ;; if a buffer's major mode is 'derived-mode-p' from a list of
+  ;; 'major-modes'.
+  ;;
+  ;; quite handy when we cannot rely on the name of a buffer f.e. when a
+  ;; major mode has a large range of buffer names etc.
+  ;;
+  ;; from: https://www.masteringemacs.org/article/demystifying-emacs-window-manager
+  (defun make-display-buffer-matcher-function (major-modes)
+    (lambda (buffer-name action)
+      (with-current-buffer buffer-name (apply #'derived-mode-p major-modes))))
+
+  ;; -----------------------------------------------------------------------------
+  ;; first just nuke the whole 'display-buffer-alist' and then start afresh...
+  (setq display-buffer-alist nil)
+
+  ;; -----------------------------------------------------------------------------
+  ;; all '*Help*', '*Colors*', '*Apropos*', '*Man.*\\*' windows must:
+  ;;    - first 'display-buffer-reuse-window' i.e. find an existing
+  ;;      window and reuse that one, and
+  ;;
+  ;;    - next, try 'display-buffer-in-direction' and pop up a new
+  ;;      window with the buffer
+  (add-to-list 'display-buffer-alist
+               '("\\*\\(Help\\|Colors\\|Apropos\\|Man\\|woman\\)\\*"
+                 (display-buffer-in-side-window)
+
+                 (side         . right)
+                 (slot         . 0)
+                 (window-width . 0.5)
+                 (dedicated    . nil)
+                 (window-parameters (no-delete-other-windows . nil))
+                 ))
+
+  ;; -----------------------------------------------------------------------------
+  ;; for all 'magit-mode' derived buffers, use a specialized display routine.
+  (setq magit-display-buffer-function #'display-buffer)
+  (add-to-list 'display-buffer-alist
+            `(,(make-display-buffer-matcher-function '(magit-mode))
+              (display-buffer-reuse-mode-window
+               display-buffer-in-direction)
+
+              (mode magit-mode)
+              (window       . root)
+              (window-width . 0.5)
+              (direction    . right)))
+
+  ;; -----------------------------------------------------------------------------
+  ;; all '*compilation*', '*rg*', '*xref*'buffers follow this
+  (add-to-list 'display-buffer-alist
+               `(,(make-display-buffer-matcher-function '(rg-mode
+                                                          compilation-mode
+                                                          xref--xref-buffer-mode))
+
+                 (display-buffer-reuse-mode-window
+                  display-buffer-in-direction)
+
+                 (mode rg-mode
+                       compilation-mode
+                       xref--xref-buffer-mode)
+
+                 (window        . root)
+                 (window-height . 0.2)
+                 (direction     . bottom)
+                 (dedicated     . t)
+                 ))
+
+#+end_src
+
+*** Epilogue
+:PROPERTIES:
+:CUSTOM_ID: h:8d8480e0-ffbf-49af-aec2-b0360a9c516a
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-window.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (provide 'anupam-emacs-window)
+
+#+end_src
+
+** Applications & Utilities =anupam-emacs-utilities.el=
+:PROPERTIES:
+:CUSTOM_ID: h:00cb7d45-7eda-4a4d-ad3a-87269314a9f8
+:END:
+
+Load various applications and utilities.
+
+*** Prologue
+:PROPERTIES:
+:CUSTOM_ID: h:bab934b1-a688-4c78-81cf-1a7653c48583
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el" :mkdirp yes
+
+  ;;; anupam-emacs-utilities.el -- various applications and utilities for enhanced Emacs experience -*- lexical-binding:t -*-
+
+#+end_src
+
+*** Which key
+:PROPERTIES:
+:CUSTOM_ID: h:24a2a45b-b73f-4a96-aeb6-9ec1405899d8
+:END:
+
+This is a minor mode for Emacs that displays the key bindings following your
+currently entered incomplete command.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
+
+  (use-package emacs-which-key
+    :ensure nil
+    :hook (after-init . which-key-mode)
+    :config
+    (setq which-key-separator "  ")
+    (setq which-key-prefix-prefix "... ")
+    (setq which-key-max-display-columns 3)
+    (setq which-key-idle-delay 1.5)
+    (setq which-key-idle-secondary-delay 0.25)
+    (setq which-key-add-column-padding 1)
+    (setq which-key-popup-type 'side-window)
+    (setq which-key-max-description-length 40))
+
+#+end_src
+
+*** Bookmark
+:PROPERTIES:
+:CUSTOM_ID: h:dd575e0b-4c99-4104-bdf5-ca91e1c4e33e
+:END:
+
+Just like the browser, you can bookmark various points of interest in
+buffers, and refer to them later, save them etc. etc.
+
+Emacs provides that feature as a builtin, let's just use it.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
+
+  (use-package emacs-bookmark
+    :ensure nil
+    :commands (bookmark-set bookmark-jump bookmark-bmenu-list)
+    :hook (bookmark-bmenu-mode . hl-line-mode)
+    :config
+    (setq bookmark-use-annotations nil)
+    (setq bookmark-automatically-show-annotations nil)
+
+    ;; -------------------------------------------------------------------------
+    ;; don't display bookmarked location on the fringe. too distracting
+    ;; for my tastes.
+    (setq bookmark-fringe-mark nil)
+    (setq bookmark-save-flag 1))
+
+#+end_src
+
+*** Session management
+:PROPERTIES:
+:CUSTOM_ID: h:c90491f6-8a37-411a-999f-4157fd2403b2
+:END:
+
+This is a lighter weight session manager for Emacs that can persist
+and restore file editing buffers, indirect buffers/clones, Dired
+buffers, windows/splits, the built-in tab-bar (including tabs, their
+buffers, and windows), and Emacs frames.
+
+It seems to be better suited than =desktop.el= which is bulky and slow
+in operation. =desktop.el= weighs in at about =1800= lines, while
+easysession is about =700= !
+
+Lets set it up.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
+
+  (use-package easysession
+    :ensure t
+    :defer t
+    :custom
+    (easysession-save-interval (* 10 60))
+
+    :config
+    ;; ---------------------------------------------------------------------------
+    ;; persist savehist additional variables as well
+    ;; https://github.com/jamescherti/easysession.el?tab=readme-ov-file#how-to-only-persist-and-restore-visible-buffers
+    (add-to-list 'savehist-additional-variables 'easysession--current-session-name)
+
+    :hook
+    (emacs-startup #'easysession-save-mode 99))
+
+#+end_src
+
+*** White space configuration
+:PROPERTIES:
+:CUSTOM_ID: h:124bb9b6-2e73-4c4e-bcfd-37c1c8abb4c7
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
+
+  (use-package whitespace
+    :ensure nil
+    :bind
+    (("<f6>" . whitespace-mode)
+     ("C-c z" . delete-trailing-whitespace))
+    :config
+    ;; ---------------------------------------------------------------------------
+    ;; Determine the kinds of whitespace are visualized.
+    (setq whitespace-style '(face
+                             tabs
+                             spaces
+                             tab-mark
+                             space-mark
+                             trailing
+                             missing-newline-at-eof
+                             space-after-tab::tab
+                             space-after-tab::space
+                             space-before-tab::tab
+                             space-before-tab::space))
+
+    :hook
+    (before-save . whitespace-cleanup))
+
+#+end_src
+
+*** Spelling and Dictionaries
+:PROPERTIES:
+:CUSTOM_ID: h:66964e66-2df0-4a93-89e4-6908d171afbc
+:END:
+
+**** Dictionary
+:PROPERTIES:
+:CUSTOM_ID: h:bbca375a-ba85-4766-92a0-a8e4e0f869b4
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
+
+  (use-package dictionary
+    :ensure nil
+    :commands
+    (dictionary-search)
+
+    :init
+    ;; ---------------------------------------------------------------------------
+    ;; right next to the `M-$' for spelling correction :o)
+    (global-set-key (kbd "M-#") #'dictionary-lookup-definition)
+
+    :config
+    (setq dictionary-server anupam-dictionary-server-host))
+
+  ;; -----------------------------------------------------------------------------
+  ;; mandatory, as the dictionary misbehaves!
+  (setq switch-to-buffer-obey-display-actions t)
+  (add-to-list 'display-buffer-alist
+               '("^\\*Dictionary\\*" display-buffer-in-side-window
+                 (side . right)
+                 (window-width . 0.5)))
+
+#+end_src
+
+**** Wucuo for spelling correction
+:PROPERTIES:
+:CUSTOM_ID: h:04eb616c-032d-4787-8be6-c987dafaa46f
+:END:
+
+This is a venerable spell checker, and should be pretty much available
+everywhere. Lets just set it up.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
+
+  (use-package wucuo
+    :ensure t
+    :config
+    ;; ---------------------------------------------------------------------------
+    ;; just spell check the documentation regions and comments in
+    ;; code. spell checking other regions seems kind of wasteful.
+    ;;
+    ;; would be _really_ cool to have this configured on a per
+    ;; major-mode basis.
+    (setq wucuo-personal-font-faces-to-check '(font-lock-doc-face font-lock-comment-face))
+
+    ;; ---------------------------------------------------------------------------
+    ;; spell checking via `aspell'
+    (setq ispell-program-name "aspell")
+    (setq ispell-extra-args '("--sug-mode=ultra" "--lang=en_US" "--run-together" "--run-together-limit=16"))
+
+    ;; ---------------------------------------------------------------------------
+    ;; save words in a personal dictionary located wherever we got the
+    ;; emacs configuration from.
+    ;;
+    ;; so, yes, the dictionary is actually *checked in*, also create it,
+    ;; if it does not exist already.
+    (setq ispell-personal-dictionary (concat user-emacs-directory "personal.dict"))
+
+    (unless (file-exists-p ispell-personal-dictionary)
+      (write-region "" nil ispell-personal-dictionary nil 0))
+
+    ;; ---------------------------------------------------------------------------
+    ;; disable spell checking in some major-modes
+    (setq wucuo-spell-check-buffer-predicate
+          (lambda ()
+            (not (memq major-mode '(dired-mode
+                                    log-edit-mode
+                                    compilation-mode
+                                    help-mode
+                                    profiler-report-mode
+                                    speedbar-mode
+                                    gud-mode
+                                    calc-mode
+                                    Info-mode)))))
+
+    :hook
+    (prog-mode . wucuo-start)
+    (text-mode . wucuo-start))
+
+#+end_src
+
+*** Epilogue
+:PROPERTIES:
+:CUSTOM_ID: h:c564e8ef-5f93-4e25-826c-519ff11ac483
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
+
+    ;; -----------------------------------------------------------------------------
+    ;; last line
+    (provide 'anupam-emacs-utilities)
+
+#+end_src
+
+** Completion =anupam-emacs-completion.el=
+:PROPERTIES:
+:CUSTOM_ID: h:694bda37-44fb-44e0-a96b-ef17ff631a0a
+:END:
+
+Completion is the process of augmenting partial user input with
+pattern matching algorithms to type out incomplete terms.
+
+I am using the ~orderless~ completion style. It matches patterns out
+of order, not unlike ~fzf~ on unix shells.
+
+*** Prologue
+:PROPERTIES:
+:CUSTOM_ID: h:24332d07-e9bf-40e0-a081-a17f6b92a87b
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el" :mkdirp yes
+
+;;; anupam-emacs-completion.el -- various completion related configuration -*- lexical-binding:t -*-
+
+#+end_src
+
+*** Setup the basic completion style first
+:PROPERTIES:
+:CUSTOM_ID: h:dc1afecc-2d59-4051-aecc-35a784c38856
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  ;; General minibuffer settings
+  (use-package minibuffer
+    :ensure nil
+    :config
+
+    ;; ---------------------------------------------------------------------------
+    ;; completion styles
+    (setq completion-styles '(basic substring initials flex orderless))
+    (setq completion-pcm-leading-wildcard t)
+
+    ;; Reset all the per-category defaults so that (i) we use the
+    ;; standard `completion-styles' and (ii) can specify our own styles
+    ;; in the `completion-category-overrides' without having to
+    ;; explicitly override everything.
+    (setq completion-category-defaults nil)
+
+    ;; A non-exhaustve list of known completion categories:
+    ;;
+    ;; - `bookmark'
+    ;; - `buffer'
+    ;; - `charset'
+    ;; - `coding-system'
+    ;; - `color'
+    ;; - `command' (e.g. `M-x')
+    ;; - `customize-group'
+    ;; - `environment-variable'
+    ;; - `expression'
+    ;; - `face'
+    ;; - `file'
+    ;; - `function' (the `describe-function' command bound to `C-h f')
+    ;; - `info-menu'
+    ;; - `imenu'
+    ;; - `input-method'
+    ;; - `kill-ring'
+    ;; - `library'
+    ;; - `minor-mode'
+    ;; - `multi-category'
+    ;; - `package'
+    ;; - `project-file'
+    ;; - `symbol' (the `describe-symbol' command bound to `C-h o')
+    ;; - `theme'
+    ;; - `unicode-name' (the `insert-char' command bound to `C-x 8 RET')
+    ;; - `variable' (the `describe-variable' command bound to `C-h v')
+    ;; - `consult-grep'
+    ;; - `consult-isearch'
+    ;; - `consult-kmacro'
+    ;; - `consult-location'
+    ;; - `embark-keybinding'
+    ;;
+    (setq completion-category-overrides
+          ;; NOTE 2021-10-25: I am adding `basic' because it works better as a
+          ;; default for some contexts.  Read:
+          ;; <https://debbugs.gnu.org/cgi/bugreport.cgi?bug=50387>.
+          ;;
+          ;; `partial-completion' is a killer app for files, because it
+          ;; can expand ~/.l/s/fo to ~/.local/share/fonts.
+          ;;
+          ;; If `basic' cannot match my current input, Emacs tries the
+          ;; next completion style in the given order.  In other words,
+          ;; `orderless' kicks in as soon as I input a space or one of its
+          ;; style dispatcher characters.
+          '((file              (styles . (basic partial-completion orderless)))
+            (bookmark          (styles . (basic substring)))
+            (library           (styles . (basic substring)))
+            (embark-keybinding (styles . (basic substring)))
+            (imenu             (styles . (basic substring orderless)))
+            (consult-location  (styles . (basic substring orderless)))
+            (kill-ring         (styles . (emacs22 orderless)))
+            (eglot             (styles . (emacs22 substring orderless))))))
+
+#+end_src
+
+*** Dynamic text expansion
+:PROPERTIES:
+:CUSTOM_ID: h:74d9daca-2d65-4854-859a-ad9efa821274
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  (use-package dabbrev
+    :ensure nil
+    :commands (dabbrev-expand dabbrev-completion)
+    :config
+  ;;;; `dabbrev' (dynamic word completion (dynamic abbreviations))
+    (setq dabbrev-abbrev-char-regexp "\\sw\\|\\s_")
+    (setq dabbrev-abbrev-skip-leading-regexp "[$*/=~']")
+    (setq dabbrev-backward-only nil)
+    (setq dabbrev-case-distinction 'case-replace)
+    (setq dabbrev-case-fold-search nil)
+    (setq dabbrev-case-replace 'case-replace)
+    (setq dabbrev-check-other-buffers t)
+    (setq dabbrev-eliminate-newlines t)
+    (setq dabbrev-upcase-means-case-search t)
+    (setq dabbrev-ignored-buffer-modes
+          '(archive-mode image-mode docview-mode pdf-view-mode)))
+
+#+end_src
+
+*** Orderless completion
+:PROPERTIES:
+:CUSTOM_ID: h:be801d35-439e-4e9c-98cf-b5aad89d3a1f
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  (use-package orderless
+    :ensure t
+    :demand t
+    :custom
+    (completion-styles '(orderless))
+    (completion-category-defaults nil)
+    (orderless-component-matching-styles '(orderless-regexp orderless-flex))
+    (orderless-regexp-separator "[/\s_-]+")
+    (completion-category-overrides '((file (styles . (partial-completion)))))
+
+    ;; ---------------------------------------------------------------------------
+    ;; SPC should never complete: use it for `orderless' groups. The `?'
+    ;; is a regexp construct.
+    :bind
+    (:map minibuffer-local-completion-map
+          ("SPC" . nil)
+          ("?" . nil)))
+
+#+end_src
+
+*** Case insensitive matching
+:PROPERTIES:
+:CUSTOM_ID: h:c03a4980-45c6-4710-b049-6571359e36de
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  (setq completion-ignore-case t)
+  (setq read-buffer-completion-ignore-case t)
+  (setq-default case-fold-search t)   ; For general regexp
+  (setq read-file-name-completion-ignore-case t)
+
+#+end_src
+
+*** Vertico layout
+:PROPERTIES:
+:CUSTOM_ID: h:0b92d580-27e0-44f9-8629-34831732f861
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  (use-package vertico
+    :ensure t
+    :hook (after-init . vertico-mode)
+    :config
+    (setq vertico-scroll-margin 0)
+    (setq vertico-count 20)
+    (setq vertico-resize t)
+    (setq vertico-cycle nil))
+
+#+end_src
+
+*** Marginalia configuration
+:PROPERTIES:
+:CUSTOM_ID: h:66b20394-5d85-4803-87d4-8a901303d759
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  (use-package marginalia
+    :ensure t
+    :hook (after-init . marginalia-mode)
+
+    :custom
+    ((marginalia-align-offset -1)         ; 1 space on the right
+     (marginalia-align 'right)
+     (marginalia-margin-threshold 200)
+     (marginalia-separator-threshold 120)
+     (marginalia-truncate-width 100)
+     (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil))))
+
+#+end_src
+
+*** Consult
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  (use-package consult
+    :ensure t
+    :demand t
+
+    :custom
+    ((register-preview-delay 0)
+     (consult-narrow-key "<"))
+
+    :init
+    ;; ---------------------------------------------------------------------------
+    ;; show absolute line-numbers when narrowing is active
+    (setq consult-line-numbers-widen t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; use plocate as the locate backend, ignoring case, and limiting to 100
+    ;; results
+    (setq consult-locate-args "plocate --ignore-case --limit 100"))
+
+    (global-set-key (kbd "C-x b")   #'consult-buffer)
+
+#+end_src
+
+*** Epilogue
+:PROPERTIES:
+:CUSTOM_ID: h:1bc53f97-9b2e-48e1-8062-6975224a6b02
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+    ;; -----------------------------------------------------------------------------
+    ;; last line
+    (provide 'anupam-emacs-completion)
+
+#+end_src
+
+** Search =anupam-emacs-search.el=
+:PROPERTIES:
+:CUSTOM_ID: h:2d2dda7b-6cf0-4cfb-b42b-d84a77998d62
+:END:
+
+Configure search within Emacs.
+
+*** Prologue
+:PROPERTIES:
+:CUSTOM_ID: h:406b7d2b-8058-429d-9028-645cf44dcbd6
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el" :mkdirp yes
+
+  ;;; anupam-emacs-search.el -- search related configuration -*- lexical-binding:t -*-
+
+#+end_src
+
+*** Isearch configuration
+:PROPERTIES:
+:CUSTOM_ID: h:62240120-6e34-4785-a929-57def0553b7f
+:END:
+
+With the ~.*?~ regex enabled, we can just type =one two= and have the
+space be interpreted as /intermediate characters/ instead of using
+regexes all the time.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el"
+
+  (use-package isearch
+    :ensure nil
+    :demand t
+    :config
+    ;; -----------------------------------------------------------------------------
+    ;; basic settings
+    (setq search-whitespace-regexp ".*?")
+    (setq search-highlight t)
+    (setq isearch-lax-whitespace t)
+    (setq isearch-regexp-lax-whitespace nil)
+    (setq isearch-lazy-highlight t)
+
+    ;; -----------------------------------------------------------------------------
+    ;; these are newer
+    (setq isearch-lazy-count t)
+    (setq lazy-count-prefix-format "(%s/%s) ")
+    (setq lazy-count-suffix-format "[%s of %s]")
+    (setq isearch-yank-on-move 'shift)
+    (setq isearch-allow-scroll 'unlimited))
+
+#+end_src
+
+*** Highlight during search
+:PROPERTIES:
+:CUSTOM_ID: h:f28e5889-6d71-45cf-bc66-cbad2034c8f3
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el"
+
+  (use-package isearch
+    :ensure nil
+    :demand t
+    :config
+    (setq search-highlight t)
+    (setq isearch-lazy-highlight t)
+    (setq lazy-highlight-initial-delay 0.5)
+    (setq lazy-highlight-no-delay-length 4))
+
+#+end_src
+
+*** Isearch counter
+:PROPERTIES:
+:CUSTOM_ID: h:fecfe265-fd6c-4d1e-a8f1-d88427f752b6
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el"
+
+  (use-package isearch
+    :ensure nil
+    :demand t
+    :config
+    (setq isearch-lazy-count t)
+    (setq lazy-count-prefix-format "(%s/%s) ")
+    (setq lazy-count-suffix-format nil))
+
+#+end_src
+
+*** Ripgrep
+
+RipGrep is a wrapper over the versatile and /fast/ ripgrep command
+line tool. It allows us to interactively create searches, performing
+automatic searches based on editing context, refining and modifying
+search results, specifying custom query commands etc. etc.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el"
+
+  (use-package rg
+    :ensure t
+    :config
+
+    ;; ---------------------------------------------------------------------------
+    ;; group matches in same file together
+    (rg-group-result t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; hide most of rg command line when non nil
+    (rg-hide-command t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; show the columns of matches in the output buffer
+    (rg-show-columns nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; show headers in the result
+    (rg-show-header t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; file aliases added to the 'rg' built-in aliases
+    (rg-custom-type-aliases nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; default file alias to use when no alias can be determined
+    (rg-default-alias-fallback "all")
+
+    :bind
+    (:map rg-mode-map
+          ("C-n" . next-line)
+          ("C-p" . prev-line)
+          ("M-n" . rg-next-file)
+          ("M-p" . rg-prev-file)))
+
+#+end_src
+
+*** Some modified keybindings
+:PROPERTIES:
+:CUSTOM_ID: h:8ba7650d-ed8c-43e3-8511-b8a736e6e828
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el"
+
+  ;; ---------------------------------------------------------------------------
+  ;; regex search always
+  (define-key global-map [remap isearch-forward]  #'isearch-forward-regexp)
+  (define-key global-map [remap isearch-backward] #'isearch-backward-regexp)
+
+#+end_src
+
+*** Epilogue
+:PROPERTIES:
+:CUSTOM_ID: h:731e843b-364e-4c51-b7bd-be2ad4d36af8
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (provide 'anupam-emacs-search)
+
+#+end_src
+
+** Dired =anupam-emacs-dired.el=
+:PROPERTIES:
+:CUSTOM_ID: h:aeed7f74-602a-4e28-afee-87466af22256
+:END:
+
+Directory editing with Emacs
+
+*** Prologue
+:PROPERTIES:
+:CUSTOM_ID: h:53ccd9cf-f0fc-4adb-a8ef-39edbc6d0775
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-dired.el" :mkdirp yes
+
+  ;;; anupam-emacs-dired.el -- directory editing related configuration -*- lexical-binding:t -*-
+
+#+end_src
+
+*** Common operations
+:PROPERTIES:
+:CUSTOM_ID: h:7baacdfa-29ba-4843-b28f-5b8f05331204
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-dired.el"
+
+  (use-package dired
+    :ensure nil
+    :commands (dired)
+    :config
+    (setq dired-recursive-copies 'always)
+    (setq dired-recursive-deletes 'always))
+
+#+end_src
+
+*** File listing switches
+:PROPERTIES:
+:CUSTOM_ID: h:6cac63f9-70ea-46d9-afd2-ac9a98c42ee8
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-dired.el"
+
+  (use-package dired
+    :ensure nil
+    :commands (dired)
+    :config
+    (setq dired-listing-switches
+          "-AGFhlv --group-directories-first --time-style=long-iso"))
+
+#+end_src
+
+*** Open files with external applications
+:PROPERTIES:
+:CUSTOM_ID: h:e908d15c-01e7-44b4-bd7b-a382c856ff17
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-dired.el"
+
+  (use-package dired
+    :ensure nil
+    :commands (dired)
+    :config
+    (setq dired-guess-shell-alist-user ; those are the suggestions for ! and & in Dired
+          '(("\\.\\(png\\|jpe?g\\|tiff\\)" "feh" "xdg-open")
+            ("\\.\\(mp[34]\\|m4a\\|ogg\\|flac\\|webm\\|mkv\\)" "mpv" "xdg-open")
+            (".*" "xdg-open"))))
+
+#+end_src
+
+*** Miscellaneous operations
+:PROPERTIES:
+:CUSTOM_ID: h:aeb46fce-bc77-4316-895a-e7c768a91dd2
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-dired.el"
+
+  (use-package dired
+    :ensure nil
+    :commands (dired)
+    :config
+    (setq dired-auto-revert-buffer #'dired-directory-changed-p)
+    (setq dired-make-directory-clickable t)
+    (setq dired-free-space t)
+
+    (add-hook 'dired-mode-hook #'hl-line-mode))
+
+#+end_src
+
+*** Minor 'extras'
+:PROPERTIES:
+:CUSTOM_ID: h:287ce7c4-3e79-4533-a3c1-4860d8bdb4b1
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-dired.el"
+
+  (use-package dired-aux
+    :ensure nil
+    :after dired
+    :bind
+    ( :map dired-mode-map
+      ("C-+" . dired-create-empty-file)
+      ("M-s f" . nil)
+      ("C-<return>" . dired-do-open) ; Emacs 30
+      ("C-x v v" . dired-vc-next-action)) ; Emacs 28
+    :config
+    (setq dired-isearch-filenames 'dwim)
+    (setq dired-create-destination-dirs 'ask) ; Emacs 27
+    (setq dired-vc-rename-file t)             ; Emacs 27
+    (setq dired-do-revert-buffer (lambda (dir) (not (file-remote-p dir)))) ; Emacs 28
+    (setq dired-create-destination-dirs-on-trailing-dirsep t)) ; Emacs 29
+
+  (use-package dired-x
+    :ensure nil
+    :after dired
+    :config
+    (setq dired-clean-up-buffers-too t)
+    (setq dired-clean-confirm-killing-deleted-buffers t))
+
+#+end_src
+
+*** Directory subtree configuration
+:PROPERTIES:
+:CUSTOM_ID: h:623ade7d-23aa-4d3a-9eac-0ada2eff67e5
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-dired.el"
+
+  (use-package dired-subtree
+    :ensure t
+    :after dired
+    :bind
+    (:map dired-mode-map
+      ("<tab>"     . dired-subtree-toggle)
+      ("TAB"       . dired-subtree-toggle)
+      ("<backtab>" . dired-subtree-remove)
+      ("S-TAB"     . dired-subtree-remove))
+    :config
+    (setq dired-subtree-use-backgrounds nil))
+
+#+end_src
+
+*** Enable directory editing a.k.a write-able dired
+:PROPERTIES:
+:CUSTOM_ID: h:775fcba5-e9dc-4292-a78e-afc1ce77b14d
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-dired.el"
+
+  (use-package wdired
+    :ensure nil
+    :commands (wdired-change-to-wdired-mode)
+    :config
+    (setq wdired-allow-to-change-permissions t)
+    (setq wdired-create-parent-directories t))
+
+#+end_src
+
+*** Epilogue
+:PROPERTIES:
+:CUSTOM_ID: h:8893f2d2-adfe-45e9-be9f-4842d6367922
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-dired.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (provide 'anupam-emacs-dired)
+
+#+end_src
+
+** Version Control =anupam-emacs-version-control.el=
+:PROPERTIES:
+:CUSTOM_ID: h:8C567C1E-785B-478D-97D1-3D2FE60057B9
+:END:
+
+Configure version control, mostly git, and associated applications /
+utilities.
+
+*** Prologue
+:PROPERTIES:
+:CUSTOM_ID: h:2FF4E2DE-1103-4758-A8E1-73FEDBD46D45
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-version-control.el" :mkdirp yes
+
+  ;;; anupam-emacs-version-control.el -- version control, and its sorroundings -*- lexical-binding:t -*-
+
+#+end_src
+
+*** Project configuration
+:PROPERTIES:
+:CUSTOM_ID: h:17346a54-c747-4e90-8238-714c6286abfe
+:END:
+
+Manage projects i.e. collection of files + directories under the same
+root identified, typically, by a =.git/= or equivalent marker. These
+markers can be specified via the ~project-vc-extra-root-markers~
+option.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-version-control.el"
+
+  (use-package project
+    :ensure nil
+    :bind
+    (("C-x p <return>" . project-dired))
+
+    :config
+    (setopt project-switch-commands '((project-find-file   "Find file")
+                                      (project-find-regexp "Find regexp")
+                                      (project-find-dir    "Find directory")
+                                      (project-dired       "Root dired")
+                                      (project-vc-dir      "VC-Dir")
+                                      (project-shell       "Shell")
+                                      (keyboard-quit       "Quit")))
+
+    ;; ---------------------------------------------------------------------------
+    ;; list of additional markers to signal project root
+    (setq project-vc-extra-root-markers '("Cargo.toml" ; rust-root
+                                          "WORKSPACE"  ; bazel-root
+                                          ))
+
+    )
+
+#+end_src
+
+*** Version control configuration
+:PROPERTIES:
+:CUSTOM_ID: h:802EEFE6-1D90-4543-999B-33D60A6A589F
+:END:
+
+Setup native version-control
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-version-control.el"
+
+  (use-package vc
+    :ensure nil
+    :config
+    (require 'vc-dir)
+    (require 'vc-annotate)
+
+    ;; ---------------------------------------------------------------------------
+    ;; what to do if we follow a symbolic link to a file under version
+    ;; control. with `t', vc follows the link and visits the real file
+    ;; (telling about it in the echo area)
+    (setq vc-follow-symlinks t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; why would you use anything else ?
+    (require 'vc-git)
+    (setq vc-handled-backends '(Git)))
+
+#+end_src
+
+*** Highlight uncommitted changes via diff-hl
+:PROPERTIES:
+:CUSTOM_ID: h:8F8D93ED-A2F5-4280-BDBC-57C1FB750D09
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-version-control.el"
+
+  (use-package diff-hl
+    :ensure t
+    :init
+    ;; ---------------------------------------------------------------------------
+    ;; toggle the mode in all buffers
+    (global-diff-hl-mode)
+
+    :hook
+    (magit-post-refresh . diff-hl-magit-post-refresh))
+
+#+end_src
+
+*** Setup Magit
+:PROPERTIES:
+:CUSTOM_ID: h:CB284937-A2B0-410E-A37E-FADDFAC19232
+:END:
+
+And finally, the *best* git client by far.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-version-control.el"
+
+  (use-package transient
+    :ensure t
+    :defer t
+    :config
+    (setq transient-show-popup 0.5))
+
+  (use-package magit
+    :ensure t
+    :bind ("C-c g" . magit-status)
+    :init
+    (setq magit-define-global-key-bindings nil)
+    :config
+    ;; ---------------------------------------------------------------------------
+    ;; commit summary should be just '80' characters long
+    (setq git-commit-summary-max-length 80)
+
+    ;; ---------------------------------------------------------------------------
+    ;; whether to show word-granularity differences within diff hunks
+    (setq magit-diff-refine-hunk t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; move untracked files section behind Unstaged changes section
+    (magit-add-section-hook 'magit-status-sections-hook
+                            'magit-insert-untracked-files
+                            'magit-insert-unpushed-commits t)
+
+    (remove-hook 'git-commit-finish-query-functions
+                 'git-commit-check-style-conventions))
+
+#+end_src
+
+*** Epilogue
+:PROPERTIES:
+:CUSTOM_ID: h:192D9D99-B7A0-448C-913C-1B2F0CDF5EA2
+:END:
+
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-version-control.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (provide 'anupam-emacs-version-control)
+
+#+end_src
+
+** Language configuration =anupam-emacs-lang.el=
+:PROPERTIES:
+:CUSTOM_ID: h:59a8d18a-19c4-4f84-98a6-c66798ebc412
+:END:
+
+*** Prologue
+:PROPERTIES:
+:CUSTOM_ID: h:2da91b96-04b6-490e-9809-534cc6bf679d
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el" :mkdirp yes
+
+  ;;; anupam-emacs-langs.el -- language specific configuration -*- lexical-binding:t -*-
+
+#+end_src
+
+*** Show parenthesis
+:PROPERTIES:
+:CUSTOM_ID: h:928b3d4c-c4ac-45d5-adb0-85f229f6a2fd
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  (use-package paren
+    :ensure nil
+    :config
+    (setq show-paren-style 'parenthesis)
+    (setq show-paren-delay 0)
+    (setq show-paren-when-point-in-periphery nil)
+    (setq show-paren-when-point-inside-paren nil)
+    (set-face-foreground 'show-paren-mismatch "orange red")
+    (set-face-background 'show-paren-match "black")
+    (set-face-foreground 'show-paren-match "gold")
+    (setq show-paren-context-when-offscreen 'overlay)
+
+    :hook
+    (prog-mode . show-paren-local-mode))
+
+  (show-paren-mode t)
+
+#+end_src
+
+*** Eglot configuration
+:PROPERTIES:
+:CUSTOM_ID: h:9cf5a33d-baef-4bbc-bf2b-1ea8fb950e5f
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  (use-package eglot
+    :ensure nil
+    :demand t
+    :functions (eglot-ensure)
+    :commands (eglot)
+
+    :custom
+    (fset #'jsonrpc--log-event #'ignore)
+    (eglot-events-buffer-size 0)
+    (eglot-sync-connect nil)
+    (eglot-connect-timeout nil)
+    (eglot-send-changes-idle-time 3)
+    (flymake-no-changes-timeout 5)
+    (eldoc-echo-area-use-multiline-p nil)
+
+    :config
+    ;; ---------------------------------------------------------------------------
+    ;; when `nil' ==> don't block the ui while eglot connection is
+    ;; getting established.
+    (setq eglot-sync-connect nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; disable annoying, _distracting_, over-the-top features that serve
+    ;; no useful purpose at all (imnsho)
+    (setq eglot-ignored-server-capabilities '(:documentHighlightProvider    ; highlight symbols automatically
+                                              :documentSymbolProvider       ; list symbols in a buffer
+                                              :hoverProvider                ; documentation on hover
+                                              :signatureHelpProvider        ; function-signature help
+                                              ))
+
+
+    ;; ---------------------------------------------------------------------------
+    ;; Inlay hints are small text annotations to specific parts of the
+    ;; whole buffer, not unlike diagnostics, but designed to help
+    ;; readability instead of indicating problems.
+    ;;
+    ;; For example, a C++ LSP server can serve hints about positional
+    ;; parameter names in function calls and a variable's automatically
+    ;; deduced type. Emacs can display these hints in many little
+    ;; 0-length overlays with an 'before-string property, thus helping
+    ;; the user remember those types and parameter names.
+    ;;
+    ;; we disable this explicitly, it is quite annoying honestly.
+    (push ':inlayHintProvider eglot-ignored-server-capabilities))
+
+#+end_src
+
+*** Eglot booster
+:PROPERTIES:
+:CUSTOM_ID: h:88b42b27-f74b-4701-b94a-085abc5dd1ca
+:END:
+
+Dramatically improve the performance of lsp-mode or eglot using a
+wrapper executable written in rust. This is available from [[https://github.com/blahgeek/emacs-lsp-booster][here]].
+
+We install the eglot wrapper here.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  (use-package eglot-booster
+    :ensure t
+    :after eglot
+    :vc (:url "https://github.com/jdtsmith/eglot-booster")
+    :config
+    (eglot-booster-mode))
+
+#+end_src
+
+I think it would be a good idea to actually /benchmark/ the whole
+thing though, and not take anybodys word for it.
+
+*** Dumbjump
+:PROPERTIES:
+:CUSTOM_ID: h:87ABCB3C-82D1-4E63-A5FF-868FF40D67E4
+:END:
+
+Low /configuration overhead/ jump to definition.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  (use-package dumb-jump
+    :ensure t
+
+    :custom
+    (dumb-jump-force-searcher 'rg)
+    )
+
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+  (setq xref-show-definitions-function #'xref-show-definitions-completing-read)
+
+#+end_src
+
+*** Programming languages
+:PROPERTIES:
+:CUSTOM_ID: h:5922c06d-1d46-4a32-8d56-0cb11527c613
+:END:
+
+**** Compilation mode buffer configuration
+:PROPERTIES:
+:CUSTOM_ID: h:EA49ED46-0CF9-4E2E-836C-03917447ADA9
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el" :mkdirp yes
+  ;; -----------------------------------------------------------------------------
+  ;; turn on compilation buffer adaptive reading
+  (defun anupam-prog-lang:compilation-buffer-turn-off-adaptive-read()
+    ;; ---------------------------------------------------------------------------
+    ;; Turn off adaptive process buffering when using compilation
+    ;; mode, which allows Emacs to read subprocess output in larger
+    ;; chunks.
+    ;;
+    ;; also see `v:read-process-output-max' for more information
+    (setq process-adaptive-read-buffering nil))
+
+  (add-hook 'compilation-mode-hook #'anupam-prog-lang:compilation-buffer-turn-off-adaptive-read)
+
+  ;; -----------------------------------------------------------------------------
+  ;; Turn it back on again when finished.
+  (add-hook 'compilation-finish-functions
+            (lambda (buffer string)
+              (setq process-adaptive-read-buffering t)))
+
+  ;; -----------------------------------------------------------------------------
+  ;; auto fill comments in programming modes only
+  (defun anupam-prog-lang:auto-fill-comments ()
+    "comments in programming mode are automatically filled"
+    (setq-local comment-auto-fill-only-comments t)
+    (auto-fill-mode))
+
+  (add-hook 'prog-mode-hook #'anupam-prog-lang:auto-fill-comments)
+
+  ;; -----------------------------------------------------------------------------
+  ;; recenter the display after `xref-find-definitions' and
+  ;; `xref-go-back'.
+  ;;
+  ;; much more conducive to keeping yourself focussed...
+  (defun anupam-prog-lang:recenter ()
+    (recenter))
+
+  (defadvice xref-find-definitions (after anupam-prog-lang:recenter activate)
+    (anupam-prog-lang:recenter))
+
+  (defadvice xref-go-back (after anupam-prog-lang:recenter activate)
+    (anupam-prog-lang:recenter))
+
+  (setq compilation-scroll-output 'first-error ; Scroll but stop at first error.
+        compilation-skip-threshold 2           ; Skip anything less than errors.
+        compilation-always-kill t)             ; Don't ask, just start new compilation.
+
+#+end_src
+**** C & C++
+:PROPERTIES:
+:CUSTOM_ID: h:01f765c4-db72-4812-958f-2ef18ed62e36
+:END:
+
+***** Utility Functions
+:PROPERTIES:
+:CUSTOM_ID: h:9e12a7f8-8848-474c-855a-926efdde8329
+:END:
+
+Utility functions for working with C & C++ sources.
+
+#+begin_src emacs-lisp :tangle "anupam-lisp/anupam-cc-mode-lib.el" :mkdirp yes
+  ;;; anupam-cc-mode-lib.el -- commonly used functions in c/c++ mode buffers -*- lexical-binding:t -*-
+
+  ;; -----------------------------------------------------------------------------
+  ;; search for `search-fname' and when found, run the `compile-cmdstr'
+  ;;;###autoload
+  (defun anupam-cc-mode:compile-eventually (search-fname compile-cmdstr)
+    "recursively search up the directory tree for 'search-file-name',
+          and when found, run 'compile-cmdstr'"
+
+    ;; find the root of the development-tree
+    (defvar search-root-dir (file-name-directory buffer-file-name))
+    (defvar devel-root-dir (locate-dominating-file search-root-dir search-fname))
+
+    ;; do the build
+    (if devel-root-dir (with-temp-buffer (cd devel-root-dir)
+                                         (compile compile-cmdstr))
+      (progn  (message (concat "unable to find: '"
+                               search-fname "' within: '"
+                               search-root-dir "', running quick-compile"))
+              (compile (anupam-cc-mode:quick-compile-cmdstr)))))
+
+  ;; ---------------------------------------------------------------------------
+  ;; compile with a makefile
+  ;;;###autoload
+  (defun anupam-cc-mode:compile-eventually-with-make ()
+    "compile with make"
+    (interactive)
+    (anupam-cc-mode:compile-eventually "Makefile" "make"))
+
+  ;; ---------------------------------------------------------------------------
+  ;; compile with bazel
+  ;;;###autoload
+  (defun anupam-cc-mode:compile-eventually-with-bazel(target)
+    "compile with bazel"
+    (interactive)
+    (let ((bazel-compile-cmdstr (concat "set -e ; time t3 build --gen-compile-commands -c " target " | cut -c26-")))
+      (anupam-cc-mode:compile-eventually "bazel_build_defs" bazel-compile-cmdstr)))
+
+  ;; ---------------------------------------------------------------------------
+  ;; test with bazel
+  ;;;###autoload
+  (defun anupam-cc-mode:verify-with-bazel ()
+    "test with bazel"
+    (interactive)
+    (let ((bazel-test-cmdstr (concat "t3 verify | cut -c26-")))
+      (anupam-cc-mode:compile-eventually "bazel_build_defs" bazel-test-cmdstr)))
+
+  ;; ---------------------------------------------------------------------------
+  ;; test with bazel
+  ;;;###autoload
+  (defun anupam-cc-mode:build-everything-with-bazel ()
+    "test with bazel"
+    (interactive)
+    (let ((bazel-test-cmdstr (concat "t3 build | cut -c26-")))
+      (anupam-cc-mode:compile-eventually "bazel_build_defs" bazel-test-cmdstr)))
+
+  ;; ---------------------------------------------------------------------------
+  ;; quickly compile single source c/c++ programs. it produces final
+  ;; executable in the 'obj' sub-directory. the executable is called
+  ;; `file-name' without the extension
+  ;;
+  ;; this, a file called `<some-path>/foo.cpp' will produce an
+  ;; executable called `<some-path>/obj/foo'
+  ;;;###autoload
+  (defun anupam-cc-mode:quick-compile-cmdstr()
+    "quick compile single-file c/c++ programs"
+
+    ;; -------------------------------------------------------------------------
+    ;; how we build c/c++ sources are almost fixed
+    ;;     -fdiagnostics-plain-output ==> no ansii colorized output
+    (defconst qc-cmd-prefix:c   "gcc -fdiagnostics-plain-output -std=c99 -g -O2 -Wall -o obj/")
+    (defconst qc-cmd-prefix:cpp "g++ -fdiagnostics-plain-output -std=c++20 -g -O2 -Wall -o obj/")
+
+    ;; first setup the appropriate compilation command based on buffer
+    ;; major-mode
+    (setq-local compile-command (format "%s%s %s"
+                                        ;; %s: 'qc-cmd-prefix:{c,cpp}'
+                                        (if (eq major-mode 'c-mode)
+                                            qc-cmd-prefix:c
+                                          qc-cmd-prefix:cpp)
+
+                                        ;; %s: 'obj/<file-name>'
+                                        (file-name-nondirectory (file-name-sans-extension (buffer-file-name)))
+
+                                        ;; %s: '<file-name>.{c,cpp}'
+                                        (file-name-nondirectory (buffer-file-name)))))
+
+  ;; -----------------------------------------------------------------------------
+  ;; anupam-cc-mode-lib ends here
+  (provide 'anupam-cc-mode-lib)
+
+#+end_src
+
+***** Clang format on save
+:PROPERTIES:
+:CUSTOM_ID: h:CD27EB1B-254F-41E3-AA93-6764FA8D16CD
+:END:
+
+Just apply project wide code-formatting settings. One less thing to
+worry / care about.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  (use-package clang-format
+    :ensure t
+    :custom
+    (clang-format-on-save-p 'clang-format-on-save-check-config-exists))
+
+  (add-hook 'c-mode-common-hook #'clang-format-on-save-mode)
+
+#+end_src
+
+***** Setup C / C++ Mode
+:PROPERTIES:
+:CUSTOM_ID: h:e4e6007d-fd13-49ba-8cb1-661cfc4c6759
+:END:
+
+****** Modern font lock for C++
+:PROPERTIES:
+:CUSTOM_ID: h:8e6af9e7-ebfb-41e5-b985-18cddbefe2f9
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  (use-package modern-cpp-font-lock
+    :ensure t
+    :config
+    (setq modern-c++-literal-string t)
+    (setq modern-c++-attributes nil)
+    )
+
+#+end_src
+
+****** Basic configuration
+:PROPERTIES:
+:CUSTOM_ID: h:4942b9f5-37ba-443d-b6d3-55b4566095ab
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; quickly compile a single source c/c++ buffer
+  (defun anupam-cc-mode:quick-compile ()
+    "quickly compile a single source c/c++ buffer"
+    (interactive)
+    (compile (anupam-cc-mode:quick-compile-cmdstr)))
+
+  ;; -----------------------------------------------------------------------------
+  ;; configure the `cc-mode'. the 'anupam-cc-mode-hook', which contains
+  ;; host specific configuration is defined in the
+  ;; "Host specific customizations" section.
+  ;;
+  ;; it just gets loaded here.
+  (use-package cc-mode
+    :demand t
+    :config
+    :bind(
+     :map c-mode-base-map
+     ;; ---------------------------------------------------------------
+     ;; some useful bindings
+     ("RET"        . #'newline-and-indent)
+     ("C-<return>" . #'recompile)
+     ("C-c c"      . #'anupam-cc-mode:quick-compile))
+
+    :hook
+    (c-mode . anupam-cc-mode-hook)
+    (c++-mode . anupam-cc-mode-hook)
+    (c++-mode . modern-c++-font-lock-mode))
+
+#+end_src
+
+****** Eglot configuration
+:PROPERTIES:
+:CUSTOM_ID: h:5fa882bc-af79-495b-8690-621d9e9bf6a2
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  (use-package eglot
+    :ensure nil
+    :config
+    (add-to-list 'eglot-server-programs `(c-mode   . (,anupam-lsp-server-with-args)))
+    (add-to-list 'eglot-server-programs `(c++-mode . (,anupam-lsp-server-with-args)))
+
+    :hook
+    ;; ---------------------------------------------------------------------------
+    ;; repititive but OK
+    (c-mode   . eglot-ensure)
+    (c++-mode . eglot-ensure))
+
+#+end_src
+
+*** Epilogue
+:PROPERTIES:
+:CUSTOM_ID: h:00ca2c69-7b41-4d93-bf0f-c53404987d45
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (provide 'anupam-emacs-langs)
+
+#+end_src
+
+
+* End of configuration
+:PROPERTIES:
+:CUSTOM_ID: h:1789f685-c19b-47cc-a7ca-6d9a387c63cd
+:END:
+
+All of our configuration is now loaded. Happy hacking !
+
+** Configuration end in =anupam-emacs-config-end.el=
+
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-config-end.el"
+
+  ;;; anupam-emacs-config-end.el -- end of configuration -*- byte-compile: t; lexical-binding:t -*-
+
+  ;; ---------------------------------------------------------------------------
+  ;; just a message to which kinda indicates that all processing was complete.
+  (defun greet-post-startup-complete ()
+    (message "= all configuration is now loaded. happy hacking ! ="))
+
+  (add-hook 'emacs-startup-hook #'greet-post-startup-complete)
+
+  ;; -----------------------------------------------------------------------------
+  ;; show some statistics for Emacs loading.
+  (defun emacs-load-statistics()
+    (message "*** Emacs loaded in %s with %d garbage collections."
+           (format "%.2f seconds"
+		   (float-time
+		    (time-subtract after-init-time before-init-time)))
+           gcs-done))
+
+  ;; iff needed.
+  ;; (add-hook 'emacs-startup-hook #'emacs-load-statistics)
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line always
+  (provide 'anupam-emacs-config-end)
+
+#+end_src

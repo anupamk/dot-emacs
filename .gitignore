@@ -1,4 +1,11 @@
 # ------------------------------------------------------------------------------
+# ignore auto-generated files
+anupam-emacs-module/*
+anupam-lisp/*
+early-init.el
+init.el
+
+# ------------------------------------------------------------------------------
 # ignore backup, autosave, byte-compiled files
 .#*
 *.el~
