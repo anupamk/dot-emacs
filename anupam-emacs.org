@@ -202,6 +202,10 @@ initialized before loading the regular init file.
   (scroll-bar-mode -1)
   (horizontal-scroll-bar-mode -1)
 
+  ;; -----------------------------------------------------------------------------
+  ;; for startup errors, uncomment this
+  ;; (toggle-debug-on-error t)
+
 #+end_src
 
 ** Set frame parameters
@@ -964,7 +968,6 @@ Per $HOST configuration.
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-shakti-customizations.el" :mkdirp yes
 
-
   ;;; anupam-emacs-host-shakti-customizations.el -- shakti-host specific customizations -*- lexical-binding:t -*-
 
   ;; -----------------------------------------------------------------------------
@@ -979,6 +982,11 @@ Per $HOST configuration.
   ;; -----------------------------------------------------------------------------
   ;; where is `clang-format-executable' ?
   (custom-set-variables '(clang-format-executable "clang-format"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; where is git installed ?
+  ;; much fasta magit experience: https://jakemccrary.com/blog/2020/11/14/speeding-up-magit/
+  (custom-set-variables '(magit-git-executable "git"))
 
   ;; ---------------------------------------------------------------------------
   ;; we run a local dictionary server on this host, no need to go to the
@@ -1079,6 +1087,11 @@ Per $HOST configuration.
   ;; where is `clang-format-executable' ?
   (custom-set-variables '(clang-format-executable "clang-format-mp-18"))
 
+  ;; -----------------------------------------------------------------------------
+  ;; where is git installed ?
+  ;; much fasta magit experience: https://jakemccrary.com/blog/2020/11/14/speeding-up-magit/
+  (custom-set-variables '(magit-git-executable "/opt/local/bin/git"))
+
   ;; ---------------------------------------------------------------------------
   ;; resort to the canonical `dict.org' for lookups
   (defconst anupam-dictionary-server-host "dict.org")
@@ -1171,6 +1184,44 @@ Per $HOST configuration.
     :ensure t)
 
   ;; -----------------------------------------------------------------------------
+  ;; don't use builtin `f' library. use whatever came from melpa
+  (use-package f
+    :ensure nil
+    :load-path ("/twbuild/anupam.kapoor/source-code/emacs.config/anupam/elpa/f-20241003.1131")
+    :config
+    (require 'f)
+    (require 'f-shortdoc))
+
+  ;; -----------------------------------------------------------------------------
+  ;; this is a lightly modified version of easysession.
+  ;;
+  ;; concretely, i have removed explicit version requirements on `f' package.
+  ;;
+  ;; for *some* reason, older / builtin version of `f' gives a 'macro
+  ;; expand error' on this host. i don't have time / inclination to
+  ;; debug this issue for now (Jan 15, 2025)
+  ;;
+  ;; to see the issue for yourself, in `early-init.el' section,
+  ;; uncomment the '(toggle-debug-on-error t)' line.
+  ;; -----------------------------------------------------------------------------
+  (use-package easysession
+    :ensure nil
+    :load-path ("/twbuild/anupam.kapoor/source-code/easysession.el.git")
+    :commands easysession-save-mode
+
+    :custom
+    (easysession-save-interval (* 10 60))
+
+    :config
+    ;; ---------------------------------------------------------------------------
+    ;; persist savehist additional variables as well
+    ;; https://github.com/jamescherti/easysession.el?tab=readme-ov-file#how-to-only-persist-and-restore-visible-buffers
+    (add-to-list 'savehist-additional-variables 'easysession--current-session-name)
+
+    :init
+    (add-hook 'emacs-startup-hook #'easysession-save-mode 99))
+
+  ;; -----------------------------------------------------------------------------
   ;; host specific theme+font customizations
   (defconst anupam-theme-name "zenburn")
   (anupam-common:setup-all-font-families-by-name "Go Mono")
@@ -1182,6 +1233,11 @@ Per $HOST configuration.
   ;; -----------------------------------------------------------------------------
   ;; where is `clang-format-executable' ?
   (custom-set-variables '(clang-format-executable "/twbuild/anupam.kapoor/local/usr/bin/clang-format"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; where is git installed ?
+  ;; much fasta magit experience: https://jakemccrary.com/blog/2020/11/14/speeding-up-magit/
+  (custom-set-variables '(magit-git-executable "/twbuild/anupam.kapoor/local/usr/bin/git"))
 
   ;; ---------------------------------------------------------------------------
   ;; resort to the canonical `dict.org' for lookups
@@ -2493,20 +2549,11 @@ Lets set it up.
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
 
-  (use-package easysession
-    :ensure t
-    :defer t
-    :custom
-    (easysession-save-interval (* 10 60))
-
-    :config
-    ;; ---------------------------------------------------------------------------
-    ;; persist savehist additional variables as well
-    ;; https://github.com/jamescherti/easysession.el?tab=readme-ov-file#how-to-only-persist-and-restore-visible-buffers
-    (add-to-list 'savehist-additional-variables 'easysession--current-session-name)
-
-    :hook
-    (emacs-startup #'easysession-save-mode 99))
+  ;; ==============================================================================
+  ;;
+  ;; FOR NOW MOVED INTO $HOST SECTION OF CONFIGURATION
+  ;;
+  ;; ==============================================================================
 
 #+end_src
 
@@ -2591,12 +2638,13 @@ everywhere. Lets just set it up.
     :ensure t
     :config
     ;; ---------------------------------------------------------------------------
-    ;; just spell check the documentation regions and comments in
-    ;; code. spell checking other regions seems kind of wasteful.
+    ;; just spell check comments in code. documentation strings are not
+    ;; a good choice for c/c++ mode buffers because they can contain
+    ;; include directives etc.
     ;;
     ;; would be _really_ cool to have this configured on a per
     ;; major-mode basis.
-    (setq wucuo-personal-font-faces-to-check '(font-lock-doc-face font-lock-comment-face))
+    (setq wucuo-personal-font-faces-to-check '(font-lock-comment-face))
 
     ;; ---------------------------------------------------------------------------
     ;; spell checking via `aspell'
@@ -3438,7 +3486,6 @@ And finally, the *best* git client by far.
     (eglot-sync-connect nil)
     (eglot-connect-timeout nil)
     (eglot-send-changes-idle-time 3)
-    (flymake-no-changes-timeout 5)
     (eldoc-echo-area-use-multiline-p nil)
 
     :config
@@ -3745,6 +3792,11 @@ worry / care about.
   (use-package cc-mode
     :demand t
     :config
+    ;; ---------------------------------------------------------------------------
+    ;; disable `flymake' mode by default. makes things just too slow for
+    ;; my taste.
+    (flymake-mode nil)
+
     :bind(
      :map c-mode-base-map
      ;; ---------------------------------------------------------------
@@ -3754,7 +3806,7 @@ worry / care about.
      ("C-c c"      . #'anupam-cc-mode:quick-compile))
 
     :hook
-    (c-mode . anupam-cc-mode-hook)
+    (c-mode   . anupam-cc-mode-hook)
     (c++-mode . anupam-cc-mode-hook)
     (c++-mode . modern-c++-font-lock-mode))
 
