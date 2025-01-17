@@ -1249,6 +1249,10 @@ Per $HOST configuration.
 
   (defun anupam-cc-mode-hook ()
     ;; ---------------------------------------------------------------------------
+    ;; no flymake for me please
+    (flymake-mode -1)
+
+    ;; ---------------------------------------------------------------------------
     ;; default styles, and then our configuration overriding it.
     (add-to-list 'c-default-style '(c-mode . "linux"))
     (add-to-list 'c-default-style '(c++-mode . "Stroustrup"))
@@ -2644,6 +2648,7 @@ everywhere. Lets just set it up.
     ;;
     ;; would be _really_ cool to have this configured on a per
     ;; major-mode basis.
+    (setq wucuo-font-faces-to-check '(font-lock-comment-face))
     (setq wucuo-personal-font-faces-to-check '(font-lock-comment-face))
 
     ;; ---------------------------------------------------------------------------
@@ -3388,26 +3393,87 @@ And finally, the *best* git client by far.
 
   (use-package magit
     :ensure t
-    :bind ("C-c g" . magit-status)
     :init
-    (setq magit-define-global-key-bindings nil)
-    :config
-    ;; ---------------------------------------------------------------------------
-    ;; commit summary should be just '80' characters long
-    (setq git-commit-summary-max-length 80)
 
+    ;; ---------------------------------------------------------------------------
+    ;; dont add any magit keybindings automagically to the global keymap please.
+    (setq magit-define-global-key-bindings nil)
+
+    :bind
+    (("C-c g" . magit-status)
+     ("C-c f" . magit-file-dispatch))
+
+    ;; ---------------------------------------------------------------------------
+    ;; the `magit-git-executable' is configured on a per-host basis. see
+    ;; ~Host specific customization~ of this file for more information.
+
+    :config
     ;; ---------------------------------------------------------------------------
     ;; whether to show word-granularity differences within diff hunks
     (setq magit-diff-refine-hunk t)
 
     ;; ---------------------------------------------------------------------------
-    ;; move untracked files section behind Unstaged changes section
-    (magit-add-section-hook 'magit-status-sections-hook
-                            'magit-insert-untracked-files
-                            'magit-insert-unpushed-commits t)
-
-    (remove-hook 'git-commit-finish-query-functions
-                 'git-commit-check-style-conventions))
+    ;; magit sometimes takes quite a while to display the status
+    ;; buffer. one approach to debug such issues is as follows:
+    ;;
+    ;;    1. (setq magit-refresh-verbose t)
+    ;;    2. M-x magit-status
+    ;;    3. look in the *Messages* buffer where you should see
+    ;;    something like the following:
+    ;; ,----
+    ;; | Refreshing buffer ‘magit: applications’...
+    ;; |   magit-insert-error-header                          0.000003
+    ;; |   magit-insert-diff-filter-header                    0.000046
+    ;; |   magit-insert-head-branch-header                    0.026190 !
+    ;; |   magit-insert-upstream-branch-header                0.000121
+    ;; |   magit-insert-push-branch-header                    0.000075
+    ;; |   magit-insert-tags-header                           0.063505 !!
+    ;; |   magit-insert-status-headers                        0.101910 !!
+    ;; |   magit-insert-merge-log                             0.004712
+    ;; |   magit-insert-rebase-sequence                       0.000118
+    ;; |   magit-insert-am-sequence                           0.000058
+    ;; |   magit-insert-sequencer-sequence                    0.000218
+    ;; |   magit-insert-bisect-output                         0.000057
+    ;; |   magit-insert-bisect-rest                           0.000054
+    ;; |   magit-insert-bisect-log                            0.000058
+    ;; |   magit-insert-untracked-files                       0.145834 !!
+    ;; |   magit-insert-unstaged-changes                      1.574611 !!
+    ;; |   magit-insert-staged-changes                        0.029202 !
+    ;; |   magit-insert-stashes                               0.227592 !!
+    ;; |   magit-insert-unpushed-to-pushremote                0.000101
+    ;; |   magit-insert-unpushed-to-upstream-or-recent        0.252350 !!
+    ;; |   magit-insert-unpulled-from-pushremote              0.000008
+    ;; |   magit-insert-unpulled-from-upstream                0.000005
+    ;; |   Refreshing buffer ‘magit: applications’...done (2.406s)
+    ;; `----
+    ;;
+    ;; note
+    ;; ====
+    ;; there should practically be no difference in speed between
+    ;; running magit or equivalent git command.
+    ;;
+    ;; for example, when `magit-insert-unstaged-changes' is executed,
+    ;; the corresponding git command that runs is
+    ;;
+    ;;     "git ls-files -z --full-name --other --exclude-standard"
+    ;;
+    ;; running this command on the same repository should give suffcient
+    ;; hints about why the execution is slow, f.e. because there are
+    ;; just too many untracked files that are not getting ignored as
+    ;; they should be etc.
+    ;;
+    ;; once we know that vanilla git also is no better on the repo, we
+    ;; can always ask Mr. Magit (very politely) to not show that
+    ;; specific section via
+    ;;
+    ;; "(remove-hook 'magit-status-sections-hook 'magit-insert-untracked-files)"
+    ;; ---------------------------------------------------------------------------
+    (remove-hook 'magit-status-sections-hook 'magit-insert-tags-header)
+    (remove-hook 'magit-status-sections-hook 'magit-insert-status-headers)
+    (remove-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-pushremote)
+    (remove-hook 'magit-status-sections-hook 'magit-insert-unpulled-from-pushremote)
+    (remove-hook 'magit-status-sections-hook 'magit-insert-unpulled-from-upstream)
+    (remove-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-upstream-or-recent))
 
 #+end_src
 
@@ -3784,6 +3850,19 @@ worry / care about.
     (compile (anupam-cc-mode:quick-compile-cmdstr)))
 
   ;; -----------------------------------------------------------------------------
+  ;; disable `flymake' mode by default. makes things just too slow for
+  ;; my taste.
+  (use-package flymake-mode
+    :ensure nil
+    :custom
+    (flymake-no-changes-timeout nil)
+    (flymake-start-on-flymake-mode nil)
+    (flymake-start-on-save-buffer nil)
+
+    :config
+    (flymake-diagnostic-functions nil))
+
+  ;; -----------------------------------------------------------------------------
   ;; configure the `cc-mode'. the 'anupam-cc-mode-hook', which contains
   ;; host specific configuration is defined in the
   ;; "Host specific customizations" section.
@@ -3795,7 +3874,7 @@ worry / care about.
     ;; ---------------------------------------------------------------------------
     ;; disable `flymake' mode by default. makes things just too slow for
     ;; my taste.
-    (flymake-mode nil)
+    (flymake-mode -1)
 
     :bind(
      :map c-mode-base-map

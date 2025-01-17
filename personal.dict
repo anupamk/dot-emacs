@@ -1,10 +1,11 @@
-personal_ws-1.1 en 99 
+personal_ws-1.1 en 103 
 syscalls
 virat
 Pandev
 xbindkeys
 defg
 Wgrep
+invariants
 arg
 veth
 cflags
@@ -23,6 +24,7 @@ Protobuf
 SMRT
 fd
 Bazel
+cmf
 elisp
 proxchains
 tds
@@ -30,8 +32,8 @@ ofcourse
 Eglot
 Stavrou
 Ahluwalia
-Muratori's
 Muratoris
+Muratori's
 proxying
 cpp
 LD
@@ -59,6 +61,7 @@ hah
 py
 LSP
 customizations
+Wucuo
 UI
 Protesilaos
 abcd
@@ -66,6 +69,7 @@ libc
 VM
 vm
 onwards
+doxygen
 async
 PRELOAD
 linux
