@@ -146,6 +146,21 @@ now split up.
     Will cause the package =magit= to be installed if it was not
     present on the system
 
+  + =:vc=
+
+    The keyword, =:vc= allows us to load non-melpa packages directly
+    from github. Thus for example:
+
+    #+begin_src emacs-lisp
+      (use-package foo
+        :vc (:url "https://github.com/rabbit/foo")
+        :config
+        (foo-mode))
+    #+end_src
+
+    installs the package ~foo~ directly from a version control
+    system. It was introduced in Emacs 30.
+
 ** Emacs Lisp
 + In Emacs Lisp, if =foo= is a symbol, then ='foo= and =#'foo= are
   completely equivalent. The latter form (with =#'=) is preferred when
@@ -976,8 +991,28 @@ Per $HOST configuration.
   (anupam-common:setup-all-font-families-by-name "PragmataPro Mono")
 
   ;; -----------------------------------------------------------------------------
-  ;; language server protocol (lsp) server, we use ccls on this machine.
-  (defconst anupam-lsp-server-with-args (executable-find "ccls"))
+  ;; setup 'language-server-protocol' (LSP) server.
+  ;;
+  ;; so for all code related actions, the picture looks something like this:
+  ;;
+  ;;    emacs == lsp-client (via a builtin package called eglot), and
+  ;;    'external' language specific servers, for example:
+  ;;
+  ;;        - 'c' / 'c++' => 'clangd' / 'ccls'
+  ;;        - 'golang'    => 'gopls'
+  ;;        - <this place is for rent>
+  ;;
+  ;; here we configure lsp-servers for c/c++
+  (defconst anupam-cc-mode:lsp-server-ccls-with-args   (executable-find "ccls"))
+  (defconst anupam-cc-mode:lsp-server-clangd-with-args '("clangd"
+                                                         "-j=8"
+                                                         "--malloc-trim"
+                                                         "--all-scopes-completion=1"
+                                                         "--background-index=1"
+                                                         "--limit-results=128"
+                                                         "--completion-style=detailed"
+                                                         "--pch-storage=memory"
+                                                         "--log=error"))
 
   ;; -----------------------------------------------------------------------------
   ;; where is `clang-format-executable' ?
@@ -1372,12 +1407,35 @@ lipstick on a pig.
 
 #+end_src
 
-*** Minions
+*** Modeline configuration
 :PROPERTIES:
 :CUSTOM_ID: h:8085068b-6835-4a00-80cb-38d07566e493
 :END:
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+**** Moodline
+:PROPERTIES:
+:CUSTOM_ID: h:e33dc794-672e-4e60-baa2-4aa7b1a57fc3
+:END:
+
+A minimalist modeline faster than the default. What's not to like ?
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-theme.el"
+
+  (use-package mood-line
+    :ensure t
+    :config
+    (mood-line-mode))
+
+#+end_src
+
+**** Minions
+:PROPERTIES:
+:CUSTOM_ID: h:2f28e30b-f6e7-41b1-9b4e-117d54330a58
+:END:
+
+Declutter the mode-line with minions.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-theme.el"
 
   (use-package minions
     :ensure t
@@ -1605,12 +1663,15 @@ interactions with Emacs. Lets set that up here.
             (regular) ; like this it uses all the fallback values and is named `regular'
 
             (medium
+             :default-weight regular
+             :default-height 115)
+
+            (medium-plus
              :default-weight semilight
-             :default-height 115
-             :bold-weight extrabold)
+             :default-height 130)
 
             (large
-             :inherit medium
+             :inherit medium-plus
              :default-height 150)
 
             (presentation
@@ -1693,26 +1754,6 @@ interactions with Emacs. Lets set that up here.
 
              :line-spacing              nil
              ))))
-
-  ;; ------------------------------------------------------------------------------
-  ;; preview a font
-  (use-package show-font
-    :ensure t
-    :if (display-graphic-p)
-    :commands (show-font-select-preview show-font-list)
-    :config
-    (setq show-font-pangram "anupam")
-    (setq show-font-character-sample
-          "
-  ABCDEFGHIJKLMNOPQRSTUVWXYZ
-  abcdefghijklmnopqrstuvwxyz
-  0123456789   !@#$¢%^&*~|
-  `'\"‘’“”.,;:  ()[]{}—-_+=<>
-
-  ()[]{}<>«»‹› 6bB8&0ODdoa 1tiIlL|\/
-  !ij c¢ 5$Ss 7Z2z 9gqp nmMNNMW uvvwWuuw
-  x×X .,·°;:¡!¿?`'‘’   ÄAÃÀ TODO
-  "))
 
   ;; -----------------------------------------------------------------------------
   ;; unbold all fonts everywhere, stolen from `ether'
@@ -1945,6 +1986,14 @@ etc. etc.
     (setq transient-mark-mode t)
 
     ;; ---------------------------------------------------------------------------
+    ;; maximum number of bytes to read from a sub-process in a single
+    ;; chunk.
+    ;;
+    ;; `8mb' at max, good for interfacing with lsp endpoints. they do
+    ;; generate megabytes of data !
+    (setq read-process-output-max (* 8 1024 1024))
+
+    ;; ---------------------------------------------------------------------------
     ;; advice-redefinition is *not* an error. this happens when some
     ;; advice has been evaluated in advance of $mode itself being defined
     ;; or loaded.
@@ -2089,7 +2138,7 @@ this is not the default. Let's just fix that.
 
   ;; -----------------------------------------------------------------------------
   ;; `recentf' for recently visited files and buffers
-  (use-package emacs-recentf
+  (use-package recentf
     :ensure nil
     :hook (after-init . recentf-mode)
     :config
@@ -2098,7 +2147,7 @@ this is not the default. Let's just fix that.
 
   ;; -----------------------------------------------------------------------------
   ;; `savehist' (minibuffer and related histories)
-  (use-package emacs-savehist
+  (use-package savehist
     :ensure nil
     :hook (after-init . savehist-mode)
     :config
@@ -2507,6 +2556,20 @@ currently entered incomplete command.
 
 #+end_src
 
+*** Boxquote
+:PROPERTIES:
+:CUSTOM_ID: h:d95deb48-6a16-4d25-a314-f47bf357583a
+:END:
+
+Nice and clean quoting.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
+
+  (use-package boxquote
+    :ensure t)
+
+#+end_src
+
 *** Bookmark
 :PROPERTIES:
 :CUSTOM_ID: h:dd575e0b-4c99-4104-bdf5-ca91e1c4e33e
@@ -2637,6 +2700,10 @@ This is a venerable spell checker, and should be pretty much available
 everywhere. Lets just set it up.
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; don't enable it man ! we using 'wucuo' for this specific purpose
+  (flyspell-mode -1)
 
   (use-package wucuo
     :ensure t
@@ -3400,8 +3467,8 @@ And finally, the *best* git client by far.
     (setq magit-define-global-key-bindings nil)
 
     :bind
-    (("C-c g" . magit-status)
-     ("C-c f" . magit-file-dispatch))
+    (("C-c m g" . magit-status)
+     ("C-c m f" . magit-file-dispatch))
 
     ;; ---------------------------------------------------------------------------
     ;; the `magit-git-executable' is configured on a per-host basis. see
@@ -3852,7 +3919,7 @@ worry / care about.
   ;; -----------------------------------------------------------------------------
   ;; disable `flymake' mode by default. makes things just too slow for
   ;; my taste.
-  (use-package flymake-mode
+  (use-package emacs
     :ensure nil
     :custom
     (flymake-no-changes-timeout nil)
@@ -3860,7 +3927,8 @@ worry / care about.
     (flymake-start-on-save-buffer nil)
 
     :config
-    (flymake-diagnostic-functions nil))
+    (setq flymake-diagnostic-functions nil)
+    (flymake-mode -1))
 
   ;; -----------------------------------------------------------------------------
   ;; configure the `cc-mode'. the 'anupam-cc-mode-hook', which contains
@@ -3901,8 +3969,8 @@ worry / care about.
   (use-package eglot
     :ensure nil
     :config
-    (add-to-list 'eglot-server-programs `(c-mode   . (,anupam-lsp-server-with-args)))
-    (add-to-list 'eglot-server-programs `(c++-mode . (,anupam-lsp-server-with-args)))
+    (add-to-list 'eglot-server-programs `(c-mode   . ,anupam-cc-mode:lsp-server-clangd-with-args))
+    (add-to-list 'eglot-server-programs `(c++-mode . ,anupam-cc-mode:lsp-server-clangd-with-args))
 
     :hook
     ;; ---------------------------------------------------------------------------
