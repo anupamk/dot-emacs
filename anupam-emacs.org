@@ -972,6 +972,8 @@ Per $HOST configuration.
   (if (anupam-common:host-name-is "aws-devel-01")
       (anupam:load-user-config-file "anupam-emacs-module/anupam-emacs-host-aws-devel-01-customizations.el"))
 
+  (if (anupam-common:host-name-is "aws-devel-06")
+      (anupam:load-user-config-file "anupam-emacs-module/anupam-emacs-host-aws-devel-06-customizations.el"))
 
   ;; -----------------------------------------------------------------------------
   ;; last line
@@ -1287,6 +1289,189 @@ Per $HOST configuration.
     ;; no flymake for me please
     (flymake-mode -1)
 
+    ;; ---------------------------------------------------------------------------
+    ;; default styles, and then our configuration overriding it.
+    (add-to-list 'c-default-style '(c-mode . "linux"))
+    (add-to-list 'c-default-style '(c++-mode . "Stroustrup"))
+
+    (setq c-basic-offset 2)
+
+    ;; ---------------------------------------------------------------------------
+    ;; Distance between tab stops (for display of tab characters), in
+    ;; columns.
+    (setq tab-width 2)
+
+    ;; ----------------------------------------------------------------------------
+    ;; column beyond which automatic line-wrapping should happen.
+    (setq fill-column 80)
+
+    ;; ---------------------------------------------------------------------------
+    ;; column to indent right-margin comments to...
+    (setq comment-column 80)
+
+    ;; ---------------------------------------------------------------------------
+    ;; Specifies how M-x indent-for-comment should handle comment-only
+    ;; lines. When this variable is non-nil, comment-only lines are
+    ;; indented according to syntactic analysis via
+    ;; `c-offsets-alist'. Otherwise, the comment is indented as if it
+    ;; was preceded by code. Note that this variable does not affect how
+    ;; the normal line indentation treats comment-only lines.
+    (setq c-indent-comments-syntactically-p t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; comment syntax
+    (setq comment-start "///")
+    (setq comment-end "")
+
+    ;; ---------------------------------------------------------------------------
+    ;; '_' is not a modifier anymore
+    (modify-syntax-entry ?_ "w")
+
+    ;; ---------------------------------------------------------------------------
+    ;; syntax help
+    ;;  +   c-basic-offset times 1
+    ;;  -   c-basic-offset times -1
+    ;;  ++  c-basic-offset times 2
+    ;;  --  c-basic-offset times -2
+    ;;  *   c-basic-offset times 0.5
+    ;;  /   c-basic-offset times -0.5
+    (c-set-offset 'case-label '+)
+    (c-set-offset 'access-label '/)
+    (c-set-offset 'label '/)
+
+    ;; ---------------------------------------------------------------------------
+    ;; some useful bindings
+    (define-key c-mode-map (kbd "RET")  #'newline-and-indent)
+    (define-key c-mode-map (kbd "C-<ret>") #'recompile)
+
+    ;; ---------------------------------------------------------------------------
+    ;; jump directly to source when we see compilation errors
+    (add-to-list 'compilation-search-path (getenv "PWD")))
+
+  ;; -----------------------------------------------------------------------------
+  ;; some keybindings
+  (global-set-key (kbd "C-<f2>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.b10.1xx")))
+  (global-set-key (kbd "C-<f3>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.r10.xxx")))
+  (global-set-key (kbd "C-<f5>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.h10.1xx")))
+  (global-set-key (kbd "C-<f6>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.h10.2xx")))
+  (global-set-key (kbd "C-<f8>")  (lambda() (interactive) (anupam-cc-mode:verify-with-bazel)))
+  (global-set-key (kbd "C-<f12>") (lambda() (interactive) (anupam-cc-mode:build-everything-with-bazel)))
+
+  ;; -----------------------------------------------------------------------------
+  ;; when connecting from macos to development machines, we cannot use
+  ;; these keys anymore, because they are already used by macos.
+  (global-unset-key (kbd "M-."))
+  (global-unset-key (kbd "M-,"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; define something similar.
+  (global-set-key (kbd "C-M-.") 'xref-find-definitions)
+  (global-set-key (kbd "C-M-,") 'xref-go-back)
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (princ (format "=aws-devel-01 config loaded="))
+
+#+end_src
+
+** Host =aws-devel-06=
+:PROPERTIES:
+:CUSTOM_ID: h:A2306D1A-CA5B-4AB7-BA3A-8FFA25997451
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-aws-devel-06-customizations.el" :mkdirp yes
+
+  ;;; anupam-emacs-host-aws-devel-06-customizations.el -- aws-devel-06 specific customizations -*- lexical-binding:t -*-
+
+  ;; -----------------------------------------------------------------------------
+  ;; host specific theme+font customizations
+  ;;    - theme options: 'modus-operandi' / 'zenburn'
+  (defconst anupam-theme-name "zenburn")
+  (anupam-common:setup-all-font-families-by-name "Go Mono")
+
+  ;; -----------------------------------------------------------------------------
+  ;; setup 'language-server-protocol' (LSP) server.
+  ;;
+  ;; so for all code related actions, the picture looks something like this:
+  ;;
+  ;;    emacs == lsp-client (via a builtin package called eglot), and
+  ;;    'external' language specific servers, for example:
+  ;;
+  ;;        - 'c' / 'c++' => 'clangd' / 'ccls'
+  ;;        - 'golang'    => 'gopls'
+  ;;        - <this place is for rent>
+  ;;
+  ;; here we configure lsp-servers for c/c++
+  (defconst anupam-cc-mode:lsp-server-ccls-with-args   '("/twbuild/anupam.kapoor/local/usr/bin/ccls"))
+  (defconst anupam-cc-mode:lsp-server-clangd-with-args '("/twbuild/anupam.kapoor/local/usr/bin/clangd"
+                                                         "-j=8"
+                                                         "--malloc-trim"
+                                                         "--all-scopes-completion=1"
+                                                         "--background-index=1"
+                                                         "--limit-results=128"
+                                                         "--completion-style=detailed"
+                                                         "--pch-storage=memory"
+                                                         "--log=error"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; ,----[from the man-page]
+  ;; | -fdiagnostics-plain-output
+  ;; | This option requests that diagnostic output look as plain as
+  ;; | possible, which may be useful when running dejagnu or other
+  ;; | utilities that need to parse diagnostics output and prefer that it
+  ;; | remain more stable over time. -fdiagnostics-plain-output is
+  ;; | currently equivalent to the following options:
+  ;; |
+  ;; | -fno-diagnostics-show-caret
+  ;; | -fno-diagnostics-show-line-numbers
+  ;; | -fdiagnostics-color=never
+  ;; | -fdiagnostics-urls=never
+  ;; | -fdiagnostics-path-format=separate-events
+  ;; | -fdiagnostics-text-art-charset=none .............  ❌
+  ;; | -fno-diagnostics-show-event-links ................ ❌
+  ;; `----
+  ;; -----------------------------------------------------------------------------
+
+  ;; -----------------------------------------------------------------------------
+  ;; which setup less noisy flags
+  (defconst plain-diag-args
+    (concat "-fno-diagnostics-show-caret "
+            "-fdiagnostics-color=never "
+            "-fdiagnostics-path-format=separate-events "
+            ))
+
+  (defconst gcc-with-args (concat "gcc " plain-diag-args))
+  (defconst g++-with-args (concat "g++ " plain-diag-args))
+
+  (defconst c-compiler gcc-with-args)
+  (defconst c++-compiler g++-with-args)
+
+  ;; -----------------------------------------------------------------------------
+  ;; where is `clang-format-executable' ?
+  (custom-set-variables '(clang-format-executable "/twbuild/anupam.kapoor/local/usr/bin/clang-format"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; where is git installed ?
+  ;; much fasta magit experience: https://jakemccrary.com/blog/2020/11/14/speeding-up-magit/
+  (custom-set-variables '(magit-git-executable "/usr/bin/git"))
+
+  ;; ---------------------------------------------------------------------------
+  ;; resort to the canonical `dict.org' for lookups
+  (defconst anupam-dictionary-server-host "dict.org")
+
+  ;; -----------------------------------------------------------------------------
+  ;; all packages that we want
+  (use-package bazel
+    :ensure t)
+
+  (use-package protobuf-mode
+    :ensure t)
+
+  ;; =============================================================================
+  ;; c/c++ mode customizations
+  ;; =============================================================================
+
+  (defun anupam-cc-mode-hook ()
     ;; ---------------------------------------------------------------------------
     ;; default styles, and then our configuration overriding it.
     (add-to-list 'c-default-style '(c-mode . "linux"))
@@ -3849,9 +4034,9 @@ Utility functions for working with C & C++ sources.
 
     ;; -------------------------------------------------------------------------
     ;; how we build c/c++ sources are almost fixed
-    ;;     -fdiagnostics-plain-output ==> no ansii colorized output
-    (defconst qc-cmd-prefix:c   "gcc -fdiagnostics-plain-output -std=c99 -g -O2 -Wall -o obj/")
-    (defconst qc-cmd-prefix:cpp "g++ -fdiagnostics-plain-output -std=c++20 -g -O2 -Wall -o obj/")
+    ;;     "-fdiagnostics-plain-output" ==> no ansii colorized output
+    (defconst qc-cmd-prefix:c   (format "%s -std=c99 -g -O2 -Wall -o obj/"   c-compiler))
+    (defconst qc-cmd-prefix:cpp (format "%s -std=c++2a -g -O2 -Wall -o obj/" c++-compiler))
 
     ;; first setup the appropriate compilation command based on buffer
     ;; major-mode
@@ -3930,7 +4115,7 @@ worry / care about.
   ;; -----------------------------------------------------------------------------
   ;; disable `flymake' mode by default. makes things just too slow for
   ;; my taste.
-  (use-package emacs
+  (use-package flymake
     :ensure nil
     :custom
     (flymake-no-changes-timeout nil)
@@ -3938,8 +4123,7 @@ worry / care about.
     (flymake-start-on-save-buffer nil)
 
     :config
-    (setq flymake-diagnostic-functions nil)
-    (flymake-mode -1))
+    (setq flymake-diagnostic-functions nil))
 
   ;; -----------------------------------------------------------------------------
   ;; configure the `cc-mode'. the 'anupam-cc-mode-hook', which contains
@@ -3980,8 +4164,8 @@ worry / care about.
   (use-package eglot
     :ensure nil
     :config
-    (add-to-list 'eglot-server-programs `(c-mode   . ,anupam-cc-mode:lsp-server-clangd-with-args))
-    (add-to-list 'eglot-server-programs `(c++-mode . ,anupam-cc-mode:lsp-server-clangd-with-args))
+    (add-to-list 'eglot-server-programs `(c-mode   . ,anupam-cc-mode:lsp-server-ccls-with-args))
+    (add-to-list 'eglot-server-programs `(c++-mode . ,anupam-cc-mode:lsp-server-ccls-with-args))
 
     :hook
     ;; ---------------------------------------------------------------------------
