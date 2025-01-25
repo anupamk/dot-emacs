@@ -1030,6 +1030,11 @@ Per $HOST configuration.
                                                          "--log=error"))
 
   ;; -----------------------------------------------------------------------------
+  ;; this is the actual server that will be used. see eglot
+  ;; configuration section more information
+  (defconst cc-mode:lsp-server-with-args anupam-cc-mode:lsp-server-clangd-with-args)
+
+  ;; -----------------------------------------------------------------------------
   ;; where is `clang-format-executable' ?
   (custom-set-variables '(clang-format-executable "clang-format"))
 
@@ -1131,7 +1136,12 @@ Per $HOST configuration.
 
   ;; -----------------------------------------------------------------------------
   ;; language server protocol (lsp) server, we use ccls on this machine.
-  (defconst anupam-lsp-server-with-args (executable-find "ccls"))
+  (defconst anupam-cc-mode:lsp-server-ccls-with-args (executable-find "ccls"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; this is the actual server that will be used. see eglot
+  ;; configuration section more information
+  (defconst cc-mode:lsp-server-with-args anupam-cc-mode:lsp-server-clangd-with-args)
 
   ;; -----------------------------------------------------------------------------
   ;; where is `clang-format-executable' ?
@@ -1425,6 +1435,11 @@ Per $HOST configuration.
                                                          "--completion-style=detailed"
                                                          "--pch-storage=memory"
                                                          "--log=error"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; this is the actual server that will be used. see eglot
+  ;; configuration section more information
+  (defconst cc-mode:lsp-server-with-args anupam-cc-mode:lsp-server-clangd-with-args)
 
   ;; -----------------------------------------------------------------------------
   ;; ,----[from the man-page]
@@ -4152,8 +4167,8 @@ worry / care about.
   (use-package eglot
     :ensure nil
     :config
-    (add-to-list 'eglot-server-programs `(c-mode   . ,anupam-cc-mode:lsp-server-ccls-with-args))
-    (add-to-list 'eglot-server-programs `(c++-mode . ,anupam-cc-mode:lsp-server-ccls-with-args))
+    (add-to-list 'eglot-server-programs `(c-mode   . ,cc-mode:lsp-server-with-args))
+    (add-to-list 'eglot-server-programs `(c++-mode . ,cc-mode:lsp-server-with-args))
 
     :hook
     ;; ---------------------------------------------------------------------------
