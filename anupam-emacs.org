@@ -847,6 +847,19 @@ here.
       (message "Active modes are %s" active-modes)))
 
   ;; -----------------------------------------------------------------------------
+  ;; remove bold fonts from everywhere
+  (defun anupam-common:unannoy-fonts ()
+    "I really don't like bold text at ALL. Just disable them. This function is
+  run after the startup is done i.e. as late as possible. Hopefully by that time
+  all faces are loaded."
+    (interactive)
+    (mapc (lambda (face)
+            (set-face-attribute face nil
+                                :weight 'normal
+                                ))
+          (face-list)))
+
+  ;; -----------------------------------------------------------------------------
   ;; anupam-common-lib.el ends here
   (provide 'anupam-common-lib)
 
@@ -1814,16 +1827,6 @@ interactions with Emacs. Lets set that up here.
     :config
 
     ;; ---------------------------------------------------------------------------
-    ;; Non-nil means to draw the underline at the same place as the
-    ;; descent line. (If ‘line-spacing’ is in effect, that moves the
-    ;; underline lower by that many pixels.)
-    ;;
-    ;; A value of nil means to draw the underline according to the value
-    ;; of the variable ‘x-use-underline-position-properties’, which is
-    ;; usually at the baseline level.  The default value is nil.
-    (setq x-underline-at-descent-line nil)
-
-    ;; ---------------------------------------------------------------------------
     ;; should text-scaling change the font size of header lines too ?
     ;; when `t' yes, yes we must.
     (setq-default text-scale-remap-header-line t)
@@ -1845,14 +1848,14 @@ interactions with Emacs. Lets set that up here.
           '((small
              :default-height 90)
 
-            (regular) ; like this it uses all the fallback values and is named `regular'
+            (regular)
 
             (medium
              :default-weight regular
              :default-height 115)
 
             (medium-plus
-             :default-weight semilight
+             :inherit medium
              :default-height 130)
 
             (large
@@ -1927,33 +1930,18 @@ interactions with Emacs. Lets set that up here.
 
              :bold-family               nil
              :bold-slant                nil
-             :bold-weight               bold
+             :bold-weight               normal
              :bold-width                nil
              :bold-height               1.0
 
              :italic-family             nil
              :italic-weight             nil
-             :italic-slant              italic
+             :italic-slant              normal
              :italic-width              nil
              :italic-height             1.0
 
              :line-spacing              nil
              ))))
-
-  ;; -----------------------------------------------------------------------------
-  ;; unbold all fonts everywhere, stolen from `ether'
-  ;; https://stackoverflow.com/a/20693389
-  (defun remap-faces-default-attributes ()
-    (let ((family (face-attribute 'default :family))
-          (height (face-attribute 'default :height)))
-      (mapcar (lambda (face)
-                (face-remap-add-relative
-                 face :family family :weight 'normal :height height))
-              (face-list))))
-
-  (when (display-graphic-p)
-    (add-hook 'minibuffer-setup-hook 'remap-faces-default-attributes)
-    (add-hook 'change-major-mode-after-body-hook 'remap-faces-default-attributes))
 
 #+end_src
 
@@ -4203,7 +4191,7 @@ All of our configuration is now loaded. Happy hacking !
 
   ;;; anupam-emacs-config-end.el -- end of configuration -*- byte-compile: t; lexical-binding:t -*-
 
-  ;; ---------------------------------------------------------------------------
+  ;; -----------------------------------------------------------------------------
   ;; just a message to which kinda indicates that all processing was complete.
   (defun greet-post-startup-complete ()
     (message "= all configuration is now loaded. happy hacking ! ="))
@@ -4211,13 +4199,18 @@ All of our configuration is now loaded. Happy hacking !
   (add-hook 'emacs-startup-hook #'greet-post-startup-complete)
 
   ;; -----------------------------------------------------------------------------
+  ;; unbold all fonts everywhere. hopefully by this time around all
+  ;; faces are loaded.
+  (add-hook 'emacs-startup-hook #'anupam-common:unannoy-fonts)
+
+  ;; -----------------------------------------------------------------------------
   ;; show some statistics for Emacs loading.
   (defun emacs-load-statistics()
     (message "*** Emacs loaded in %s with %d garbage collections."
-           (format "%.2f seconds"
+             (format "%.2f seconds"
 		   (float-time
 		    (time-subtract after-init-time before-init-time)))
-           gcs-done))
+             gcs-done))
 
   ;; iff needed.
   ;; (add-hook 'emacs-startup-hook #'emacs-load-statistics)
