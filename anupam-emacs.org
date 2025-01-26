@@ -2313,6 +2313,7 @@ this is not the default. Let's just fix that.
     :hook (after-init . savehist-mode)
     :config
     (setq history-delete-duplicates t)
+    (setq savehist-save-minibuffer-history t)
     (setq savehist-file (expand-file-name "save-hist" user-emacs-directory))
 
     (setq history-length 10000)
@@ -3039,6 +3040,71 @@ of order, not unlike ~fzf~ on unix shells.
 
 #+end_src
 
+*** Ignore cases
+:PROPERTIES:
+:CUSTOM_ID: h:d5bbe364-132b-4ed0-9b18-49d248c315af
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  (setq completion-ignore-case t)
+  (setq read-buffer-completion-ignore-case t)
+  (setq-default case-fold-search t)   ; For general regexp
+  (setq read-file-name-completion-ignore-case t)
+
+#+end_src
+
+*** Minibuffer UI configuration
+:PROPERTIES:
+:CUSTOM_ID: h:024e5417-a2b0-457d-8a22-48e8b1b5b973
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  (use-package minibuffer
+    :ensure nil
+    :demand t
+    :config
+    (setq completions-format 'one-column)
+    (setq completion-show-help nil)
+    (setq completion-auto-help 'always)
+    (setq completion-auto-select nil)
+    (setq completions-detailed t)
+    (setq completion-show-inline-help nil)
+    (setq completions-max-height 10)
+    (setq completions-header-format (propertize "%s candidates:\n" 'face 'bold-italic))
+    (setq completions-highlight-face 'completions-highlight)
+    (setq minibuffer-completion-auto-choose t)
+    (setq minibuffer-visible-completions t) ; Emacs 30
+    (setq completions-sort 'historical))
+
+#+end_src
+
+*** Orderless completion
+:PROPERTIES:
+:CUSTOM_ID: h:be801d35-439e-4e9c-98cf-b5aad89d3a1f
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  (use-package orderless
+    :ensure t
+    :demand t
+    :custom
+    (completion-styles '(orderless basic))
+    (completion-category-defaults nil)
+    (completion-category-overrides '((file (styles . (partial-completion)))))
+
+    ;; ---------------------------------------------------------------------------
+    ;; SPC should never complete: use it for `orderless' groups. The `?'
+    ;; is a regexp construct.
+    :bind
+    (:map minibuffer-local-completion-map
+          ("SPC" . nil)
+          ("?" . nil)))
+
+#+end_src
+
 *** Dynamic text expansion
 :PROPERTIES:
 :CUSTOM_ID: h:74d9daca-2d65-4854-859a-ad9efa821274
@@ -3065,33 +3131,6 @@ of order, not unlike ~fzf~ on unix shells.
 
 #+end_src
 
-*** Orderless completion
-:PROPERTIES:
-:CUSTOM_ID: h:be801d35-439e-4e9c-98cf-b5aad89d3a1f
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
-
-  (use-package orderless
-    :ensure t
-    :demand t
-    :custom
-    (completion-styles '(orderless))
-    (completion-category-defaults nil)
-    (orderless-component-matching-styles '(orderless-regexp orderless-flex))
-    (orderless-regexp-separator "[/\s_-]+")
-    (completion-category-overrides '((file (styles . (partial-completion)))))
-
-    ;; ---------------------------------------------------------------------------
-    ;; SPC should never complete: use it for `orderless' groups. The `?'
-    ;; is a regexp construct.
-    :bind
-    (:map minibuffer-local-completion-map
-          ("SPC" . nil)
-          ("?" . nil)))
-
-#+end_src
-
 *** Case insensitive matching
 :PROPERTIES:
 :CUSTOM_ID: h:c03a4980-45c6-4710-b049-6571359e36de
@@ -3115,12 +3154,7 @@ of order, not unlike ~fzf~ on unix shells.
 
   (use-package vertico
     :ensure t
-    :hook (after-init . vertico-mode)
-    :config
-    (setq vertico-scroll-margin 0)
-    (setq vertico-count 20)
-    (setq vertico-resize t)
-    (setq vertico-cycle nil))
+    :hook (after-init . vertico-mode))
 
 #+end_src
 
