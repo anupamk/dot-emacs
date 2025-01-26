@@ -3864,8 +3864,14 @@ Low /configuration overhead/ jump to definition.
     (dumb-jump-force-searcher 'rg)
     )
 
-  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
-  (setq xref-show-definitions-function #'xref-show-definitions-completing-read)
+  ;; -----------------------------------------------------------------------------
+  ;; remove TAGS as an option from xref, as i never use that.
+  (setq xref-backend-functions (remq 'etags--xref-backend xref-backend-functions))
+
+  ;; -----------------------------------------------------------------------------
+  ;; add dumb-jump as an option of last resort for navigation within
+  ;; buffers in a project.
+  (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate t)
 
 #+end_src
 
