@@ -1244,44 +1244,6 @@ Per $HOST configuration.
     :ensure t)
 
   ;; -----------------------------------------------------------------------------
-  ;; don't use builtin `f' library. use whatever came from melpa
-  (use-package f
-    :ensure nil
-    :load-path ("/twbuild/anupam.kapoor/source-code/emacs.config/anupam/elpa/f-20241003.1131")
-    :config
-    (require 'f)
-    (require 'f-shortdoc))
-
-  ;; -----------------------------------------------------------------------------
-  ;; this is a lightly modified version of easysession.
-  ;;
-  ;; concretely, i have removed explicit version requirements on `f' package.
-  ;;
-  ;; for *some* reason, older / builtin version of `f' gives a 'macro
-  ;; expand error' on this host. i don't have time / inclination to
-  ;; debug this issue for now (Jan 15, 2025)
-  ;;
-  ;; to see the issue for yourself, in `early-init.el' section,
-  ;; uncomment the '(toggle-debug-on-error t)' line.
-  ;; -----------------------------------------------------------------------------
-  (use-package easysession
-    :ensure nil
-    :load-path ("/twbuild/anupam.kapoor/source-code/easysession.el.git")
-    :commands easysession-save-mode
-
-    :custom
-    (easysession-save-interval (* 10 60))
-
-    :config
-    ;; ---------------------------------------------------------------------------
-    ;; persist savehist additional variables as well
-    ;; https://github.com/jamescherti/easysession.el?tab=readme-ov-file#how-to-only-persist-and-restore-visible-buffers
-    (add-to-list 'savehist-additional-variables 'easysession--current-session-name)
-
-    :init
-    (add-hook 'emacs-startup-hook #'easysession-save-mode 99))
-
-  ;; -----------------------------------------------------------------------------
   ;; host specific theme+font customizations
   (defconst anupam-theme-name "zenburn")
   (anupam-common:setup-all-font-families-by-name "Go Mono")
@@ -2815,11 +2777,21 @@ Lets set it up.
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
 
-  ;; ==============================================================================
-  ;;
-  ;; FOR NOW MOVED INTO $HOST SECTION OF CONFIGURATION
-  ;;
-  ;; ==============================================================================
+  (use-package easysession
+    :ensure t
+    :custom
+    (easysession-save-interval (* 10 60))
+
+    :config
+    ;; ---------------------------------------------------------------------------
+    ;; persist savehist additional variables as well
+    ;; https://github.com/jamescherti/easysession.el?tab=readme-ov-file#how-to-only-persist-and-restore-visible-buffers
+    (add-to-list 'savehist-additional-variables 'easysession--current-session-name)
+
+    :init
+    ;; ---------------------------------------------------------------------------
+    ;; save session every '99' seconds
+    (add-hook 'emacs-startup-hook #'easysession-save-mode 99))
 
 #+end_src
 
