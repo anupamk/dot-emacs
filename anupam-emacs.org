@@ -2574,6 +2574,32 @@ Infinitely better window movement keybindings
 
 #+end_src
 
+*** Popper configuration
+:PROPERTIES:
+:CUSTOM_ID: h:a972e873-f0a8-4365-bb8c-8ade9f6b0649
+:END:
+
+Tame the tyranny of popup-buffers :o)
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-window.el"
+
+  (use-package popper
+    :ensure t
+    :bind (
+           :map global-map
+                ("C-`"    . popper-toggle)
+                ("M-`"    . popper-cycle)
+                ("C-M-`"  . popper-toggle-type))
+    :init
+    (setq popper-reference-buffers '("\\*Messages\\*"
+                                     "\\*Async Shell Command\\*"
+                                     help-mode
+                                     compilation-mode))
+    (popper-mode +1)
+    (popper-echo-mode +1))
+
+#+end_src
+
 *** Display buffer
 :PROPERTIES:
 :CUSTOM_ID: h:1b3413ee-bf20-4309-850e-07e01f9adcc1
@@ -3186,6 +3212,7 @@ of order, not unlike ~fzf~ on unix shells.
   (use-package consult
     :ensure t
     :demand t
+    :after minibuffer
 
     :custom
     ((register-preview-delay 0)
