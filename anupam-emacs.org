@@ -982,15 +982,8 @@ Per $HOST configuration.
   (if (anupam-common:host-name-is "axon")
       (anupam:load-user-config-file "anupam-emacs-module/anupam-emacs-host-axon-customizations.el"))
 
-  (if (anupam-common:host-name-is "aws-devel-01")
-      (anupam:load-user-config-file "anupam-emacs-module/anupam-emacs-host-aws-devel-01-customizations.el"))
-
   (if (anupam-common:host-name-is "aws-devel-06")
       (anupam:load-user-config-file "anupam-emacs-module/anupam-emacs-host-aws-devel-06-customizations.el"))
-
-  ;; -----------------------------------------------------------------------------
-  ;; last line
-  (provide 'anupam-host-customizations)
 
 #+end_src
 
@@ -1228,137 +1221,6 @@ Per $HOST configuration.
 
 #+end_src
 
-** Host =aws-devel-01=
-:PROPERTIES:
-:CUSTOM_ID: h:A2306D1A-CA5B-4AB7-BA3A-8FFA25997451
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-aws-devel-01-customizations.el" :mkdirp yes
-
-  ;;; anupam-emacs-host-aws-devel-01-customizations.el -- aws-devel-01 specific customizations -*- lexical-binding:t -*-
-
-  (use-package bazel
-    :ensure t)
-
-  (use-package protobuf-mode
-    :ensure t)
-
-  ;; -----------------------------------------------------------------------------
-  ;; host specific theme+font customizations
-  (defconst anupam-theme-name "zenburn")
-  (anupam-common:setup-all-font-families-by-name "Go Mono")
-
-  ;; -----------------------------------------------------------------------------
-  ;; language server protocol (lsp) server, we use ccls on this machine.
-  (defconst anupam-lsp-server-with-args (executable-find "ccls"))
-
-  ;; -----------------------------------------------------------------------------
-  ;; where is `clang-format-executable' ?
-  (custom-set-variables '(clang-format-executable "/twbuild/anupam.kapoor/local/usr/bin/clang-format"))
-
-  ;; -----------------------------------------------------------------------------
-  ;; where is git installed ?
-  ;; much fasta magit experience: https://jakemccrary.com/blog/2020/11/14/speeding-up-magit/
-  (custom-set-variables '(magit-git-executable "/twbuild/anupam.kapoor/local/usr/bin/git"))
-
-  ;; ---------------------------------------------------------------------------
-  ;; resort to the canonical `dict.org' for lookups
-  (defconst anupam-dictionary-server-host "dict.org")
-
-  ;; =============================================================================
-  ;; c/c++ mode customizations
-  ;; =============================================================================
-
-  (defun anupam-cc-mode-hook ()
-    ;; ---------------------------------------------------------------------------
-    ;; no flymake for me please
-    (flymake-mode -1)
-
-    ;; ---------------------------------------------------------------------------
-    ;; default styles, and then our configuration overriding it.
-    (add-to-list 'c-default-style '(c-mode . "linux"))
-    (add-to-list 'c-default-style '(c++-mode . "Stroustrup"))
-
-    (setq c-basic-offset 2)
-
-    ;; ---------------------------------------------------------------------------
-    ;; Distance between tab stops (for display of tab characters), in
-    ;; columns.
-    (setq tab-width 2)
-
-    ;; ----------------------------------------------------------------------------
-    ;; column beyond which automatic line-wrapping should happen.
-    (setq fill-column 80)
-
-    ;; ---------------------------------------------------------------------------
-    ;; column to indent right-margin comments to...
-    (setq comment-column 80)
-
-    ;; ---------------------------------------------------------------------------
-    ;; Specifies how M-x indent-for-comment should handle comment-only
-    ;; lines. When this variable is non-nil, comment-only lines are
-    ;; indented according to syntactic analysis via
-    ;; `c-offsets-alist'. Otherwise, the comment is indented as if it
-    ;; was preceded by code. Note that this variable does not affect how
-    ;; the normal line indentation treats comment-only lines.
-    (setq c-indent-comments-syntactically-p t)
-
-    ;; ---------------------------------------------------------------------------
-    ;; comment syntax
-    (setq comment-start "///")
-    (setq comment-end "")
-
-    ;; ---------------------------------------------------------------------------
-    ;; '_' is not a modifier anymore
-    (modify-syntax-entry ?_ "w")
-
-    ;; ---------------------------------------------------------------------------
-    ;; syntax help
-    ;;  +   c-basic-offset times 1
-    ;;  -   c-basic-offset times -1
-    ;;  ++  c-basic-offset times 2
-    ;;  --  c-basic-offset times -2
-    ;;  *   c-basic-offset times 0.5
-    ;;  /   c-basic-offset times -0.5
-    (c-set-offset 'case-label '+)
-    (c-set-offset 'access-label '/)
-    (c-set-offset 'label '/)
-
-    ;; ---------------------------------------------------------------------------
-    ;; some useful bindings
-    (define-key c-mode-map (kbd "RET")  #'newline-and-indent)
-    (define-key c-mode-map (kbd "C-<ret>") #'recompile)
-
-    ;; ---------------------------------------------------------------------------
-    ;; jump directly to source when we see compilation errors
-    (add-to-list 'compilation-search-path (getenv "PWD")))
-
-  ;; -----------------------------------------------------------------------------
-  ;; some keybindings
-  (global-set-key (kbd "C-<f2>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.b10.1xx")))
-  (global-set-key (kbd "C-<f3>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.r10.xxx")))
-  (global-set-key (kbd "C-<f5>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.h10.1xx")))
-  (global-set-key (kbd "C-<f6>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.h10.2xx")))
-  (global-set-key (kbd "C-<f8>")  (lambda() (interactive) (anupam-cc-mode:verify-with-bazel)))
-  (global-set-key (kbd "C-<f12>") (lambda() (interactive) (anupam-cc-mode:build-everything-with-bazel)))
-
-  ;; -----------------------------------------------------------------------------
-  ;; when connecting from macos to development machines, we cannot use
-  ;; these keys anymore, because they are already used by macos.
-  (global-unset-key (kbd "M-."))
-  (global-unset-key (kbd "M-,"))
-
-  ;; -----------------------------------------------------------------------------
-  ;; define something similar.
-  (global-set-key (kbd "C-M-.") 'xref-find-definitions)
-  (global-set-key (kbd "C-M-,") 'xref-go-back)
-
-  ;; -----------------------------------------------------------------------------
-  ;; last line
-  (princ (format "=aws-devel-01 config loaded="))
-
-#+end_src
-
 ** Host =aws-devel-06=
 :PROPERTIES:
 :CUSTOM_ID: h:A2306D1A-CA5B-4AB7-BA3A-8FFA25997451
@@ -1543,7 +1405,7 @@ Per $HOST configuration.
 
   ;; -----------------------------------------------------------------------------
   ;; last line
-  (princ (format "=aws-devel-01 config loaded="))
+  (princ (format "=aws-devel-06 config loaded="))
 
 #+end_src
 
