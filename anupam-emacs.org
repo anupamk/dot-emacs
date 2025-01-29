@@ -125,12 +125,13 @@ now split up.
     When you use the :commands keyword, it creates autoloads for those
     commands and defers loading of the module until they are used.
 
-  + =:demand=
+  + =:demand= and =:commands=
 
-    The keywords :commands, et al, provide "triggers" that cause a
-    package to be loaded when certain events occur. The presence of
-    triggers can be overridden using =:demand t= to force immediately
-    loading anyway.
+    The keywords =:commands=, provides a "trigger" that cause a
+    package to be loaded when certain events occur.
+
+    The presence of triggers can be overridden using =:demand t= to
+    force immediately loading anyway.
 
   + =:ensure=
 
@@ -847,7 +848,17 @@ here.
       (message "Active modes are %s" active-modes)))
 
   ;; -----------------------------------------------------------------------------
+  ;; which major modes are active ?
+  ;;;###autoload
+  (defun anupam-common:which-major-mode (&optional buffer-or-name)
+    "returns the major mode associated with a buffer."
+    (buffer-local-value 'major-mode (if buffer-or-name
+                                        (get-buffer buffer-or-name)
+                                      (current-buffer))))
+
+  ;; -----------------------------------------------------------------------------
   ;; remove bold fonts from everywhere
+  ;;;###autoload
   (defun anupam-common:unannoy-fonts ()
     "I really don't like bold text at ALL. Just disable them. This function is
   run after the startup is done i.e. as late as possible. Hopefully by that time
@@ -2671,16 +2682,10 @@ Lets set it up.
     :custom
     (easysession-save-interval (* 10 60))
 
-    :config
-    ;; ---------------------------------------------------------------------------
-    ;; persist savehist additional variables as well
-    ;; https://github.com/jamescherti/easysession.el?tab=readme-ov-file#how-to-only-persist-and-restore-visible-buffers
-    (add-to-list 'savehist-additional-variables 'easysession--current-session-name)
-
-    :init
+    :hook
     ;; ---------------------------------------------------------------------------
     ;; save session every '99' seconds
-    (add-hook 'emacs-startup-hook #'easysession-save-mode 99))
+    (emacs-startup #'easysession-save-mode 99))
 
 #+end_src
 
@@ -3204,7 +3209,7 @@ search results, specifying custom query commands etc. etc.
 
   (use-package rg
     :ensure t
-    :config
+    :custom
 
     ;; ---------------------------------------------------------------------------
     ;; group matches in same file together
