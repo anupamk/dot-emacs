@@ -3716,32 +3716,63 @@ And finally, the *best* git client by far.
   (use-package eglot
     :ensure nil
     :demand t
-    :functions (eglot-ensure)
-    :commands (eglot)
 
     :custom
     (fset #'jsonrpc--log-event #'ignore)
-    (eglot-events-buffer-size 0)
+
+    ;; ---------------------------------------------------------------------------
+    ;; control blocking of lsp connection attempts. with 'nil' we don't
+    ;; block at all.
     (eglot-sync-connect nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; dont timeout lsp connection attempts
     (eglot-connect-timeout nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; don't tell server of changes before Emacs has been idle for this
+    ;; many seconds
     (eglot-send-changes-idle-time 3)
+
+    ;; ---------------------------------------------------------------------------
+    ;; don't allow eldoc to use multiline in the echo-area for
+    ;; displaying documentation strings.
+    ;;
+    ;; when 'nil' the documentation string will be truncated.
     (eldoc-echo-area-use-multiline-p nil)
 
-    :config
     ;; ---------------------------------------------------------------------------
     ;; when `nil' ==> don't block the ui while eglot connection is
     ;; getting established.
-    (setq eglot-sync-connect nil)
+    (eglot-sync-connect nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; shut down server after killing last managed buffer
+    (eglot-autoshutdown t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; activate in cross-referenced non-project files.
+    (eglot-extend-to-xref t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; don't show progress of long running lsp server work
+    (eglot-report-progress nil)
 
     ;; ---------------------------------------------------------------------------
     ;; disable annoying, _distracting_, over-the-top features that serve
     ;; no useful purpose at all (imnsho)
-    (setq eglot-ignored-server-capabilities '(:documentHighlightProvider    ; highlight symbols automatically
-                                              :documentSymbolProvider       ; list symbols in a buffer
-                                              :hoverProvider                ; documentation on hover
-                                              :signatureHelpProvider        ; function-signature help
-                                              ))
+    (eglot-ignored-server-capabilities '(:documentHighlightProvider    ; highlight symbols automatically
+                                         :documentSymbolProvider       ; list symbols in a buffer
+                                         :hoverProvider                ; documentation on hover
+                                         :signatureHelpProvider        ; function-signature help
+                                         ))
 
+    :config
+    ;; ---------------------------------------------------------------------------
+    ;; reduce to 0. by default eglot retains 2m lines, and each new
+    ;; event triggers pretty-printing of entire buffer, leading to
+    ;; gradual performance decline.
+    (setf (plist-get eglot-events-buffer-config :size) 0)
 
     ;; ---------------------------------------------------------------------------
     ;; Inlay hints are small text annotations to specific parts of the
