@@ -1247,7 +1247,6 @@ Per $HOST configuration.
 
   ;; -----------------------------------------------------------------------------
   ;; host specific theme+font customizations
-  ;;    - theme options: 'modus-operandi' / 'zenburn'
   (defconst anupam-theme-name "zenburn")
   (anupam-common:setup-all-font-families-by-name "Go Mono")
 
@@ -1278,7 +1277,7 @@ Per $HOST configuration.
   ;; -----------------------------------------------------------------------------
   ;; this is the actual server that will be used. see eglot
   ;; configuration section more information
-  (defconst cc-mode:lsp-server-with-args anupam-cc-mode:lsp-server-clangd-with-args)
+  (defconst cc-mode:lsp-server-with-args anupam-cc-mode:lsp-server-ccls-with-args)
 
   ;; -----------------------------------------------------------------------------
   ;; ,----[from the man-page]
@@ -1326,13 +1325,29 @@ Per $HOST configuration.
   ;; resort to the canonical `dict.org' for lookups
   (defconst anupam-dictionary-server-host "dict.org")
 
-  ;; -----------------------------------------------------------------------------
-  ;; all packages that we want
+  ;; =============================================================================
+  ;; all packages that we want on aws-devel-06
+  ;; =============================================================================
+
   (use-package bazel
     :ensure t)
 
   (use-package protobuf-mode
     :ensure t)
+
+  ;; -----------------------------------------------------------------------------
+  ;; for as of yet (Feb 06, 2025) 'eglot-booster' refuses to install via
+  ;; the canonical
+  ;;     ':vc (:url "https://github.com/jdtsmith/eglot-booster")'
+  ;; stanza in the use-package snippet below.
+  ;;
+  ;; have to resort to manual installation like a peasant.
+  (use-package eglot-booster
+    :ensure nil
+    :after eglot
+    :load-path (concat user-emacs-directory "elpa/eglot-booster")
+    :config
+    (eglot-booster-mode))
 
   ;; =============================================================================
   ;; c/c++ mode customizations
@@ -3803,6 +3818,7 @@ We install the eglot wrapper here.
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
 
   (use-package eglot-booster
+    :if (not (anupam-common:host-name-is "aws-devel-06"))
     :ensure t
     :after eglot
     :vc (:url "https://github.com/jdtsmith/eglot-booster")
@@ -3813,6 +3829,9 @@ We install the eglot wrapper here.
 
 I think it would be a good idea to actually /benchmark/ the whole
 thing though, and not take anybodys word for it.
+
+For as of yet (Feb 06, 2025) unknown reason, this is only installed
+via the ':vc' stanza when /not/ on 'aws-devel-06' host.
 
 *** Dumbjump
 :PROPERTIES:
