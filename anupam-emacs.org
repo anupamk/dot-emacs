@@ -1010,7 +1010,7 @@ Per $HOST configuration.
 
   ;; -----------------------------------------------------------------------------
   ;; host specific theme+font customizations
-  (defconst anupam-theme-name "zenburn")
+  (defconst anupam-theme-name "modus-operandi")
   (anupam-common:setup-all-font-families-by-name "PragmataPro Mono")
 
   ;; -----------------------------------------------------------------------------
@@ -1294,8 +1294,8 @@ Per $HOST configuration.
   ;; | -fdiagnostics-color=never
   ;; | -fdiagnostics-urls=never
   ;; | -fdiagnostics-path-format=separate-events
-  ;; | -fdiagnostics-text-art-charset=none .............  ❌
-  ;; | -fno-diagnostics-show-event-links ................ ❌
+  ;; | -fdiagnostics-text-art-charset=none .............  na
+  ;; | -fno-diagnostics-show-event-links ................ na
   ;; `----
   ;; -----------------------------------------------------------------------------
 
@@ -1420,6 +1420,7 @@ Per $HOST configuration.
 
   ;; -----------------------------------------------------------------------------
   ;; last line
+
   (princ (format "=aws-devel-06 config loaded="))
 
 #+end_src
