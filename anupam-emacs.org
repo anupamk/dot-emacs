@@ -1139,12 +1139,13 @@ Per $HOST configuration.
 
   ;; -----------------------------------------------------------------------------
   ;; host specific theme+font customizations
-  (defconst anupam-theme-name "modus-operandi")
+  (defconst anupam-theme-name "modus-vivendi")
   (anupam-common:setup-all-font-families-by-name "Go Mono")
 
   ;; -----------------------------------------------------------------------------
   ;; language server protocol (lsp) server, we use ccls on this machine.
   (defconst anupam-cc-mode:lsp-server-ccls-with-args (executable-find "ccls"))
+  (defconst anupam-cc-mode:lsp-server-clangd-with-args (executable-find "clangd"))
 
   ;; -----------------------------------------------------------------------------
   ;; this is the actual server that will be used. see eglot
@@ -1600,6 +1601,82 @@ Declutter the mode-line with minions.
 
 #+end_src
 
+**** Modus Vivendi theme definition
+:PROPERTIES:
+:CUSTOM_ID: h:6fdb207c-7171-48e3-87ae-35f6e1ef92d9
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-modus-vivendi-theme.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; slightly tweaked modus-operandi theme.
+  (use-package modus-themes
+    :ensure t
+    :demand t
+
+    :config
+    (require 'modus-themes)
+
+    ;; ---------------------------------------------------------------------------
+    ;; some minor tweaks
+    (setq modus-themes-italic-constructs nil
+          modus-themes-bold-constructs nil
+          modus-themes-mixed-fonts nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; some color customizations
+    (setq modus-themes-prompts '(bold))
+
+    ;; ---------------------------------------------------------------------------
+    ;; overall steps (for customizing specific colors) are as follows:
+    ;;
+    ;;    1. place point at character whose color needs modification,
+    ;;    and issue a 'M-x describe-char'
+    ;;
+    ;;    2. scroll to bottom of help-buffer (from 1), and find the
+    ;;    'face' property, it would look something like
+    ;;    'font-lock-<face-name>-face'
+    ;;
+    ;;    3. next find what color corresponds to that face in the
+    ;;    current theme via a 'M-x modus-themes-list-colors-current'
+    ;;
+    ;;    4. find a color you like or any other color, and add the face
+    ;;    into the 'modus-vivendi-palette-overrides' below
+    ;;
+    ;;    5. reload theme
+
+    ;; ---------------------------------------------------------------------------
+    ;; modus-operandi-palette customizations
+    (setq modus-vivendi-palette-overrides
+          '(
+            ;; -------------------------------------------------------------------
+            ;; dimmer / subtler colors seems to agree more with me
+            (fg-main      fg-dim)
+            (cursor       magenta-intense)
+            (string       green-warmer)
+            (preprocessor cyan-faint)
+            (keyword      slate)
+            (type         slate)
+            (fnname       fg-ochre)
+            (comment      bg-term-black-bright)
+            (builtin      yellow-faint)
+            (bg-hl-line   bg-dim)
+            (variable     docstring)
+
+            ;; add more customizations ↑
+            ;; -------------------------------------------------------------------
+            ))
+
+    ;; ---------------------------------------------------------------------------
+    ;; finally load the theme
+    (load-theme 'modus-vivendi :no-confirm-loading))
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (provide 'anupam-emacs-modus-vivendi-theme)
+
+#+end_src
+
 **** Zenburn theme definition
 :PROPERTIES:
 :CUSTOM_ID: h:c656db79-caa1-48a3-b764-406b90363340
@@ -1644,11 +1721,15 @@ interactions with Emacs. Lets set that up here.
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-theme.el"
 
   ;; -----------------------------------------------------------------------------
-  ;; load a named-theme
+  ;; load a named-theme, following names are supported
+  ;;    - 'modus-operandi'
+  ;;    - 'modus-vivendi'
+  ;;    - 'zenburn'
   (defun anupam-theme:load-a-theme-by-name (theme-name-string)
 
     (pcase theme-name-string
       ("modus-operandi" (require 'anupam-emacs-modus-operandi-theme))
+      ("modus-vivendi" (require 'anupam-emacs-modus-vivendi-theme))
       ("zenburn" (require 'anupam-emacs-zenburn-theme))
       ))
 
