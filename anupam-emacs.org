@@ -258,7 +258,11 @@ initialized before loading the regular init file.
                                 '(width                      . (text-pixels . 800))
                                 '(height                     . (text-pixels . 900))
                                 '(vertical-scroll-bars       . nil)
-                                '(horizontal-scroll-bar-mode . nil))
+                                '(horizontal-scroll-bar-mode . nil)
+                                '(bottom-divider-width       . 0)
+                                '(right-divider-width        . 0))
+
+  (modify-frame-parameters nil default-frame-alist)
 
   ;; -----------------------------------------------------------------------------
   ;; sane defaults
@@ -1646,6 +1650,8 @@ interactions with Emacs. Lets set that up here.
   (set-face-attribute 'font-lock-doc-face nil :inherit 'font-lock-comment-face)
   (set-face-attribute 'font-lock-preprocessor-face nil)
   (set-face-attribute 'font-lock-builtin-face nil)
+  (set-face-attribute 'bold nil :weight 'regular)
+  (set-face-attribute 'bold-italic nil :weight 'regular)
 
 #+end_src
 
