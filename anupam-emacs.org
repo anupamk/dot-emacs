@@ -347,15 +347,12 @@ without a modicum of understanding of the innards.
   ;; during startup we don't care about these. once startup is
   ;; over, we restore things back.
   (defvar startup/file-name-handler-alist file-name-handler-alist)
-  (defvar startup/vc-handled-backends vc-handled-backends)
 
-  (setq file-name-handler-alist nil
-        vc-handled-backends nil)
+  (setq file-name-handler-alist nil)
 
   (add-hook 'emacs-startup-hook
             (lambda ()
-              file-name-handler-alist startup/file-name-handler-alist
-              vc-handled-backends startup/vc-handled-backends))
+              file-name-handler-alist startup/file-name-handler-alist))
 
 #+end_src
 
@@ -1335,20 +1332,6 @@ Per $HOST configuration.
 
   (use-package protobuf-mode
     :ensure t)
-
-  ;; -----------------------------------------------------------------------------
-  ;; for as of yet (Feb 06, 2025) 'eglot-booster' refuses to install via
-  ;; the canonical
-  ;;     ':vc (:url "https://github.com/jdtsmith/eglot-booster")'
-  ;; stanza in the use-package snippet below.
-  ;;
-  ;; have to resort to manual installation like a peasant.
-  (use-package eglot-booster
-    :ensure nil
-    :after eglot
-    :load-path (concat user-emacs-directory "elpa/eglot-booster")
-    :config
-    (eglot-booster-mode))
 
   ;; =============================================================================
   ;; c/c++ mode customizations
@@ -2780,15 +2763,24 @@ Lets set it up.
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
 
-  (use-package easysession
-    :ensure t
-    :custom
-    (easysession-save-interval (* 10 60))
+  ;; -----------------------------------------------------------------------------
+  ;; for as of yet (Feb 06, 2025) 'easysession' refuses to install via the
+  ;; canonical
+  ;;     ':vc (:url "https://github.com/jamescherti/easysession.el")'
+  ;; stanza in the use-package snippet below.
+  ;;
+  ;; have to resort to manual installation like a peasant.
 
-    :hook
-    ;; ---------------------------------------------------------------------------
-    ;; save session every '99' seconds
-    (emacs-startup #'easysession-save-mode 99))
+  (unless (require 'easysession nil 'noerror)
+    (package-vc-install '(easysession :url "https://github.com/jamescherti/easysession.el")))
+
+  (use-package easysession
+      :ensure nil
+      :load-path (lambda() (concat user-emacs-directory "elpa/easysession"))
+
+      :init
+      (setq easysession-save-interval (* 10 60))
+      (add-hook 'emacs-startup-hook #'easysession-save-mode 103))
 
 #+end_src
 
@@ -3898,13 +3890,23 @@ We install the eglot wrapper here.
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
 
+  ;; -----------------------------------------------------------------------------
+  ;; for as of yet (Feb 06, 2025) 'eglot-booster' refuses to install via
+  ;; the canonical
+  ;;     ':vc (:url "https://github.com/jdtsmith/eglot-booster")'
+  ;; stanza in the use-package snippet below.
+  ;;
+  ;; have to resort to manual installation like a peasant.
+
+  (unless (require 'eglot-booster nil 'noerror)
+    (package-vc-install '(eglot-booster :url "https://github.com/jdtsmith/eglot-booster")))
+
   (use-package eglot-booster
-    :if (not (anupam-common:host-name-is "aws-devel-06"))
-    :ensure t
-    :after eglot
-    :vc (:url "https://github.com/jdtsmith/eglot-booster")
-    :config
-    (eglot-booster-mode))
+      :ensure nil
+      :after eglot
+      :load-path (lambda() (concat user-emacs-directory "elpa/eglot-booster"))
+      :config
+      (eglot-booster-mode))
 
 #+end_src
 

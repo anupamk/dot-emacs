@@ -35,7 +35,6 @@ tramp
 save-hist
 save-place
 save-point
-prescient-items
 recentf
 package-quickstart.el
 custom.el
@@ -53,7 +52,7 @@ eln-cache/*
 history
 save-point-place
 *custom.el
-session*
+easysession/*
 
 # ------------------------------------------------------------------------------
 # for 'straight' we don't care about either the 'repos' or the 'build'
