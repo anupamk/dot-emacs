@@ -991,6 +991,9 @@ Per $HOST configuration.
   (if (anupam-common:host-name-is "shakti")
       (anupam:load-user-config-file "anupam-emacs-module/anupam-emacs-host-shakti-customizations.el"))
 
+  (if (anupam-common:host-name-is "soma")
+      (anupam:load-user-config-file "anupam-emacs-module/anupam-emacs-host-soma-customizations.el"))
+
   (if (anupam-common:host-name-is "axon")
       (anupam:load-user-config-file "anupam-emacs-module/anupam-emacs-host-axon-customizations.el"))
 
@@ -1122,6 +1125,176 @@ Per $HOST configuration.
   ;; -----------------------------------------------------------------------------
   ;; last line just see if things are setup ok.
   (princ (format "=shakti config loaded="))
+
+#+end_src
+
+** Host =soma=
+:PROPERTIES:
+:CUSTOM_ID: h:68590E4D-0108-4CD5-AE9A-2C07523E923F
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-soma-customizations.el" :mkdirp yes
+
+  ;;; anupam-emacs-host-soma-customizations.el -- soma-host specific customizations -*- lexical-binding:t -*-
+
+  ;; -----------------------------------------------------------------------------
+  ;; host specific theme+font customizations
+  (defconst anupam-theme-name "modus-operandi")
+  (anupam-common:setup-all-font-families-by-name "Berkeley Mono")
+
+  ;; -----------------------------------------------------------------------------
+  ;; language server protocol (lsp) server, we use ccls on this machine.
+  (defconst anupam-cc-mode:lsp-server-ccls-with-args (executable-find "ccls"))
+  (defconst anupam-cc-mode:lsp-server-clangd-with-args '("/usr/bin/clangd"
+                                                         "-j=8"
+                                                         "--all-scopes-completion=1"
+                                                         "--background-index=1"
+                                                         "--limit-results=128"
+                                                         "--completion-style=detailed"
+                                                         "--pch-storage=memory"
+                                                         "--log=error"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; this is the actual server that will be used. see eglot
+  ;; configuration section more information
+  (defconst cc-mode:lsp-server-with-args anupam-cc-mode:lsp-server-clangd-with-args)
+
+  ;; -----------------------------------------------------------------------------
+  ;; ,----[from the gcc man-page]
+  ;; | -fdiagnostics-plain-output
+  ;; | This option requests that diagnostic output look as plain as
+  ;; | possible, which may be useful when running dejagnu or other
+  ;; | utilities that need to parse diagnostics output and prefer that it
+  ;; | remain more stable over time. -fdiagnostics-plain-output is
+  ;; | currently equivalent to the following options:
+  ;; |
+  ;; | -fno-diagnostics-show-caret
+  ;; | -fno-diagnostics-show-line-numbers
+  ;; | -fdiagnostics-color=never
+  ;; | -fdiagnostics-urls=never
+  ;; | -fdiagnostics-path-format=separate-events
+  ;; | -fdiagnostics-text-art-charset=none .............  na
+  ;; | -fno-diagnostics-show-event-links ................ na
+  ;; `----
+  ;; -----------------------------------------------------------------------------
+
+  ;; -----------------------------------------------------------------------------
+  ;; which setup less noisy flags
+  (defconst gcc-plain-diag-args
+    (concat "-fno-diagnostics-show-caret "
+            "-fdiagnostics-color=never "
+            "-fdiagnostics-path-format=separate-events "
+            ))
+
+  (defconst gcc-with-args (concat "gcc " gcc-plain-diag-args))
+  (defconst g++-with-args (concat "g++ " gcc-plain-diag-args))
+
+  ;; -----------------------------------------------------------------------------
+  ;; clang and clang++ with less noisy flags
+  (defconst clang-plain-diag-args
+    (concat ""))
+
+  (defconst clang-with-args (concat "clang " clang-plain-diag-args))
+  (defconst clang++-with-args (concat "clang++ " clang-plain-diag-args))
+
+  ;; -----------------------------------------------------------------------------
+  ;; now choose a compiler family, 'gcc' or 'clang'
+  (defconst c-compiler clang-with-args)
+  (defconst c++-compiler clang++-with-args)
+
+  ;; -----------------------------------------------------------------------------
+  ;; where is `clang-format-executable' ?
+  (custom-set-variables '(clang-format-executable "clang-format-mp-18"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; where is git installed ?
+  ;; much fasta magit experience: https://jakemccrary.com/blog/2020/11/14/speeding-up-magit/
+  (custom-set-variables '(magit-git-executable (executable-find "git")))
+
+  ;; ---------------------------------------------------------------------------
+  ;; resort to the canonical `dict.org' for lookups
+  (defconst anupam-dictionary-server-host "dict.org")
+
+  ;; =============================================================================
+  ;; c/c++ mode customizations
+  ;; =============================================================================
+
+  (defun anupam-cc-mode-hook ()
+    ;; ---------------------------------------------------------------------------
+    ;; default styles, and then our configuration overriding it.
+    (add-to-list 'c-default-style '(c-mode . "linux"))
+    (add-to-list 'c-default-style '(c++-mode . "Stroustrup"))
+
+    ;; ---------------------------------------------------------------------------
+    ;; Distance between tab stops (for display of tab characters), in
+    ;; columns.
+    (setq tab-width 8)
+
+    ;; ----------------------------------------------------------------------------
+    ;; column beyond which automatic line-wrapping should happen.
+    (setq fill-column 80)
+
+    ;; ---------------------------------------------------------------------------
+    ;; column to indent right-margin comments to...
+    (setq comment-column 80)
+
+    ;; ---------------------------------------------------------------------------
+    ;; Specifies how M-x indent-for-comment should handle comment-only
+    ;; lines. When this variable is non-nil, comment-only lines are
+    ;; indented according to syntactic analysis via
+    ;; `c-offsets-alist'. Otherwise, the comment is indented as if it
+    ;; was preceded by code. Note that this variable does not affect how
+    ;; the normal line indentation treats comment-only lines.
+    (setq c-indent-comments-syntactically-p t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; comment syntax
+    (setq comment-start "///")
+    (setq comment-end "")
+
+    ;; ---------------------------------------------------------------------------
+    ;; '_' is not a modifier anymore
+    (modify-syntax-entry ?_ "w")
+
+    ;; ---------------------------------------------------------------------------
+    ;; amount of basic offset used by `+' and `-' symbols in `c-offsets-alist'
+    (setq c-basic-offset 8)
+
+    ;; ---------------------------------------------------------------------------
+    ;; syntax help
+    ;;  +   c-basic-offset times 1
+    ;;  -   c-basic-offset times -1
+    ;;  ++  c-basic-offset times 2
+    ;;  --  c-basic-offset times -2
+    ;;  *   c-basic-offset times 0.5
+    ;;  /   c-basic-offset times -0.5
+    (c-set-offset 'case-label '+)
+    (c-set-offset 'access-label '/)
+    (c-set-offset 'label '/)
+
+    ;; ---------------------------------------------------------------------------
+    ;; some useful bindings
+    (define-key c-mode-map (kbd "RET")  #'newline-and-indent)
+    (define-key c-mode-map (kbd "C-<ret>") #'recompile)
+
+    ;; ---------------------------------------------------------------------------
+    ;; jump directly to source when we see compilation errors
+    (add-to-list 'compilation-search-path (getenv "PWD")))
+
+  ;; -----------------------------------------------------------------------------
+  ;; when connecting from macos to development machines, we cannot use
+  ;; these keys anymore, because they are already used by macos.
+  (global-unset-key (kbd "M-."))
+  (global-unset-key (kbd "M-,"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; define something similar.
+  (global-set-key (kbd "C-M-.") 'xref-find-definitions)
+  (global-set-key (kbd "C-M-,") 'xref-go-back)
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line just see if things are setup ok.
+  (princ (format "=soma config loaded="))
 
 #+end_src
 
