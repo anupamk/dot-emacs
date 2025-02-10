@@ -4397,6 +4397,22 @@ worry / care about.
 
 #+end_src
 
+**** Java
+
+As of now (Feb 09, 2025), it seems that ~eglot-java~ is the /easiest/
+option to set this up.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; use eglot-java for java programming
+  (use-package eglot-java
+    :ensure t
+    :after eglot)
+
+  (add-hook 'java-mode-hook 'eglot-java-mode)
+
+#+end_src
 *** Epilogue
 :PROPERTIES:
 :CUSTOM_ID: h:00ca2c69-7b41-4d93-bf0f-c53404987d45
