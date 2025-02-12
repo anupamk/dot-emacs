@@ -1309,13 +1309,22 @@ Per $HOST configuration.
 
   ;; -----------------------------------------------------------------------------
   ;; host specific theme+font customizations
-  (defconst anupam-theme-name "modus-vivendi")
-  (anupam-common:setup-all-font-families-by-name "Go Mono")
+  (defconst anupam-theme-name "modus-operandi")
+  (anupam-common:setup-all-font-families-by-name "Berkeley Mono")
 
   ;; -----------------------------------------------------------------------------
   ;; language server protocol (lsp) server, we use ccls on this machine.
   (defconst anupam-cc-mode:lsp-server-ccls-with-args (executable-find "ccls"))
-  (defconst anupam-cc-mode:lsp-server-clangd-with-args (executable-find "clangd"))
+  (defconst anupam-cc-mode:lsp-server-clangd-with-args '("/usr/bin/clangd"
+                                                         "-j=8"
+                                                         "--malloc-trim"
+                                                         "--all-scopes-completion=1"
+                                                         "--background-index=1"
+                                                         "--limit-results=128"
+                                                         "--completion-style=detailed"
+                                                         "--pch-storage=memory"
+                                                         "--log=error"))
+
 
   ;; -----------------------------------------------------------------------------
   ;; this is the actual server that will be used. see eglot
