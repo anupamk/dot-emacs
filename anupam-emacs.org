@@ -1044,12 +1044,12 @@ Per $HOST configuration.
 
   ;; -----------------------------------------------------------------------------
   ;; where is `clang-format-executable' ?
-  (custom-set-variables '(clang-format-executable "clang-format"))
+  (defconst anupam-cc-mode:clang-format-executable (executable-find "clang-format"))
 
   ;; -----------------------------------------------------------------------------
   ;; where is git installed ?
   ;; much fasta magit experience: https://jakemccrary.com/blog/2020/11/14/speeding-up-magit/
-  (custom-set-variables '(magit-git-executable "git"))
+  (defconst anupam-magit:magit-git-executable (executable-find "git"))
 
   ;; ---------------------------------------------------------------------------
   ;; we run a local dictionary server on this host, no need to go to the
@@ -1204,12 +1204,12 @@ Per $HOST configuration.
 
   ;; -----------------------------------------------------------------------------
   ;; where is `clang-format-executable' ?
-  (custom-set-variables '(clang-format-executable "clang-format-mp-18"))
+  (defconst anupam-cc-mode:clang-format-executable (executable-find "clang-format-mp-18"))
 
   ;; -----------------------------------------------------------------------------
   ;; where is git installed ?
   ;; much fasta magit experience: https://jakemccrary.com/blog/2020/11/14/speeding-up-magit/
-  (custom-set-variables '(magit-git-executable (executable-find "git")))
+  (defconst anupam-magit:magit-git-executable (executable-find "git"))
 
   ;; ---------------------------------------------------------------------------
   ;; resort to the canonical `dict.org' for lookups
@@ -1333,12 +1333,12 @@ Per $HOST configuration.
 
   ;; -----------------------------------------------------------------------------
   ;; where is `clang-format-executable' ?
-  (custom-set-variables '(clang-format-executable "clang-format-mp-18"))
+  (defconst anupam-cc-mode:clang-format-executable (executable-find "clang-format-mp-18"))
 
   ;; -----------------------------------------------------------------------------
   ;; where is git installed ?
   ;; much fasta magit experience: https://jakemccrary.com/blog/2020/11/14/speeding-up-magit/
-  (custom-set-variables '(magit-git-executable "/opt/local/bin/git"))
+  (defconst anupam-magit:magit-git-executable "/opt/local/bin/git")
 
   ;; ---------------------------------------------------------------------------
   ;; resort to the canonical `dict.org' for lookups
@@ -1428,7 +1428,7 @@ Per $HOST configuration.
   ;; -----------------------------------------------------------------------------
   ;; host specific theme+font customizations
   (defconst anupam-theme-name "zenburn")
-  (anupam-common:setup-all-font-families-by-name "Go Mono")
+  (anupam-common:setup-all-font-families-by-name "Berkeley Mono")
 
   ;; -----------------------------------------------------------------------------
   ;; setup 'language-server-protocol' (LSP) server.
@@ -1494,12 +1494,12 @@ Per $HOST configuration.
 
   ;; -----------------------------------------------------------------------------
   ;; where is `clang-format-executable' ?
-  (custom-set-variables '(clang-format-executable "/twbuild/anupam.kapoor/local/usr/bin/clang-format"))
+  (defconst anupam-cc-mode:clang-format-executable "/usr/bin/clang-format")
 
   ;; -----------------------------------------------------------------------------
   ;; where is git installed ?
   ;; much fasta magit experience: https://jakemccrary.com/blog/2020/11/14/speeding-up-magit/
-  (custom-set-variables '(magit-git-executable "/usr/bin/git"))
+  (defconst anupam-magit:magit-git-executable "/usr/bin/git")
 
   ;; ---------------------------------------------------------------------------
   ;; resort to the canonical `dict.org' for lookups
@@ -3842,13 +3842,12 @@ And finally, the *best* git client by far.
     ;; dont add any magit keybindings automagically to the global keymap please.
     (setq magit-define-global-key-bindings nil)
 
+    :custom
+    (magit-git-executable anupam-magit:magit-git-executable)
+
     :bind
     (("C-c m g" . magit-status)
      ("C-c m f" . magit-file-dispatch))
-
-    ;; ---------------------------------------------------------------------------
-    ;; the `magit-git-executable' is configured on a per-host basis. see
-    ;; ~Host specific customization~ of this file for more information.
 
     :config
     ;; ---------------------------------------------------------------------------
@@ -4302,6 +4301,7 @@ worry / care about.
   (use-package clang-format
     :ensure t
     :custom
+    (clang-format-executable anupam-cc-mode:clang-format-executable)
     (clang-format-on-save-p 'clang-format-on-save-check-config-exists))
 
   (add-hook 'c-mode-common-hook #'clang-format-on-save-mode)

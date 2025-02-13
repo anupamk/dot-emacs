@@ -1,5 +1,7 @@
+### -*- mode: conf -*- ###
+
 # ------------------------------------------------------------------------------
-# ignore auto-generated files
+# mode auto-generated files
 anupam-emacs-module/*
 anupam-lisp/*
 early-init.el
@@ -53,6 +55,7 @@ history
 save-point-place
 *custom.el
 easysession/*
+eshell/*
 
 # ------------------------------------------------------------------------------
 # for 'straight' we don't care about either the 'repos' or the 'build'
