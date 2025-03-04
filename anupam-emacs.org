@@ -2871,6 +2871,8 @@ currently entered incomplete command.
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
 
   (use-package emacs-which-key
+    :disabled
+
     :ensure nil
     :hook (after-init . which-key-mode)
     :config
@@ -4039,8 +4041,8 @@ And finally, the *best* git client by far.
     (fset #'jsonrpc--log-event #'ignore)
 
     ;; ---------------------------------------------------------------------------
-    ;; control blocking of lsp connection attempts. with 'nil' we don't
-    ;; block at all.
+    ;; when `nil' ==> don't block the ui while eglot connection is
+    ;; getting established.
     (eglot-sync-connect nil)
 
     ;; ---------------------------------------------------------------------------
@@ -4058,11 +4060,6 @@ And finally, the *best* git client by far.
     ;;
     ;; when 'nil' the documentation string will be truncated.
     (eldoc-echo-area-use-multiline-p nil)
-
-    ;; ---------------------------------------------------------------------------
-    ;; when `nil' ==> don't block the ui while eglot connection is
-    ;; getting established.
-    (eglot-sync-connect nil)
 
     ;; ---------------------------------------------------------------------------
     ;; shut down server after killing last managed buffer
