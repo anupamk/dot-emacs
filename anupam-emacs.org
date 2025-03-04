@@ -3864,7 +3864,7 @@ Setup native version-control
 
   (use-package diff-hl
     :ensure t
-    :init
+    :config
     ;; ---------------------------------------------------------------------------
     ;; toggle the mode in all buffers
     (global-diff-hl-mode)
