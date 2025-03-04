@@ -1964,27 +1964,31 @@ interactions with Emacs. Lets set that up here.
     ;; it might be a good idea to specify the font sizes too i suppose.
     (setq fontaine-presets
           '((small
-             :default-height 90)
+             :default-height 110)
 
-            (regular)
+            (regular
+             :default-height 120)
 
             (medium
-             :default-weight regular
-             :default-height 115)
-
-            (medium-plus
-             :inherit medium
              :default-height 130)
 
+            (medium-plus
+             :default-height 140)
+
             (large
-             :inherit medium-plus
              :default-height 150)
+
+            (large-plus
+             :default-height 160)
+
+            (large-plus-plus
+             :default-height 170)
 
             (presentation
              :default-height 180)
 
             (jumbo
-             :default-height 260)
+             :default-height 220)
 
             (t
              ;; ------------------------------------------------------------------
@@ -1992,7 +1996,7 @@ interactions with Emacs. Lets set that up here.
              :default-weight            regular
              :default-slant             normal
              :default-width             normal
-             :default-height            100
+             :default-height            110
 
              :fixed-pitch-weight        nil
              :fixed-pitch-slant         nil
