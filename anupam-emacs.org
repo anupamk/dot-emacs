@@ -4170,6 +4170,22 @@ Low /configuration overhead/ jump to definition.
         compilation-always-kill t)             ; Don't ask, just start new compilation.
 
 #+end_src
+
+**** CMake Integration
+:PROPERTIES:
+:CUSTOM_ID: h:9F6F8F3E-677F-4DE9-BB90-34C1042D07C1
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; no configuration is necessary. when installed, this package is
+  ;; automatically activated when using the CMake mode.
+  (use-package cmake-font-lock
+    :ensure t)
+
+#+end_src
+
 **** C & C++
 :PROPERTIES:
 :CUSTOM_ID: h:01f765c4-db72-4812-958f-2ef18ed62e36
