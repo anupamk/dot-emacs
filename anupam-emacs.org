@@ -1939,8 +1939,7 @@ interactions with Emacs. Lets set that up here.
                      ;; Set last preset or fall back to desired style from `fontaine-presets'.
                      (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular)))))
 
-    :bind (("C-c f" . fontaine-set-preset)
-           ("C-c F" . fontaine-toggle-preset))
+    :bind (("C-c f" . fontaine-set-preset))
 
     :config
 
@@ -1984,15 +1983,21 @@ interactions with Emacs. Lets set that up here.
             (large-plus-plus
              :default-height 170)
 
-            (presentation
+            (hulk
              :default-height 180)
+
+            (hulk-plus
+             :default-height 190)
+
+            (hulk-plus-plus
+             :default-height 200)
 
             (jumbo
              :default-height 220)
 
             (t
              ;; ------------------------------------------------------------------
-             ;; just show `all' the properties possible.
+             ;; just show all possible properties.
              :default-weight            regular
              :default-slant             normal
              :default-width             normal
