@@ -3179,85 +3179,6 @@ of order, not unlike ~fzf~ on unix shells.
 
 #+end_src
 
-*** Setup the basic completion style first
-:PROPERTIES:
-:CUSTOM_ID: h:dc1afecc-2d59-4051-aecc-35a784c38856
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
-
-  ;; General minibuffer settings
-  (use-package minibuffer
-    :ensure nil
-    :config
-
-    ;; ---------------------------------------------------------------------------
-    ;; completion styles
-    (setq completion-styles '(basic substring initials flex orderless))
-    (setq completion-pcm-leading-wildcard t)
-
-    ;; Reset all the per-category defaults so that (i) we use the
-    ;; standard `completion-styles' and (ii) can specify our own styles
-    ;; in the `completion-category-overrides' without having to
-    ;; explicitly override everything.
-    (setq completion-category-defaults nil)
-
-    ;; A non-exhaustve list of known completion categories:
-    ;;
-    ;; - `bookmark'
-    ;; - `buffer'
-    ;; - `charset'
-    ;; - `coding-system'
-    ;; - `color'
-    ;; - `command' (e.g. `M-x')
-    ;; - `customize-group'
-    ;; - `environment-variable'
-    ;; - `expression'
-    ;; - `face'
-    ;; - `file'
-    ;; - `function' (the `describe-function' command bound to `C-h f')
-    ;; - `info-menu'
-    ;; - `imenu'
-    ;; - `input-method'
-    ;; - `kill-ring'
-    ;; - `library'
-    ;; - `minor-mode'
-    ;; - `multi-category'
-    ;; - `package'
-    ;; - `project-file'
-    ;; - `symbol' (the `describe-symbol' command bound to `C-h o')
-    ;; - `theme'
-    ;; - `unicode-name' (the `insert-char' command bound to `C-x 8 RET')
-    ;; - `variable' (the `describe-variable' command bound to `C-h v')
-    ;; - `consult-grep'
-    ;; - `consult-isearch'
-    ;; - `consult-kmacro'
-    ;; - `consult-location'
-    ;; - `embark-keybinding'
-    ;;
-    (setq completion-category-overrides
-          ;; NOTE 2021-10-25: I am adding `basic' because it works better as a
-          ;; default for some contexts.  Read:
-          ;; <https://debbugs.gnu.org/cgi/bugreport.cgi?bug=50387>.
-          ;;
-          ;; `partial-completion' is a killer app for files, because it
-          ;; can expand ~/.l/s/fo to ~/.local/share/fonts.
-          ;;
-          ;; If `basic' cannot match my current input, Emacs tries the
-          ;; next completion style in the given order.  In other words,
-          ;; `orderless' kicks in as soon as I input a space or one of its
-          ;; style dispatcher characters.
-          '((file              (styles . (basic partial-completion orderless)))
-            (bookmark          (styles . (basic substring)))
-            (library           (styles . (basic substring)))
-            (embark-keybinding (styles . (basic substring)))
-            (imenu             (styles . (basic substring orderless)))
-            (consult-location  (styles . (basic substring orderless)))
-            (kill-ring         (styles . (emacs22 orderless)))
-            (eglot             (styles . (emacs22 substring orderless))))))
-
-#+end_src
-
 *** Ignore cases
 :PROPERTIES:
 :CUSTOM_ID: h:d5bbe364-132b-4ed0-9b18-49d248c315af
@@ -3269,69 +3190,6 @@ of order, not unlike ~fzf~ on unix shells.
   (setq read-buffer-completion-ignore-case t)
   (setq-default case-fold-search t)
   (setq read-file-name-completion-ignore-case t)
-
-#+end_src
-
-*** Completion preview
-:PROPERTIES:
-:CUSTOM_ID: h:ECCCA56F-1E00-4202-9DFE-8407932F4C29
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
-
-  (use-package completion-preview
-    :ensure nil
-
-    :hook
-    (prog-mode . completion-preview-mode)
-    (text-mode . completion-preview-mode)
-
-    :bind(
-          :map completion-preview-active-mode-map
-               ;; ----------------------------------------------------------------
-               ("M-n" . completion-preview-next-candidate)
-               ("M-p" . completion-preview-prev-candidate)
-               ("M-i" . completion-preview-insert))
-          )
-
-  ;; and in \\[shell] and friends
-  (with-eval-after-load 'comint
-    (add-hook 'comint-mode-hook #'completion-preview-mode))
-
-  (with-eval-after-load 'completion-preview
-    ;; ---------------------------------------------------------------------------
-    ;; Show the preview already after two symbol characters
-    (setq completion-preview-minimum-symbol-length 2)
-
-    ;; ---------------------------------------------------------------------------
-    ;; Non-standard commands to that should show the preview:
-
-    ;; ---------------------------------------------------------------------------
-    ;; Org mode has a custom `self-insert-command'
-    (push 'org-self-insert-command completion-preview-commands)
-
-    ;; ---------------------------------------------------------------------------
-    ;; Paredit has a custom `delete-backward-char' command
-    (push 'paredit-backward-delete completion-preview-commands))
-
-  ;; -----------------------------------------------------------------------------
-  ;; allows searching candidate -list
-  (use-package corfu
-    :ensure t
-    :config
-    (global-corfu-mode))
-
-#+end_src
-
-*** Filename Completion
-:PROPERTIES:
-:CUSTOM_ID: h:CE3B96E7-9192-491D-8006-79DC172E58BE
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
-
-  (require 'comint)
-  (setq completion-at-point-functions '(elisp-completion-at-point comint-dynamic-complete-filename t))
 
 #+end_src
 
@@ -3473,6 +3331,44 @@ of order, not unlike ~fzf~ on unix shells.
 
 #+end_src
 
+*** Corfu
+:PROPERTIES:
+:CUSTOM_ID: h:ECCCA56F-1E00-4202-9DFE-8407932F4C29
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  (use-package corfu
+    :ensure t
+
+    :custom
+    (corfu-cycle t)                 ; Allows cycling through candidates
+    (corfu-auto t)                  ; Enable auto completion
+    (corfu-auto-prefix 2)
+    (corfu-auto-delay 0.1)
+    (corfu-popupinfo-delay '(0.5 . 0.2))
+    (corfu-preview-current 'insert) ; insert previewed candidate
+    (corfu-preselect 'prompt)
+    (corfu-on-exact-match nil)      ; Don't auto expand tempel snippets
+
+    ;; Use TAB for cycling, default is `corfu-complete'.
+    :bind
+    :bind (:map corfu-map
+                ("M-SPC"      . corfu-insert-separator)
+                ("TAB"        . corfu-next)
+                ([tab]        . corfu-next)
+                ("S-TAB"      . corfu-previous)
+                ([backtab]    . corfu-previous)
+                ("S-<return>" . corfu-insert)
+                ("RET"        . nil))
+
+    :init
+    (global-corfu-mode)
+    (corfu-history-mode)
+    (corfu-popupinfo-mode))
+
+#+end_src
+
 *** Epilogue
 :PROPERTIES:
 :CUSTOM_ID: h:1bc53f97-9b2e-48e1-8062-6975224a6b02
@@ -3480,9 +3376,9 @@ of order, not unlike ~fzf~ on unix shells.
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
 
-    ;; -----------------------------------------------------------------------------
-    ;; last line
-    (provide 'anupam-emacs-completion)
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (provide 'anupam-emacs-completion)
 
 #+end_src
 
