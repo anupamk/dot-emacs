@@ -3107,6 +3107,43 @@ everywhere. Lets just set it up.
 
 #+end_src
 
+*** Terminal Emulator
+:PROPERTIES:
+:CUSTOM_ID: h:DE1CC610-8A43-44B4-9496-38ED69978BBB
+:END:
+
+**** VTerm
+:PROPERTIES:
+:CUSTOM_ID: h:D15B2F5B-2D75-4464-9671-B6ED9F4B49F0
+:END:
+
+Emacs-libvterm (vterm) is fully-fledged terminal emulator inside GNU
+Emacs based on libvterm, a C library. As a result of using compiled
+code (instead of elisp), emacs-libvterm is fully capable, fast, and it
+can seamlessly handle large outputs.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
+
+  (use-package vterm
+    :ensure t
+    :defer t
+    :custom
+    ;; ---------------------------------------------------------------------------
+    ;; auto-compile 'libvterm'.
+    ;;
+    ;; this *will* fail if following dependencies are *not* installed:
+    ;;     - 'c' compiler,
+    ;;     - cmake,
+    ;;     - libtool-bin, and
+    ;;     - libvterm (optional)
+    (vterm-always-compile-module t)
+
+    :config
+    ;; Speed up vterm
+    (setq vterm-timer-delay 0.01))
+
+#+end_src
+
 *** Epilogue
 :PROPERTIES:
 :CUSTOM_ID: h:c564e8ef-5f93-4e25-826c-519ff11ac483
