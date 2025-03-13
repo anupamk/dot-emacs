@@ -953,6 +953,14 @@ here.
     "1"       #'delete-other-windows
     "^"       #'tear-off-window)
 
+  (defvar-keymap anupam-prefix-cape-map
+    :doc "Prefix keymap for cape completions."
+    :name "cape actions"
+    :prefix 'anupam-prefix-cape
+    "d"      #'cape-dabbrev
+    "f"      #'cape-file
+    "h"      #'cape-history)
+
   ;; -----------------------------------------------------------------------------
   ;; final keymap of keymaps
   (defvar-keymap anupam-prefix-map
@@ -963,6 +971,7 @@ here.
     "m" (cons "minor mode toggles"  'anupam-toggle-mode)
     "f" (cons "file actions"        'anupam-prefix-file)
     "w" (cons "window actions"      'anupam-prefix-window)
+    "c" (cons "cape actions"        'anupam-prefix-cape)
     )
 
   ;; -----------------------------------------------------------------------------
@@ -3219,7 +3228,7 @@ of order, not unlike ~fzf~ on unix shells.
 
 #+end_src
 
-*** Orderless completion
+*** Orderless
 :PROPERTIES:
 :CUSTOM_ID: h:be801d35-439e-4e9c-98cf-b5aad89d3a1f
 :END:
@@ -3270,7 +3279,7 @@ of order, not unlike ~fzf~ on unix shells.
 
 #+end_src
 
-*** Vertico layout
+*** Vertico
 :PROPERTIES:
 :CUSTOM_ID: h:0b92d580-27e0-44f9-8629-34831732f861
 :END:
@@ -3283,7 +3292,7 @@ of order, not unlike ~fzf~ on unix shells.
 
 #+end_src
 
-*** Marginalia configuration
+*** Marginalia
 :PROPERTIES:
 :CUSTOM_ID: h:66b20394-5d85-4803-87d4-8a901303d759
 :END:
@@ -3331,6 +3340,33 @@ of order, not unlike ~fzf~ on unix shells.
 
 #+end_src
 
+*** Cape
+:PROPERTIES:
+:CUSTOM_ID: h:10F2578B-F772-4CE9-9517-B02870AF574A
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  (defun anupam:setup-cape-completions()
+    (setq-local completion-at-point-functions '(cape-file
+						      cape-abbrev
+						      cape-dabbrev
+						      cape-keyword)))
+  (use-package cape
+    :ensure t
+    :config
+
+    ;; -----------------------------------------------------------------------------
+    ;; same as corfu
+    (setq cape-dabbrev-min-length 2)
+    (setq cape-file-directory-must-exist nil)
+
+    :hook
+    (text-mode . anupam:setup-cape-completions)
+    (prog-mode . anupam:setup-cape-completions))
+
+#+end_src
+
 *** Corfu
 :PROPERTIES:
 :CUSTOM_ID: h:ECCCA56F-1E00-4202-9DFE-8407932F4C29
@@ -3342,30 +3378,51 @@ of order, not unlike ~fzf~ on unix shells.
     :ensure t
 
     :custom
-    (corfu-cycle t)                 ; Allows cycling through candidates
-    (corfu-auto t)                  ; Enable auto completion
-    (corfu-auto-prefix 2)
-    (corfu-auto-delay 0.1)
-    (corfu-popupinfo-delay '(0.5 . 0.2))
-    (corfu-preview-current 'insert) ; insert previewed candidate
-    (corfu-preselect 'prompt)
-    (corfu-on-exact-match nil)      ; Don't auto expand tempel snippets
+    ;; ---------------------------------------------------------------------------
+    ;; allow cycling through candidate list
+    (corfu-cycle t)
 
-    ;; Use TAB for cycling, default is `corfu-complete'.
+    ;; ---------------------------------------------------------------------------
+    ;; enable auto completion (disabled by default)
+    (corfu-auto t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; minimum length of prefix for auto completion to kick in.
+    (corfu-auto-prefix 2)
+
+    ;; ---------------------------------------------------------------------------
+    ;; delay for auto completion
+    (corfu-auto-delay 0.1)
+
+    ;; ---------------------------------------------------------------------------
+    ;; preview currently selected candidate
+    (corfu-preview-current 'insert)
+
+    ;; ---------------------------------------------------------------------------
+    ;; always select the prompt.
+    (corfu-preselect 'prompt)
+
+    ;; ---------------------------------------------------------------------------
+    ;; use TAB for cycling, default is `corfu-complete'.
     :bind
-    :bind (:map corfu-map
-                ("M-SPC"      . corfu-insert-separator)
-                ("TAB"        . corfu-next)
-                ([tab]        . corfu-next)
-                ("S-TAB"      . corfu-previous)
-                ([backtab]    . corfu-previous)
-                ("S-<return>" . corfu-insert)
-                ("RET"        . nil))
+    (:map corfu-map
+          ("M-SPC" . corfu-insert-separator)
+          ("TAB"   . corfu-next)
+          ("M-TAB" . corfu-previous)
+          ("RET"   . corfu-insert))
 
     :init
+    ;; ---------------------------------------------------------------------------
+    ;; use it everywhere
     (global-corfu-mode)
+
+    ;; ---------------------------------------------------------------------------
+    ;; save completion history for better sorting
     (corfu-history-mode)
-    (corfu-popupinfo-mode))
+
+    ;; ---------------------------------------------------------------------------
+    ;; display brief candidate documentation in the 'echo' area.
+    (corfu-echo-mode))
 
 #+end_src
 
