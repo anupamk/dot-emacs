@@ -2805,11 +2805,9 @@ Tame the tyranny of popup-buffers :o)
                '("\\*\\(Help\\|Colors\\|Apropos\\|Man\\|woman\\)\\*"
                  (display-buffer-in-side-window)
 
-                 (side         . right)
-                 (slot         . 0)
+                 (direction    . bottom)
                  (window-width . 0.5)
                  (dedicated    . nil)
-                 (window-parameters (no-delete-other-windows . nil))
                  ))
 
   ;; -----------------------------------------------------------------------------
@@ -3064,8 +3062,10 @@ everywhere. Lets just set it up.
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
 
   ;; -----------------------------------------------------------------------------
-  ;; don't enable it man ! we using 'wucuo' for this specific purpose
-  (flyspell-mode -1)
+  ;; disable flyspell-mode, we are using 'wucuo' for this. these two
+  ;; hooks ought to be sufficient for almost everthing that we do.
+  (dolist (hook-i '(text-mode-hook prog-mode-hook))
+    (add-hook hook-i (lambda () (flyspell-mode -1))))
 
   (use-package wucuo
     :ensure t
