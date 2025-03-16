@@ -3858,14 +3858,16 @@ Setup native version-control
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-version-control.el"
 
   (use-package diff-hl
+    :after magit
     :ensure t
-    :config
-    ;; ---------------------------------------------------------------------------
-    ;; toggle the mode in all buffers
-    (global-diff-hl-mode)
+    :demand
 
     :hook
     (magit-post-refresh . diff-hl-magit-post-refresh))
+
+  ;; -----------------------------------------------------------------------------
+  ;; enable it everywhere
+  (global-diff-hl-mode)
 
 #+end_src
 
