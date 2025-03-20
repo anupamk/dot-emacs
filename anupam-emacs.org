@@ -219,6 +219,11 @@ initialized before loading the regular init file.
   (horizontal-scroll-bar-mode -1)
 
   ;; -----------------------------------------------------------------------------
+  ;; never want to use this
+  (when (fboundp 'set-horizontal-scroll-bar-mode)
+    (set-horizontal-scroll-bar-mode nil))
+
+  ;; -----------------------------------------------------------------------------
   ;; for startup errors, uncomment this
   ;; (toggle-debug-on-error t)
 
@@ -2154,6 +2159,10 @@ etc. etc.
     :config
 
     ;; ---------------------------------------------------------------------------
+    ;; no startup message for me.
+    (setf inhibit-startup-message t)
+
+    ;; ---------------------------------------------------------------------------
     ;; auto-fill by default ?
     (auto-fill-mode t)
 
@@ -2306,6 +2315,28 @@ etc. etc.
     (setq transient-mark-mode t)
 
     ;; ---------------------------------------------------------------------------
+    ;; lexical binding by default. Must be delayed since Emacs sets this
+    ;; on its own to nil after initialization.
+    (run-at-time 0 nil (lambda ()
+			       (setq-default lexical-binding t)))
+
+    ;; ---------------------------------------------------------------------------
+    ;; the one true encoding please
+    (prefer-coding-system         'utf-8)
+    (set-terminal-coding-system   'utf-8)
+    (set-keyboard-coding-system   'utf-8)
+    (set-language-environment     'utf-8)
+    (set-selection-coding-system  'utf-8)
+    (setq locale-coding-system    'utf-8)
+    (setq coding-system-for-read  'utf-8)
+    (setq coding-system-for-write 'utf-8)
+    (setq default-process-coding-system '(utf-8-unix . utf-8-unix))
+
+    ;; -------------------------------------------------------------------------
+    ;; additional space to put between lines when displaying a buffer
+    (setq-default line-spacing -1)
+
+    ;; ---------------------------------------------------------------------------
     ;; maximum number of bytes to read from a sub-process in a single
     ;; chunk.
     ;;
@@ -2344,6 +2375,10 @@ etc. etc.
     ;; ---------------------------------------------------------------------------
     ;; copy to kill-ring upon mouse adjustments of the region.
     (setq mouse-drag-copy-region t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; If non-nil, mouse yank commands yank at point instead of at click.
+    (setf mouse-yank-at-point t)
 
     ;; ---------------------------------------------------------------------------
     ;; how much should we scroll when the mouse-wheel is spun around ? when the
@@ -2391,6 +2426,7 @@ etc. etc.
           ("C-x C-z"  . nil)
           ("C-h h"    . nil)
           ("C-x C-c"  . nil)
+          ("C-c C-l"  . nil)
           ("M-`"      . nil)
 
           ;; ---------------------------------------------------------------
@@ -2556,8 +2592,14 @@ this is not the default. Let's just fix that.
     ;; post-forward-angle-brackets   name<bar/mumble>   name<quux/mumble>
     ;; nil                           name               name<2>
     (setq uniquify-buffer-name-style 'post-forward-angle-brackets)
-    (setq uniquify-separator "•")
+
+    ;; ---------------------------------------------------------------------------
+    ;; rerationalize buffer-names after a buffer has been killed.
     (setq uniquify-after-kill-buffer-p t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; Regular expression matching buffer names that should not be
+    ;; uniquified.
     (setq uniquify-ignore-buffers-re "^\\*"))
 
 #+end_src
@@ -3846,7 +3888,12 @@ Setup native version-control
     ;; ---------------------------------------------------------------------------
     ;; why would you use anything else ?
     (require 'vc-git)
-    (setq vc-handled-backends '(Git)))
+    (setq vc-handled-backends '(Git))
+
+    ;; ---------------------------------------------------------------------------
+    ;; If non-nil, display revision number and lock status in mode line.
+    ;; If nil, only the backend name is displayed.
+    (setf vc-display-status nil))
 
 #+end_src
 
@@ -4011,19 +4058,7 @@ And finally, the *best* git client by far.
   (use-package paren
     :ensure nil
     :config
-    (setq show-paren-style 'parenthesis)
-    (setq show-paren-delay 0)
-    (setq show-paren-when-point-in-periphery nil)
-    (setq show-paren-when-point-inside-paren nil)
-    (set-face-foreground 'show-paren-mismatch "orange red")
-    (set-face-background 'show-paren-match "black")
-    (set-face-foreground 'show-paren-match "gold")
-    (setq show-paren-context-when-offscreen 'overlay)
-
-    :hook
-    (prog-mode . show-paren-local-mode))
-
-  (show-paren-mode t)
+    (show-paren-mode))
 
 #+end_src
 
