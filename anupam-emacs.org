@@ -1832,15 +1832,18 @@ Declutter the mode-line with minions.
             ;; dimmer / subtler colors seems to agree more with me
             (fg-main      fg-dim)
             (cursor       magenta-intense)
-            (string       green-warmer)
+            (string       green-faint)
             (preprocessor cyan-faint)
-            (keyword      slate)
-            (type         slate)
+            (keyword      blue-faint)
+            (type         yellow-faint)
             (fnname       fg-ochre)
             (comment      bg-term-black-bright)
             (builtin      yellow-faint)
             (bg-hl-line   bg-dim)
-            (variable     docstring)
+            (docstring    comment)
+            (docmarkup    yellow-faint)
+            (constant     fg-term-white)
+            (variable     fg-term-white)
 
             ;; add more customizations ↑
             ;; -------------------------------------------------------------------
