@@ -1951,10 +1951,7 @@ interactions with Emacs. Lets set that up here.
     ;; ---------------------------------------------------------------------------
     ;; persist the latest font preset when closing/starting Emacs and
     ;; while switching between themes.
-    ((after-init . fontaine-mode)
-     (after-init . (lambda ()
-                     ;; Set last preset or fall back to desired style from `fontaine-presets'.
-                     (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular)))))
+    (after-init . fontaine-mode)
 
     :bind (("C-c f" . fontaine-set-preset))
 
