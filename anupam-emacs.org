@@ -3588,8 +3588,8 @@ regexes all the time.
 
     :bind
     (:map isearch-mode-map
-          ("C-o" . anupam:isearch-occur-from-isearch)
-          ("C-p" . anupam:project-search-from-isearch)
+          ("C-c C-o" . anupam:isearch-occur-from-isearch)
+          ("C-c C-p" . anupam:project-search-from-isearch)
 
           ;; ---------------------------------------------------------------------
           ;; Many times you want to select the current symbol to start
@@ -3607,11 +3607,11 @@ regexes all the time.
           ;; mode since I find it easier being close to C-s on a qwerty
           ;; keyboard. I can then just do C-s C-d and I’ll get that
           ;; symbol filled.
-          ("C-d" . isearch-forward-symbol-at-point)
+          ("C-c C-d" . isearch-forward-symbol-at-point)
 
           ;; ---------------------------------------------------------------------
           ;; invoke 'consult-line' from isearch
-          ("C-l" . anupam:isearch-consult-line-from-isearch))
+          ("C-c C-l" . anupam:isearch-consult-line-from-isearch))
 
     :config
     ;; ---------------------------------------------------------------------------
