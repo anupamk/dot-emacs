@@ -3426,6 +3426,7 @@ of order, not unlike ~fzf~ on unix shells.
     ;; same as corfu
     (setq cape-dabbrev-min-length 2)
     (setq cape-file-directory-must-exist nil)
+    (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
 
     :hook
     (text-mode . anupam:setup-cape-completions)
