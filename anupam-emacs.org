@@ -1352,7 +1352,7 @@ Per $HOST configuration.
   ;; -----------------------------------------------------------------------------
   ;; where is git installed ?
   ;; much fasta magit experience: https://jakemccrary.com/blog/2020/11/14/speeding-up-magit/
-  (defconst anupam-magit:magit-git-executable "/opt/local/bin/git")
+  (defconst anupam-magit:magit-git-executable "/opt/homebrew/bin/git")
 
   ;; ---------------------------------------------------------------------------
   ;; resort to the canonical `dict.org' for lookups
