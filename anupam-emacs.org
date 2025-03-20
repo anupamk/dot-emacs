@@ -1597,6 +1597,7 @@ Per $HOST configuration.
   ;; some keybindings
   (global-set-key (kbd "C-<f2>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.b10.1xx")))
   (global-set-key (kbd "C-<f3>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.r10.xxx")))
+  (global-set-key (kbd "C-<f4>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a4.b10.1xx")))
   (global-set-key (kbd "C-<f5>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.h10.1xx")))
   (global-set-key (kbd "C-<f6>")  (lambda() (interactive) (anupam-cc-mode:compile-eventually-with-bazel "cap.a3.h10.2xx")))
   (global-set-key (kbd "C-<f8>")  (lambda() (interactive) (anupam-cc-mode:verify-with-bazel)))
@@ -4421,10 +4422,10 @@ Utility functions for working with C & C++ sources.
       (anupam-cc-mode:compile-eventually "bazel_build_defs" bazel-compile-cmdstr)))
 
   ;; ---------------------------------------------------------------------------
-  ;; test with bazel
+  ;; verify with bazel
   ;;;###autoload
   (defun anupam-cc-mode:verify-with-bazel ()
-    "test with bazel"
+    "verify with bazel"
     (interactive)
     (let ((bazel-test-cmdstr (concat "t3 verify | cut -c26-")))
       (anupam-cc-mode:compile-eventually "bazel_build_defs" bazel-test-cmdstr)))
