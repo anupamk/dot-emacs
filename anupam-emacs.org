@@ -3627,6 +3627,22 @@ search results, specifying custom query commands etc. etc.
 
 #+end_src
 
+*** XRef
+:PROPERTIES:
+:CUSTOM_ID: h:6E0F51F3-04D7-4650-9C18-1C3FC040FD6A
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; use ripgrep for xref as well
+  (use-package xref
+    :ensure nil
+    :custom
+    (xref-search-program 'ripgrep))
+
+#+end_src
+
 *** Epilogue
 :PROPERTIES:
 :CUSTOM_ID: h:731e843b-364e-4c51-b7bd-be2ad4d36af8
