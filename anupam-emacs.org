@@ -2837,6 +2837,11 @@ Tame the tyranny of popup-buffers :o)
   (setq display-buffer-alist nil)
 
   ;; -----------------------------------------------------------------------------
+  ;; select a window.
+  (defun anupam:select-buffer (window &rest _)
+    (select-window window))
+
+  ;; -----------------------------------------------------------------------------
   ;; all '*Help*', '*Colors*', '*Apropos*', '*Man.*\\*' windows must:
   ;;    - first 'display-buffer-reuse-window' i.e. find an existing
   ;;      window and reuse that one, and
@@ -2857,32 +2862,36 @@ Tame the tyranny of popup-buffers :o)
   (setq magit-display-buffer-function #'display-buffer)
   (add-to-list 'display-buffer-alist
             `(,(make-display-buffer-matcher-function '(magit-mode))
-              (display-buffer-reuse-mode-window
-               display-buffer-in-direction)
+
+              (display-buffer-reuse-mode-window display-buffer-in-direction)
 
               (mode magit-mode)
-              (window       . root)
-              (window-width . 0.5)
-              (direction    . right)))
+              (window        . root)
+              (window-width  . 0.5)
+              (direction     . right)
+              (body-function . anupam:select-buffer)
+              ))
 
   ;; -----------------------------------------------------------------------------
-  ;; all '*compilation*', '*rg*', '*xref*'buffers follow this
+  ;; all '*compilation*', '*rg*', '*xref*' buffers follow this
   (add-to-list 'display-buffer-alist
                `(,(make-display-buffer-matcher-function '(rg-mode
                                                           compilation-mode
-                                                          xref--xref-buffer-mode))
+                                                          xref--xref-buffer-mode
+                                                          occur-mode))
 
-                 (display-buffer-reuse-mode-window
-                  display-buffer-in-direction)
+                 (display-buffer-reuse-mode-window display-buffer-at-bottom)
 
                  (mode rg-mode
                        compilation-mode
-                       xref--xref-buffer-mode)
+                       xref--xref-buffer-mode
+                       occur-mode)
 
                  (window        . root)
                  (window-height . 0.2)
                  (direction     . bottom)
                  (dedicated     . t)
+                 (body-function . anupam:select-buffer)
                  ))
 
 #+end_src
@@ -3305,19 +3314,33 @@ of order, not unlike ~fzf~ on unix shells.
   (use-package dabbrev
     :ensure nil
     :commands (dabbrev-expand dabbrev-completion)
+
     :config
-  ;;;; `dabbrev' (dynamic word completion (dynamic abbreviations))
-    (setq dabbrev-abbrev-char-regexp "\\sw\\|\\s_")
+    ;; ---------------------------------------------------------------------------
+    ;; regexp for skipping leading characters of an abbreviation.
     (setq dabbrev-abbrev-skip-leading-regexp "[$*/=~']")
     (setq dabbrev-backward-only nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; fixups for 'case' searching.
     (setq dabbrev-case-distinction 'case-replace)
-    (setq dabbrev-case-fold-search nil)
     (setq dabbrev-case-replace 'case-replace)
+
+    ;; ---------------------------------------------------------------------------
+    ;; control whether dabbrev searches should ignore case.
+    ;;    'nil' ==> case-is-significant
+    (setq dabbrev-case-fold-search nil)
+    (setq dabbrev-upcase-means-case-search t)
+
     (setq dabbrev-check-other-buffers t)
     (setq dabbrev-eliminate-newlines t)
-    (setq dabbrev-upcase-means-case-search t)
-    (setq dabbrev-ignored-buffer-modes
-          '(archive-mode image-mode docview-mode pdf-view-mode)))
+
+    ;; ---------------------------------------------------------------------------
+    ;; inhibit looking for abbreviations in buffers derived from these modes
+    (setq dabbrev-ignored-buffer-modes '(archive-mode
+                                         image-mode
+                                         docview-mode
+                                         pdf-view-mode)))
 
 #+end_src
 
@@ -3378,7 +3401,7 @@ of order, not unlike ~fzf~ on unix shells.
     ;; results
     (setq consult-locate-args "plocate --ignore-case --limit 100"))
 
-    (global-set-key (kbd "C-x b")   #'consult-buffer)
+  (global-set-key (kbd "C-x b") #'consult-buffer)
 
 #+end_src
 
@@ -3510,11 +3533,87 @@ regexes all the time.
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el"
 
+  ;; -----------------------------------------------------------------------------
+  ;; When you search a buffer with a word it may become tedious to jump
+  ;; around with 'C-s', you can use the key combo 'M-s o' in isearch to
+  ;; automatically have an overview of all the occurrences in the occur
+  ;; buffer.
+  ;;
+  ;; I like to keep that buffer and have the isearch mode exited. To be
+  ;; able to do this I have a little function that does it:
+  (defun anupam:isearch-occur-from-isearch ()
+    (interactive)
+    (let ((query (if isearch-regexp
+                     isearch-string
+                   (regexp-quote isearch-string))))
+      (isearch-update-ring isearch-string isearch-regexp)
+      (let (search-nonincremental-instead)
+        (ignore-errors (isearch-done t t)))
+      (occur query)))
+
+  ;; -----------------------------------------------------------------------------
+  ;; perform a project search out of the current search word instead of
+  ;; limiting ourselves to the current buffer:
+  (defun anupam:project-search-from-isearch ()
+    (interactive)
+    (let ((query (if isearch-regexp
+                     isearch-string
+                   (regexp-quote isearch-string))))
+      (isearch-update-ring isearch-string isearch-regexp)
+      (let (search-nonincremental-instead)
+        (ignore-errors (isearch-done t t)))
+      (project-find-regexp query)))
+
+  ;; -----------------------------------------------------------------------------
+  ;; Sometime I want to have a interactive way to jump into the current
+  ;; search word, you can use consult-line from the consult package to
+  ;; jump interactively. But if you want to jump from the current
+  ;; isearch term you can just use that same simple function from
+  ;; earlier and instead consult-line like this:
+  (defun anupam:isearch-consult-line-from-isearch ()
+    "Invoke `consult-line' from isearch."
+    (interactive)
+    (let ((query (if isearch-regexp
+                     isearch-string
+                   (regexp-quote isearch-string))))
+      (isearch-update-ring isearch-string isearch-regexp)
+      (let (search-nonincremental-instead)
+        (ignore-errors (isearch-done t t)))
+      (consult-line query)))
+
   (use-package isearch
     :ensure nil
     :demand t
+
+    :bind
+    (:map isearch-mode-map
+          ("C-o" . anupam:isearch-occur-from-isearch)
+          ("C-p" . anupam:project-search-from-isearch)
+
+          ;; ---------------------------------------------------------------------
+          ;; Many times you want to select the current symbol to start
+          ;; the search, there is multiple way to do this. In evil I can
+          ;; do a selection with vio to select the current symbol and
+          ;; thanks to the defadvice in the previous tip it would
+          ;; automatically select that symbol for search.
+          ;;
+          ;; Emacs has a builtin way to do this using M-s . or since
+          ;; Emacs 28 you can use the function
+          ;; isearch-forward-thing-at-point to directly start a search
+          ;; with the current symbol.
+          ;;
+          ;; I find it easier for me to remap the C-d key in isearch
+          ;; mode since I find it easier being close to C-s on a qwerty
+          ;; keyboard. I can then just do C-s C-d and I’ll get that
+          ;; symbol filled.
+          ("C-d" . isearch-forward-symbol-at-point)
+
+          ;; ---------------------------------------------------------------------
+          ;; invoke 'consult-line' from isearch
+          ("C-l" . anupam:isearch-consult-line-from-isearch))
+
     :config
-    ;; -----------------------------------------------------------------------------
+    ;; ---------------------------------------------------------------------------
     ;; basic settings
     (setq search-whitespace-regexp ".*?")
     (setq search-highlight t)
@@ -3522,48 +3621,22 @@ regexes all the time.
     (setq isearch-regexp-lax-whitespace nil)
     (setq isearch-lazy-highlight t)
 
-    ;; -----------------------------------------------------------------------------
+    ;; ---------------------------------------------------------------------------
     ;; these are newer
     (setq isearch-lazy-count t)
     (setq lazy-count-prefix-format "(%s/%s) ")
     (setq lazy-count-suffix-format "[%s of %s]")
     (setq isearch-yank-on-move 'shift)
-    (setq isearch-allow-scroll 'unlimited))
+    (setq isearch-allow-scroll 'unlimited)
 
-#+end_src
-
-*** Highlight during search
-:PROPERTIES:
-:CUSTOM_ID: h:f28e5889-6d71-45cf-bc66-cbad2034c8f3
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el"
-
-  (use-package isearch
-    :ensure nil
-    :demand t
-    :config
-    (setq search-highlight t)
-    (setq isearch-lazy-highlight t)
+    ;; ---------------------------------------------------------------------------
+    ;; seconds to wait before beginning to lazily highlight all matches.
     (setq lazy-highlight-initial-delay 0.5)
+
+    ;; ---------------------------------------------------------------------------
+    ;; search strings at least '4' long, lazy highlight starts
+    ;; immediately.
     (setq lazy-highlight-no-delay-length 4))
-
-#+end_src
-
-*** Isearch counter
-:PROPERTIES:
-:CUSTOM_ID: h:fecfe265-fd6c-4d1e-a8f1-d88427f752b6
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el"
-
-  (use-package isearch
-    :ensure nil
-    :demand t
-    :config
-    (setq isearch-lazy-count t)
-    (setq lazy-count-prefix-format "(%s/%s) ")
-    (setq lazy-count-suffix-format nil))
 
 #+end_src
 
