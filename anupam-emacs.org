@@ -4622,6 +4622,75 @@ option to set this up.
 
 #+end_src
 
+** Org Mode Configuration
+:PROPERTIES:
+:CUSTOM_ID: h:36FB776E-7086-4B7F-977E-5B798D84C8F3
+:END:
+
+*** Prologue
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-org-mode.el" :mkdirp yes
+
+  ;;; anupam-emacs-org-mode.el -- org-mode specific configuration -*- lexical-binding:t -*-
+
+#+end_src
+
+*** Basics
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-org-mode.el" :mkdirp yes
+
+  (use-package org
+    :ensure nil
+    :functions (anupamk/do-org-mode-setup)
+
+    :config
+    (defun anupamk/do-org-mode-setup ()
+      "run these commands every time an org-mode buffer starts up"
+
+      ;; -------------------------------------------------------------------------
+      ;; indent text according to outline structure
+      (org-indent-mode)
+
+      ;; -------------------------------------------------------------------------
+      ;; code-blocks within org-mode
+      (setq org-src-window-setup 'current-window)
+      (setq org-src-fontify-natively t)
+      (setq org-src-preserve-indentation t)
+      (setq org-src-tab-acts-natively t)
+      (setq org-confirm-babel-evaluate nil)
+      (setq org-edit-src-content-indentation 0)
+
+      ;; -------------------------------------------------------------------------
+      ;; when `visual-line-mode' is enabled, word-wrap is turned on, and
+      ;; simple editing commands are redefined to act on visual lines, not
+      ;; logical lines.
+      (visual-line-mode 1))
+
+    :hook (org-mode . anupamk/do-org-mode-setup))
+
+  (require 'org-tempo)
+  (add-to-list 'org-structure-template-alist '("sh"   . "src shell"))
+  (add-to-list 'org-structure-template-alist '("el"   . "src emacs-lisp"))
+  (add-to-list 'org-structure-template-alist '("py"   . "src python"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; remove 'C-c C-l' from global-map
+  (global-unset-key (kbd "C-c C-l"))
+
+#+end_src
+
+*** Epilogue
+:PROPERTIES:
+:CUSTOM_ID: h:60615BB4-0DDA-4560-A1F6-6B8503E4DC7C
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-org-mode.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (provide 'anupam-emacs-org-mode)
+
+#+end_src
 
 * End of configuration
 :PROPERTIES:
