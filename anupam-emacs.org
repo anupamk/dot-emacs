@@ -1749,9 +1749,9 @@ Declutter the mode-line with minions.
         '(
           ;; -------------------------------------------------------------------
           ;; dimmer backgrounds are better
-          (bg-main "#fdf8e8")
+          (bg-main "#d4d4d4")
           (fg-main "#3a484d")
-          (bg-hl-line bg-ochre)
+          (bg-hl-line bg-blue-subtle)
           (cursor red-faint)
 
           ;; -------------------------------------------------------------------
