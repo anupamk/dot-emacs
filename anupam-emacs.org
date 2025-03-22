@@ -1153,7 +1153,7 @@ Per $HOST configuration.
 
   ;; -----------------------------------------------------------------------------
   ;; host specific theme+font customizations
-  (defconst anupam-theme-name "modus-vivendi")
+  (defconst anupam-theme-name "modus-operandi")
   (anupam-common:setup-all-font-families-by-name "Berkeley Mono")
 
   ;; -----------------------------------------------------------------------------
@@ -2928,30 +2928,24 @@ Load various applications and utilities.
 
 #+end_src
 
-*** Which key
+*** Ultra scroll
 :PROPERTIES:
-:CUSTOM_ID: h:24a2a45b-b73f-4a96-aeb6-9ec1405899d8
+:CUSTOM_ID: h:B7FCD787-3141-4906-A8A4-A0D181FC5682
 :END:
-
-This is a minor mode for Emacs that displays the key bindings following your
-currently entered incomplete command.
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el"
 
-  (use-package emacs-which-key
-    :disabled
-
-    :ensure nil
-    :hook (after-init . which-key-mode)
+  (use-package ultra-scroll
+    :vc (:url "https://github.com/jdtsmith/ultra-scroll")
+    :init
+    (setq scroll-conservatively 101 ; important!
+          scroll-margin 0)
     :config
-    (setq which-key-separator "  ")
-    (setq which-key-prefix-prefix "... ")
-    (setq which-key-max-display-columns 3)
-    (setq which-key-idle-delay 1.5)
-    (setq which-key-idle-secondary-delay 0.25)
-    (setq which-key-add-column-padding 1)
-    (setq which-key-popup-type 'side-window)
-    (setq which-key-max-description-length 40))
+    (ultra-scroll-mode 1))
+
+  ;; -----------------------------------------------------------------------------
+  ;; hiding cursors, and disabling other modules during scrolling.
+  (add-hook 'ultra-scroll-hide-functions 'hl-line-mode)
 
 #+end_src
 
