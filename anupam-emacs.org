@@ -607,13 +607,23 @@ them.
     (unless package-archive-contents
       (package-refresh-contents))
 
+  ;; -----------------------------------------------------------------------------
   ;; Install use-package if necessary
   (unless (package-installed-p 'use-package)
     (package-install 'use-package))
 
+  ;; -----------------------------------------------------------------------------
   ;; Ensure use-package is available at compile time
   (eval-when-compile
     (require 'use-package))
+
+  ;; -----------------------------------------------------------------------------
+  ;; want to see loading time of each package during startup ? here is
+  ;; how:
+  ;;    - uncomment '(setq use-package-compute-statistics t)' below,
+  ;;    - restart emacs, and then
+  ;;    - M-x use-package-report
+  (setq use-package-compute-statistics t)
 
 #+end_src
 
