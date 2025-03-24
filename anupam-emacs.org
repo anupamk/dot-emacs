@@ -2421,7 +2421,7 @@ etc. etc.
     :ensure nil
     :demand t
 
-    :bind(
+    :bind (
           :map global-map
           ;; ---------------------------------------------------------------
           ;; multi-lingual text input ?!
@@ -3590,32 +3590,19 @@ regexes all the time.
     :ensure nil
     :demand t
 
-    :bind
-    (:map isearch-mode-map
-          ("C-c C-o" . anupam:isearch-occur-from-isearch)
-          ("C-c C-p" . anupam:project-search-from-isearch)
+    :bind (:map global-map
+                ;; ---------------------------------------------------------------
+                ;; these are made available all the timer.
+                ("M-s M-o" . anupam:isearch-occur-from-isearch)
+                ("M-s M-p" . anupam:project-search-from-isearch)
 
-          ;; ---------------------------------------------------------------------
-          ;; Many times you want to select the current symbol to start
-          ;; the search, there is multiple way to do this. In evil I can
-          ;; do a selection with vio to select the current symbol and
-          ;; thanks to the defadvice in the previous tip it would
-          ;; automatically select that symbol for search.
-          ;;
-          ;; Emacs has a builtin way to do this using M-s . or since
-          ;; Emacs 28 you can use the function
-          ;; isearch-forward-thing-at-point to directly start a search
-          ;; with the current symbol.
-          ;;
-          ;; I find it easier for me to remap the C-d key in isearch
-          ;; mode since I find it easier being close to C-s on a qwerty
-          ;; keyboard. I can then just do C-s C-d and I’ll get that
-          ;; symbol filled.
-          ("C-c C-d" . isearch-forward-symbol-at-point)
+                ;; ---------------------------------------------------------------------
+                ;; bind to a more convenient key
+                ("M-s M-d" . isearch-forward-thing-at-point)
 
-          ;; ---------------------------------------------------------------------
-          ;; invoke 'consult-line' from isearch
-          ("C-c C-l" . anupam:isearch-consult-line-from-isearch))
+                ;; ---------------------------------------------------------------------
+                ;; invoke 'consult-line' from isearch
+                ("M-s M-c" . anupam:isearch-consult-line-from-isearch))
 
     :config
     ;; ---------------------------------------------------------------------------
