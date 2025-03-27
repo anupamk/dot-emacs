@@ -691,16 +691,6 @@ here.
     (string-equal (system-name) host_name))
 
   ;; -----------------------------------------------------------------------------
-  ;; set all font families (default/fixed/variable) by name
-  ;;;###autoload
-  (defun anupam-common:setup-all-font-families-by-name (font-name)
-    "setup all font families, we don't particularly care about it too much for now"
-    (progn
-      (set-face-attribute 'default nil :family font-name)
-      (set-face-attribute 'fixed-pitch nil :family font-name)
-      (set-face-attribute 'variable-pitch nil :family font-name)))
-
-  ;; -----------------------------------------------------------------------------
   ;; did vi(m) get anything right ? paren matching probably...
   ;;;###autoload
   (defun anupam-common:vi-match-paren (arg)
@@ -1035,7 +1025,7 @@ Per $HOST configuration.
   ;; -----------------------------------------------------------------------------
   ;; host specific theme+font customizations
   (defconst anupam-theme-name "modus-operandi")
-  (anupam-common:setup-all-font-families-by-name "PragmataPro Mono")
+  (defconst anupam-font-family-name "PragmataPro Mono")
 
   ;; -----------------------------------------------------------------------------
   ;; setup 'language-server-protocol' (LSP) server.
@@ -1164,7 +1154,7 @@ Per $HOST configuration.
   ;; -----------------------------------------------------------------------------
   ;; host specific theme+font customizations
   (defconst anupam-theme-name "modus-operandi")
-  (anupam-common:setup-all-font-families-by-name "Berkeley Mono")
+  (defconst anupam-font-family-name "Berkeley Mono")
 
   ;; -----------------------------------------------------------------------------
   ;; language server protocol (lsp) server, we use ccls on this machine.
@@ -1181,7 +1171,7 @@ Per $HOST configuration.
   ;; -----------------------------------------------------------------------------
   ;; this is the actual server that will be used. see eglot
   ;; configuration section more information
-  (defconst cc-mode:lsp-server-with-args anupam-cc-mode:lsp-server-clangd-with-args)
+  (defconst cc-mode:lsp-server-with-args anupam-cc-mode:lsp-server-ccls-with-args)
 
   ;; -----------------------------------------------------------------------------
   ;; ,----[from the gcc man-page]
@@ -1334,7 +1324,7 @@ Per $HOST configuration.
   ;; -----------------------------------------------------------------------------
   ;; host specific theme+font customizations
   (defconst anupam-theme-name "modus-operandi")
-  (anupam-common:setup-all-font-families-by-name "Berkeley Mono")
+  (defconst anupam-font-family-name "Berkeley Mono")
 
   ;; -----------------------------------------------------------------------------
   ;; language server protocol (lsp) server, we use ccls on this machine.
@@ -1452,7 +1442,7 @@ Per $HOST configuration.
   ;; -----------------------------------------------------------------------------
   ;; host specific theme+font customizations
   (defconst anupam-theme-name "zenburn")
-  (anupam-common:setup-all-font-families-by-name "Go Mono")
+  (defconst anupam-font-family-name "Berkeley Mono")
 
   ;; -----------------------------------------------------------------------------
   ;; setup 'language-server-protocol' (LSP) server.
@@ -1964,10 +1954,12 @@ interactions with Emacs. Lets set that up here.
     ;; while switching between themes.
     (after-init . fontaine-mode)
 
-    :bind (("C-c f" . fontaine-set-preset))
+    :bind
+    ;; ---------------------------------------------------------------------------
+    ;; global-map
+    ("C-c f" . fontaine-set-preset)
 
     :config
-
     ;; ---------------------------------------------------------------------------
     ;; should text-scaling change the font size of header lines too ?
     ;; when `t' yes, yes we must.
@@ -1981,119 +1973,92 @@ interactions with Emacs. Lets set that up here.
     (setq fontaine-latest-state-file (locate-user-emacs-file "fontaine-latest-state.eld"))
 
     ;; ---------------------------------------------------------------------------
-    ;; notice that we are not specifying font names here. these are
-    ;; specified, on a per-host basis, using:
-    ;; `anupam-common:setup-all-font-families-by-name'
+    ;; quasi-quoting in lisp is quite useful, as demonstrated here.
     ;;
-    ;; it might be a good idea to specify the font sizes too i suppose.
-    (setq fontaine-presets
-          '((small
-             :default-height 110)
+    ;; fonts are not specified with a name, but through the
+    ;; 'anupam-font-family-name' variable. this variable specifies the
+    ;; font-family to use.
+    ;;
+    ;; for now just a single family is sufficient for 'fixed-pitch',
+    ;; 'variable-pitch' as well as 'default-family'. when needed, these
+    ;; can always be broken out into something more fancier.
+    (setq fontaine-presets `((small
+                              :default-family ,anupam-font-family-name
+                              :fixed-pitch    ,anupam-font-family-name
+                              :variable-pitch ,anupam-font-family-name
 
-            (regular
-             :default-height 120)
+                              :default-height 110)
 
-            (medium
-             :default-height 130)
+                             (regular
+                              :default-family ,anupam-font-family-name
+                              :fixed-pitch    ,anupam-font-family-name
+                              :variable-pitch ,anupam-font-family-name
 
-            (medium-plus
-             :default-height 140)
+                              :default-height 120)
 
-            (large
-             :default-height 150)
+                             (medium
+                              :default-family ,anupam-font-family-name
+                              :fixed-pitch    ,anupam-font-family-name
+                              :variable-pitch ,anupam-font-family-name
 
-            (large-plus
-             :default-height 160)
+                              :default-height 130)
 
-            (large-plus-plus
-             :default-height 170)
+                             (medium-plus
+                              :default-family ,anupam-font-family-name
+                              :fixed-pitch    ,anupam-font-family-name
 
-            (hulk
-             :default-height 180)
+                              :variable-pitch ,anupam-font-family-name
 
-            (hulk-plus
-             :default-height 190)
+                              :default-height 140)
 
-            (hulk-plus-plus
-             :default-height 200)
+                             (large
+                              :default-family ,anupam-font-family-name
+                              :fixed-pitch    ,anupam-font-family-name
+                              :variable-pitch ,anupam-font-family-name
 
-            (jumbo
-             :default-height 220)
+                              :default-height 150)
 
-            (t
-             ;; ------------------------------------------------------------------
-             ;; just show all possible properties.
-             :default-weight            regular
-             :default-slant             normal
-             :default-width             normal
-             :default-height            110
+                             (large-plus
+                              :default-family ,anupam-font-family-name
+                              :fixed-pitch    ,anupam-font-family-name
+                              :variable-pitch ,anupam-font-family-name
 
-             :fixed-pitch-weight        nil
-             :fixed-pitch-slant         nil
-             :fixed-pitch-width         nil
-             :fixed-pitch-height        1.0
+                              :default-height 160)
 
-             :fixed-pitch-serif-family  nil
-             :fixed-pitch-serif-weight  nil
-             :fixed-pitch-serif-slant   nil
-             :fixed-pitch-serif-width   nil
-             :fixed-pitch-serif-height  1.0
+                             (large-plus-plus
+                              :default-family ,anupam-font-family-name
+                              :fixed-pitch    ,anupam-font-family-name
+                              :variable-pitch ,anupam-font-family-name
 
-             :variable-pitch-weight     nil
-             :variable-pitch-slant      nil
-             :variable-pitch-width      nil
-             :variable-pitch-height     1.0
+                              :default-height 170)
 
-             :mode-line-active-family   nil
-             :mode-line-active-weight   nil
-             :mode-line-active-slant    nil
-             :mode-line-active-width    nil
-             :mode-line-active-height   1.0
+                             (hulk
+                              :default-family ,anupam-font-family-name
+                              :fixed-pitch    ,anupam-font-family-name
+                              :variable-pitch ,anupam-font-family-name
 
-             :mode-line-inactive-family nil
-             :mode-line-inactive-weight nil
-             :mode-line-inactive-slant  nil
-             :mode-line-inactive-width  nil
-             :mode-line-inactive-height 1.0
+                              :default-height 180)
 
-             :header-line-family        nil
-             :header-line-weight        nil
-             :header-line-slant         nil
-             :header-line-width         nil
-             :header-line-height        1.0
+                             (hulk-plus
+                              :default-family ,anupam-font-family-name
+                              :fixed-pitch    ,anupam-font-family-name
+                              :variable-pitch ,anupam-font-family-name
 
-             :line-number-family        nil
-             :line-number-weight        nil
-             :line-number-slant         nil
-             :line-number-width         nil
-             :line-number-height        1.0
+                              :default-height 190)
 
-             :tab-bar-family            nil
-             :tab-bar-weight            nil
-             :tab-bar-slant             nil
-             :tab-bar-width             nil
-             :tab-bar-height            1.0
+                             (hulk-plus-plus
+                              :default-family ,anupam-font-family-name
+                              :fixed-pitch    ,anupam-font-family-name
+                              :variable-pitch ,anupam-font-family-name
 
-             :tab-line-family           nil
-             :tab-line-weight           nil
-             :tab-line-slant            nil
-             :tab-line-width            nil
-             :tab-line-height           1.0
+                              :default-height 200)
 
-             :bold-family               nil
-             :bold-slant                nil
-             :bold-weight               normal
-             :bold-width                nil
-             :bold-height               1.0
+                             (jumbo
+                              :default-family ,anupam-font-family-name
+                              :fixed-pitch    ,anupam-font-family-name
+                              :variable-pitch ,anupam-font-family-name
 
-             :italic-family             nil
-             :italic-weight             nil
-             :italic-slant              normal
-             :italic-width              nil
-             :italic-height             1.0
-
-             :line-spacing              nil
-             ))))
+                              :default-height 220))))
 
 #+end_src
 
