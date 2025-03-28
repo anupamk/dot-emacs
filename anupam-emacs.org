@@ -1441,7 +1441,7 @@ Per $HOST configuration.
 
   ;; -----------------------------------------------------------------------------
   ;; host specific theme+font customizations
-  (defconst anupam-theme-name "zenburn")
+  (defconst anupam-theme-name "modus-operandi")
   (defconst anupam-font-family-name "Berkeley Mono")
 
   ;; -----------------------------------------------------------------------------
@@ -1457,16 +1457,40 @@ Per $HOST configuration.
   ;;        - <this place is for rent>
   ;;
   ;; here we configure lsp-servers for c/c++
-  (defconst anupam-cc-mode:lsp-server-ccls-with-args   '("/twbuild/anupam.kapoor/local/usr/bin/ccls"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; for ccls don't forget to do the following:
+  ;;
+  ;;     1. once 'compile_commands.json' is created, generate an
+  ;;     offline-index for ccls to use: 'ccls-index=$PWD', *AND*
+  ;;
+  ;;     2. create an empty '.ccls-root' file in top-level i.e. the place
+  ;;     where you just generated the offline-index at.
+  ;;
+  ;; the first one is the offline index ofcourse, and the 2nd one marks
+  ;; the $ROOT of the project for which the index was created.
+  ;;
+  ;; heck, if you are creative enough, you can do #1 & #2 together !!!
+  ;; what the world is coming to ? <snicker>
+  ;; -----------------------------------------------------------------------------
+  (defconst anupam-cc-mode:lsp-server-ccls-with-args   '("/twbuild/anupam.kapoor/local/usr/bin/ccls"
+                                                         "--log-file=/tmp/anupam-kapoor-repo-03.log"
+                                                         "--log-file-append=true"
+                                                         "-v=1"
+                                                         ))
+
   (defconst anupam-cc-mode:lsp-server-clangd-with-args '("/twbuild/anupam.kapoor/local/usr/bin/clangd"
+                                                         "--enable-config"
                                                          "-j=8"
                                                          "--malloc-trim"
                                                          "--all-scopes-completion=1"
                                                          "--background-index=1"
                                                          "--limit-results=128"
+                                                         "--limit-references=128"
                                                          "--completion-style=detailed"
-                                                         "--pch-storage=memory"
-                                                         "--log=error"))
+                                                         "--sync"
+                                                         "--pch-storage=disk"
+                                                         "--log=verbose"))
 
   ;; -----------------------------------------------------------------------------
   ;; this is the actual server that will be used. see eglot
