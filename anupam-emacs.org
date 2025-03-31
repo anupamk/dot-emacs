@@ -654,6 +654,7 @@ organization.
   (require 'anupam-common-lib)
   (require 'anupam-host-customizations)
   (require 'anupam-emacs-theme)
+  (require 'anupam-emacs-mode-line)
   (require 'anupam-emacs-unannoy)
   (require 'anupam-emacs-window)
   (require 'anupam-emacs-utilities)
@@ -1685,35 +1686,181 @@ lipstick on a pig.
 :CUSTOM_ID: h:8085068b-6835-4a00-80cb-38d07566e493
 :END:
 
-**** Moodline
-:PROPERTIES:
-:CUSTOM_ID: h:e33dc794-672e-4e60-baa2-4aa7b1a57fc3
-:END:
+**** Custom Modeline
 
-A minimalist modeline faster than the default. What's not to like ?
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-mode-line.el"
+  ;; anupam-emacs-mode-line.el --- make the modeline pretty -*- lexical-binding: t; -*-
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-theme.el"
+  ;; -----------------------------------------------------------------------------
+  ;; STEP-1 : Have the vanilla thing first
+  ;; =====================================
+  ;;
+  ;; NOTES
+  ;;    - ':eval' here makes the evaluation of the form that follows,
+  ;;    dynamic. thus, 'mode-line-format' is computed anew in every
+  ;;    buffer, instead of having a fixed recorded value at the place
+  ;;    where 'setq-default' was invoked.
+  ;;
+  ;;    everything else is statically defined.
+  ;;
+  ;;    - 'propertize' adds various properties to the string that is
+  ;;    returned for the purposes of displaying on the modeline.
+  ;;
+  ;;    builtin properties can be obtained by the 'list-faces-display',
+  ;;    and then used.
+  ;;
+  ;;    these properties are defined via the 'defface' macro, and you
+  ;;    can define your own as well.
+  ;;
+  ;;    And we get this:
+  ;;    ,----
+  ;;    | (setq-default mode-line-format
+  ;;    |               '(""
+  ;;    |                 ;; -----------------------------------------------------
+  ;;    |                 ;; buffer-name
+  ;;    |                 (:eval
+  ;;    |                  (format "%s"
+  ;;    |                          (propertize (buffer-name) 'face 'bold)
+  ;;    |                          ))
+  ;;    |
+  ;;    |                 ;; -----------------------------------------------------
+  ;;    |                 ;; major-mode
+  ;;    |                 (:eval
+  ;;    |                  (format " %s"
+  ;;    |                          (propertize (capitalize (symbol-name major-mode)) 'face 'shadow)
+  ;;    |                          ))
+  ;;    |                 ))
+  ;;    `----
+  ;;
+  ;;    which is *almost* ok !
+  ;;
+  ;;    problems are:
+  ;;        - looks ugly,
+  ;;        - all in 1 single line.
+  ;;    we don't have to live like this, and we can do better !
+  ;;
+  ;;    specifically, we can take each of the 'buffer-name' /
+  ;;    'major-mode' etc. and put them in variables.
+  ;;
+  ;; STEP-2 : Put the modeline constructions in variables
+  ;; ====================================================
+  ;;
+  ;; 1. this is done with the 'defvar-local' declaration for declaring
+  ;; local variables.
+  ;;
+  ;; 2. all the variables must have the 'risky-local-variable' property
+  ;; associated with them.
+  ;; -----------------------------------------------------------------------------
+  (setq-default mode-line-format '(""
+                                   anupam-modeline--buffer-name
+                                   mode-line-format-right-align
+                                   anupam-modeline--git-info
+                                   "  "
+                                   anupam-modeline--major-mode
+                                   " "
+                                   anupam-modeline--date-time-info
+                                   " "
+                                   ))
 
-  (use-package mood-line
-    :ensure t
-    :config
-    (mood-line-mode))
+  ;; -----------------------------------------------------------------------------
+  ;; make all variables risky
+  (dolist (modeline-var-i '(anupam-modeline--buffer-name
+                            anupam-modeline--major-mode
+                            anupam-modeline--git-info
+                            anupam-modeline--date-time-info
+                            ))
+    (put modeline-var-i 'risky-local-variable t))
 
-#+end_src
+  ;; ==============================================================================
+  ;; buffer-name
+  (defvar-local anupam-modeline--buffer-name
+      '(:eval
+        ;; -----------------------------------------------------------------------
+        ;; 'format-mode-line' follows the same format specification as
+        ;; the 'mode-line-format', let's just use that:
+        ;;
+        ;; syntax reminder:
+        ;;    '%@' => print '@' for remote files, '-' otherwise
+        ;;    '%&' => print '*' if buffer is modified, '-' otherwise
+        ;;    '%b' => print 'buffer-name'
+        ;;    '%l' => print 'line-number'
+        ;;    '%c' => print 'column-number'
+        ;;
+        ;; now, most of the time, both '%@' and '%&' will display
+        ;; '-'. so there is no need to waste / clutter the precious
+        ;; modeline space with this.
+        ;;
+        ;; we can do that(this is Emacs afterall). but more expertise is
+        ;; needed.
+        ;; -----------------------------------------------------------------------
+        (propertize (format-mode-line "[%@%&] %b [%l:%c]") 'face 'bold))
+    "mode line definition for displaying buffer-name")
 
-**** Minions
-:PROPERTIES:
-:CUSTOM_ID: h:2f28e30b-f6e7-41b1-9b4e-117d54330a58
-:END:
+  ;; ==============================================================================
+  ;; major-mode
+  (defun anupam-modeline--major-mode-indicator ()
+    "Return indicator for major-mode"
 
-Declutter the mode-line with minions.
+    (let ((mm-ind-value (cond ((derived-mode-p 'text-mode) "§")
+                              ((derived-mode-p 'prog-mode) "λ")
+                              (t "◦"))))
+      (propertize mm-ind-value 'face 'shadow)))
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-theme.el"
+  (defun anupam-modeline--major-mode-short-name ()
+    "Short capitalized major mode name"
+    (capitalize (string-replace "-mode" "" (symbol-name major-mode))))
 
-  (use-package minions
-    :ensure t
-    :hook
-    (after-init . minions-mode))
+  (defvar-local anupam-modeline--major-mode
+      '(:eval
+        (concat (anupam-modeline--major-mode-indicator)
+                " "
+                (propertize (anupam-modeline--major-mode-short-name) 'face 'shadow)))
+
+    "mode line definition for displaying major-mode")
+
+  ;; ==============================================================================
+  ;; git-version-control information
+  (defun anupam-modeline--git-info-text (file-name branch-name)
+    "Text for git controlled file and branch names"
+    (concat
+     "["
+     (propertize (char-to-string #xE0A0) 'face 'shadow)
+     " "
+     (propertize branch-name 'face 'shadow)
+     "]"
+     ))
+
+  (defvar-local anupam-modeline--git-info
+      '(:eval
+        (when-let* ((file-name (buffer-file-name))
+                    ;; -----------------------------------------------------------
+                    ;; file is registered with git ?
+                    (vc-git-registered file-name)
+
+                    ;; -----------------------------------------------------------
+                    ;; get git-branch-name
+                    (branch-name (vc-git--symbolic-ref file-name)))
+          (anupam-modeline--git-info-text file-name branch-name)))
+      "mode line definition for displaying version control information")
+
+  ;; ==============================================================================
+  ;; date-time-info, only displayed when window is selected.
+  ;;
+  ;; i use the venerable 'format-time-string' here. syntax reminder:
+  ;;     '%a' => abbreviated name of the week, Mon(day), Tue(sday)...
+  ;;     '%b' => abbreviated name of the month
+  ;;     '%d' => (zero-padded) day of the month
+  ;;     '%H' => hour on 24h clock
+  ;;     '%M' => minute (00..59)
+  (defvar-local anupam-modeline--date-time-info
+      '(:eval
+        (when (mode-line-window-selected-p)
+          (propertize (format-time-string "%a %b %d %H:%M") 'face 'shadow)))
+    "mode line definition for displaying date and time")
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line of this file
+  (provide 'anupam-emacs-mode-line)
 
 #+end_src
 
@@ -2812,6 +2959,8 @@ Tame the tyranny of popup-buffers :o)
   ;; load up 'window.el'
   (require 'window)
   (setq even-window-heights t)
+  (setq even-window-sizes 'height-only)
+  (setq switch-to-buffer-in-dedicated-window 'pop)
 
   ;; -----------------------------------------------------------------------------
   ;; '*NOTE*' '*NOTE*' '*NOTE*'
