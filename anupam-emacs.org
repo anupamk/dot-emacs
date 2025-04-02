@@ -623,7 +623,7 @@ them.
   ;;    - uncomment '(setq use-package-compute-statistics t)' below,
   ;;    - restart emacs, and then
   ;;    - M-x use-package-report
-  (setq use-package-compute-statistics t)
+  ;; (setq use-package-compute-statistics t)
 
 #+end_src
 
@@ -2117,13 +2117,13 @@ interactions with Emacs. Lets set that up here.
   ;; fontaine for font configuration, it takes the pain away !
   (use-package fontaine
     :ensure t
-    :if (display-graphic-p)
 
-    :hook
     ;; ---------------------------------------------------------------------------
-    ;; persist the latest font preset when closing/starting Emacs and
-    ;; while switching between themes.
-    (after-init . fontaine-mode)
+    ;; defer loading 'fontaine' it seems to be slowing things down
+    ;; significantly.
+    :defer t
+
+    :if (display-graphic-p)
 
     :bind
     ;; ---------------------------------------------------------------------------
@@ -2177,7 +2177,6 @@ interactions with Emacs. Lets set that up here.
                              (medium-plus
                               :default-family ,anupam-font-family-name
                               :fixed-pitch    ,anupam-font-family-name
-
                               :variable-pitch ,anupam-font-family-name
 
                               :default-height 140)
@@ -2230,6 +2229,16 @@ interactions with Emacs. Lets set that up here.
                               :variable-pitch ,anupam-font-family-name
 
                               :default-height 220))))
+
+  ;; -----------------------------------------------------------------------------
+  ;; persist the latest font preset when closing/starting Emacs and
+  ;; while switching between themes.
+  (fontaine-mode 1)
+
+  ;; -----------------------------------------------------------------------------
+  ;; Set the last preset or fall back to desired style from
+  ;; `fontaine-presets' (the `regular' in this case).
+  (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
 
 #+end_src
 
