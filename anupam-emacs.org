@@ -1819,14 +1819,39 @@ lipstick on a pig.
     "mode line definition for displaying major-mode")
 
   ;; ==============================================================================
-  ;; git-version-control information
+  ;; git-version-control information for the visited buffer when
+  ;; appropriate.
+
+  ;; -----------------------------------------------------------------------------
+  ;; action to execute when 'mouse-1' is clicked on highlighted branch-indicator.
+  (defvar anupam-modeline--git-info-mouse-map
+    (let ((git-info-mouse-map (make-sparse-keymap)))
+      (define-key git-info-mouse-map
+                  [mode-line down-mouse-1] 'vc-diff)
+      git-info-mouse-map)
+    "Configure mouse-actions when clicked on branch-indicator on the modeline.")
+
+  ;; ---------------------------------------------------------------------------
+  ;; help-text to display when mouse hovers on highlighted branch-indicator.
+  (defun anupam-modeline--git-info-text-show-help (file-name)
+    "Return help message for FILE-NAME tracked by git."
+    (format "Revision: %s\nmouse-1: `vc-diff'"
+            (vc-git-working-revision file-name)))
+
+  ;; -----------------------------------------------------------------------------
+  ;; git information that will be shown on the modeline. 'diffstat' is
+  ;; just a bit too much for my taste.
   (defun anupam-modeline--git-info-text (file-name branch-name)
     "Text for git controlled file and branch names"
     (concat
      "["
      (propertize (char-to-string #xE0A0) 'face 'shadow)
      " "
-     (propertize branch-name 'face 'shadow)
+     (propertize branch-name
+                 'face 'shadow
+                 'mouse-face 'ansi-color-inverse
+                 'help-echo (anupam-modeline--git-info-text-show-help file-name)
+                 'local-map anupam-modeline--git-info-mouse-map)
      "]"
      ))
 
@@ -1841,21 +1866,19 @@ lipstick on a pig.
                     ;; get git-branch-name
                     (branch-name (vc-git--symbolic-ref file-name)))
           (anupam-modeline--git-info-text file-name branch-name)))
-      "mode line definition for displaying version control information")
+    "mode line definition for displaying version control information")
 
   ;; ==============================================================================
-  ;; date-time-info, only displayed when window is selected.
+  ;; date-time-info
   ;;
   ;; i use the venerable 'format-time-string' here. syntax reminder:
-  ;;     '%a' => abbreviated name of the week, Mon(day), Tue(sday)...
-  ;;     '%b' => abbreviated name of the month
   ;;     '%d' => (zero-padded) day of the month
+  ;;     '%b' => abbreviated name of the month
   ;;     '%H' => hour on 24h clock
   ;;     '%M' => minute (00..59)
   (defvar-local anupam-modeline--date-time-info
       '(:eval
-        (when (mode-line-window-selected-p)
-          (propertize (format-time-string "%a %b %d %H:%M") 'face 'shadow)))
+        (propertize (format-time-string " ❬ %d-%B ❙ %H:%M ❭ ") 'face 'shadow))
     "mode line definition for displaying date and time")
 
   ;; -----------------------------------------------------------------------------
