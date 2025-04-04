@@ -1686,10 +1686,23 @@ lipstick on a pig.
 :CUSTOM_ID: h:8085068b-6835-4a00-80cb-38d07566e493
 :END:
 
-**** Custom Modeline
+**** Simple Modeline
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-mode-line.el"
   ;; anupam-emacs-mode-line.el --- make the modeline pretty -*- lexical-binding: t; -*-
+
+  ;; ==============================================================================
+  ;; define the faces that we might use here
+  (defface anupam-modeline--indicator-red-bg
+    '(
+      (((class color) (min-colors 88) (background light))
+       :background "#aa1111" :foreground "white")
+
+      (((class color) (min-colors 88) (background dark))
+       :background "#ff9090" :foreground "black")
+
+      (t :background "red" :foreground "black"))
+    "modeline indicator with a red background.")
 
   ;; -----------------------------------------------------------------------------
   ;; STEP-1 : Have the vanilla thing first
@@ -1714,22 +1727,23 @@ lipstick on a pig.
   ;;
   ;;    And we get this:
   ;;    ,----
-  ;;    | (setq-default mode-line-format
-  ;;    |               '(""
-  ;;    |                 ;; -----------------------------------------------------
-  ;;    |                 ;; buffer-name
-  ;;    |                 (:eval
-  ;;    |                  (format "%s"
-  ;;    |                          (propertize (buffer-name) 'face 'bold)
-  ;;    |                          ))
+  ;;    | (setq-default
+  ;;    |  mode-line-format
+  ;;    |  '(""
+  ;;    |    ;; -----------------------------------------------------
+  ;;    |    ;; buffer-name
+  ;;    |    (:eval
+  ;;    |     (format "%s"
+  ;;    |             (propertize (buffer-name) 'face 'bold)
+  ;;    |             ))
   ;;    |
-  ;;    |                 ;; -----------------------------------------------------
-  ;;    |                 ;; major-mode
-  ;;    |                 (:eval
-  ;;    |                  (format " %s"
-  ;;    |                          (propertize (capitalize (symbol-name major-mode)) 'face 'shadow)
-  ;;    |                          ))
-  ;;    |                 ))
+  ;;    |    ;; -----------------------------------------------------
+  ;;    |    ;; major-mode
+  ;;    |    (:eval
+  ;;    |     (format " %s"
+  ;;    |             (propertize (capitalize (symbol-name major-mode)) 'face 'shadow)
+  ;;    |             ))
+  ;;    |    ))
   ;;    `----
   ;;
   ;;    which is *almost* ok !
@@ -1752,7 +1766,8 @@ lipstick on a pig.
   ;; associated with them.
   ;; -----------------------------------------------------------------------------
   (setq-default mode-line-format '(""
-                                   anupam-modeline--buffer-name
+                                   anupam-modeline--remote-buffer-indicator
+                                   anupam-modeline--buffer-name-info
                                    mode-line-format-right-align
                                    anupam-modeline--git-info
                                    "  "
@@ -1764,7 +1779,8 @@ lipstick on a pig.
 
   ;; -----------------------------------------------------------------------------
   ;; make all variables risky
-  (dolist (modeline-var-i '(anupam-modeline--buffer-name
+  (dolist (modeline-var-i '(anupam-modeline--remote-buffer-indicator
+                            anupam-modeline--buffer-name-info
                             anupam-modeline--major-mode
                             anupam-modeline--git-info
                             anupam-modeline--date-time-info
@@ -1772,28 +1788,31 @@ lipstick on a pig.
     (put modeline-var-i 'risky-local-variable t))
 
   ;; ==============================================================================
-  ;; buffer-name
-  (defvar-local anupam-modeline--buffer-name
+  ;; buffer-remote-or-local
+  (defvar-local anupam-modeline--remote-buffer-indicator
       '(:eval
-        ;; -----------------------------------------------------------------------
-        ;; 'format-mode-line' follows the same format specification as
-        ;; the 'mode-line-format', let's just use that:
-        ;;
-        ;; syntax reminder:
-        ;;    '%@' => print '@' for remote files, '-' otherwise
-        ;;    '%&' => print '*' if buffer is modified, '-' otherwise
-        ;;    '%b' => print 'buffer-name'
-        ;;    '%l' => print 'line-number'
-        ;;    '%c' => print 'column-number'
-        ;;
-        ;; now, most of the time, both '%@' and '%&' will display
-        ;; '-'. so there is no need to waste / clutter the precious
-        ;; modeline space with this.
-        ;;
-        ;; we can do that(this is Emacs afterall). but more expertise is
-        ;; needed.
-        ;; -----------------------------------------------------------------------
-        (propertize (format-mode-line "[%@%&] %b [%l:%c]") 'face 'bold))
+        (when (file-remote-p default-directory)
+          (propertize " @ "
+                      'face 'anupam-modeline--indicator-red-bg)))
+    "mode line definition for remote buffers.")
+
+  ;; ==============================================================================
+  ;; buffer-name-info
+  (defun anupam-modeline--buffer-name-with-ro-ind ()
+    "Return buffer name with r(ead) o(nly) indicator('') if necessary."
+    (if buffer-read-only
+        (format " %s %s" (char-to-string #xF023) (buffer-name))
+      (buffer-name)))
+
+  (defun anupam-modeline--buffer-location ()
+    "Return location of point in the buffer."
+    (format-mode-line "[%l:%c]"))
+
+  (defvar-local anupam-modeline--buffer-name-info
+      '(:eval
+        (concat (anupam-modeline--buffer-name-with-ro-ind)
+                " "
+                (anupam-modeline--buffer-location)))
     "mode line definition for displaying buffer-name")
 
   ;; ==============================================================================
