@@ -196,7 +196,7 @@ initialized before loading the regular init file.
 
 ** File =early-init.el= header
 
-#+begin_src emacs-lisp :tangle "early-init.el"
+#+begin_src emacs-lisp :tangle "early-init.el" :tangle-mode (identity #o444)
 
   ;;; early-init.el --- Early Init -*- no-byte-compile: t; lexical-binding: t; -*-
 
@@ -465,7 +465,7 @@ compilation enabled, things are slightly less convoluted here.
 :CUSTOM_ID: h:ed42cf6c-0d01-4998-afda-7f145d7252a3
 :END:
 
-#+begin_src emacs-lisp :tangle "init.el"
+#+begin_src emacs-lisp :tangle "init.el" :tangle-mode (identity #o444)
 
   ;;; init.el --- Emacs Init -*- no-byte-compile: t; lexical-binding: t; -*-
 
@@ -681,7 +681,8 @@ organization.
 Utility functions used throughout the configuration. Just define them
 here.
 
-#+begin_src emacs-lisp :tangle "anupam-lisp/anupam-common-lib.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-lisp/anupam-common-lib.el" :mkdirp yes  :tangle-mode (identity #o444)
+
   ;;; anupam-common-lib.el -- commonly used functions for my configuration -*- lexical-binding:t -*-
 
   ;; -----------------------------------------------------------------------------
@@ -887,7 +888,7 @@ here.
 :CUSTOM_ID: h:bedbf047-1440-4fd4-84de-e2d135b290a1
 :END:
 
-#+begin_src emacs-lisp :tangle "anupam-lisp/anupam-prefix.el"
+#+begin_src emacs-lisp :tangle "anupam-lisp/anupam-prefix.el"  :tangle-mode (identity #o444)
 
   ;;; anupam-prefix.el --- keymaps for my dotemacs -*- lexical-binding: t -*-
 
@@ -996,7 +997,7 @@ Per $HOST configuration.
 
 ** Prologue
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-host-customizations.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-host-customizations.el" :mkdirp yes :tangle-mode (identity #o444)
 
   ;;; anupam-host-customizations.el -- host specific customizations -*- lexical-binding:t -*-
 
@@ -1019,7 +1020,7 @@ Per $HOST configuration.
 
 ** Host =shakti=
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-shakti-customizations.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-shakti-customizations.el" :mkdirp yes :tangle-mode (identity #o444)
 
   ;;; anupam-emacs-host-shakti-customizations.el -- shakti-host specific customizations -*- lexical-binding:t -*-
 
@@ -1148,7 +1149,7 @@ Per $HOST configuration.
 :CUSTOM_ID: h:68590E4D-0108-4CD5-AE9A-2C07523E923F
 :END:
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-soma-customizations.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-soma-customizations.el" :mkdirp yes :tangle-mode (identity #o444)
 
   ;;; anupam-emacs-host-soma-customizations.el -- soma-host specific customizations -*- lexical-binding:t -*-
 
@@ -1318,7 +1319,7 @@ Per $HOST configuration.
 :CUSTOM_ID: h:68590E4D-0108-4CD5-AE9A-2C07523E923F
 :END:
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-axon-customizations.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-axon-customizations.el" :mkdirp yes :tangle-mode (identity #o444)
 
   ;;; anupam-emacs-host-axon-customizations.el -- axon-host specific customizations -*- lexical-binding:t -*-
 
@@ -1436,7 +1437,7 @@ Per $HOST configuration.
 :CUSTOM_ID: h:A2306D1A-CA5B-4AB7-BA3A-8FFA25997451
 :END:
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-aws-devel-06-customizations.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-aws-devel-06-customizations.el" :mkdirp yes :tangle-mode (identity #o444)
 
   ;;; anupam-emacs-host-aws-devel-06-customizations.el -- aws-devel-06 specific customizations -*- lexical-binding:t -*-
 
@@ -1675,7 +1676,7 @@ lipstick on a pig.
 :CUSTOM_ID: h:64b83c63-a88d-4180-969a-aadf4967fa6c
 :END:
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-theme.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-theme.el" :mkdirp yes :tangle-mode (identity #o444)
 
   ;;; anupam-emacs-theme.el --- make Emacs pretty -*- lexical-binding: t; -*-
 
@@ -1688,8 +1689,8 @@ lipstick on a pig.
 
 **** Simple Modeline
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-mode-line.el"
-  ;; anupam-emacs-mode-line.el --- make the modeline pretty -*- lexical-binding: t; -*-
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-mode-line.el" :tangle-mode (identity #o444)
+  ;;; anupam-emacs-mode-line.el --- make the modeline pretty -*- lexical-binding: t; -*-
 
   ;; ==============================================================================
   ;; define the faces that we might use here
@@ -1916,7 +1917,7 @@ lipstick on a pig.
 :CUSTOM_ID: h:6fdb207c-7171-48e3-87ae-35f6e1ef92d9
 :END:
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-modus-operandi-theme.el"
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-modus-operandi-theme.el" :tangle-mode (identity #o444)
 
 ;; -----------------------------------------------------------------------------
 ;; slightly tweaked modus-operandi theme.
@@ -1999,7 +2000,7 @@ lipstick on a pig.
 :CUSTOM_ID: h:6fdb207c-7171-48e3-87ae-35f6e1ef92d9
 :END:
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-modus-vivendi-theme.el"
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-modus-vivendi-theme.el" :tangle-mode (identity #o444)
 
   ;; -----------------------------------------------------------------------------
   ;; slightly tweaked modus-operandi theme.
@@ -2081,7 +2082,7 @@ lipstick on a pig.
 I /really/ love the low-contrast =zenburn= theme for long term
 interactions with Emacs. Lets set that up here.
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-zenburn-theme.el"
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-zenburn-theme.el" :tangle-mode (identity #o444)
 
   (use-package zenburn-theme
     :ensure t
@@ -2337,7 +2338,7 @@ etc. etc.
 
 *** Prologue
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el" :mkdirp yes :tangle-mode (identity #o444)
 
   ;;; anupam-emacs-unannoy.el -- better defaults aka unannoy Emacs -*- lexical-binding:t -*-
 
@@ -2905,7 +2906,7 @@ Try a package without installing it.
 :CUSTOM_ID: h:16618f11-8a8d-465a-a9b8-8fe9d6afb4e2
 :END:
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-window.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-window.el" :mkdirp yes :tangle-mode (identity #o444)
 
   ;;; anupam-emacs-window.el -- window management -*- lexical-binding:t -*-
 
@@ -3121,7 +3122,7 @@ Load various applications and utilities.
 :CUSTOM_ID: h:bab934b1-a688-4c78-81cf-1a7653c48583
 :END:
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-utilities.el" :mkdirp yes :tangle-mode (identity #o444)
 
   ;;; anupam-emacs-utilities.el -- various applications and utilities for enhanced Emacs experience -*- lexical-binding:t -*-
 
@@ -3427,7 +3428,7 @@ of order, not unlike ~fzf~ on unix shells.
 :CUSTOM_ID: h:24332d07-e9bf-40e0-a081-a17f6b92a87b
 :END:
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el" :mkdirp yes :tangle-mode (identity #o444)
 
 ;;; anupam-emacs-completion.el -- various completion related configuration -*- lexical-binding:t -*-
 
@@ -3710,7 +3711,7 @@ Configure search within Emacs.
 :CUSTOM_ID: h:406b7d2b-8058-429d-9028-645cf44dcbd6
 :END:
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el" :mkdirp yes :tangle-mode (identity #o444)
 
   ;;; anupam-emacs-search.el -- search related configuration -*- lexical-binding:t -*-
 
@@ -3922,7 +3923,7 @@ Directory editing with Emacs
 :CUSTOM_ID: h:53ccd9cf-f0fc-4adb-a8ef-39edbc6d0775
 :END:
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-dired.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-dired.el" :mkdirp yes :tangle-mode (identity #o444)
 
   ;;; anupam-emacs-dired.el -- directory editing related configuration -*- lexical-binding:t -*-
 
@@ -4092,7 +4093,7 @@ utilities.
 :CUSTOM_ID: h:2FF4E2DE-1103-4758-A8E1-73FEDBD46D45
 :END:
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-version-control.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-version-control.el" :mkdirp yes :tangle-mode (identity #o444)
 
   ;;; anupam-emacs-version-control.el -- version control, and its sorroundings -*- lexical-binding:t -*-
 
@@ -4312,7 +4313,7 @@ And finally, the *best* git client by far.
 :CUSTOM_ID: h:2da91b96-04b6-490e-9809-534cc6bf679d
 :END:
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el" :mkdirp yes :tangle-mode (identity #o444)
 
   ;;; anupam-emacs-langs.el -- language specific configuration -*- lexical-binding:t -*-
 
@@ -4562,7 +4563,7 @@ Low /configuration overhead/ jump to definition.
 
 Utility functions for working with C & C++ sources.
 
-#+begin_src emacs-lisp :tangle "anupam-lisp/anupam-cc-mode-lib.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-lisp/anupam-cc-mode-lib.el" :mkdirp yes :tangle-mode (identity #o444)
   ;;; anupam-cc-mode-lib.el -- commonly used functions in c/c++ mode buffers -*- lexical-binding:t -*-
 
   ;; -----------------------------------------------------------------------------
@@ -4810,7 +4811,7 @@ option to set this up.
 
 *** Prologue
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-org-mode.el" :mkdirp yes
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-org-mode.el" :mkdirp yes :tangle-mode (identity #o444)
 
   ;;; anupam-emacs-org-mode.el -- org-mode specific configuration -*- lexical-binding:t -*-
 
@@ -4883,7 +4884,7 @@ All of our configuration is now loaded. Happy hacking !
 ** Configuration end in =anupam-emacs-config-end.el=
 
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-config-end.el"
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-config-end.el" :tangle-mode (identity #o444)
 
   ;;; anupam-emacs-config-end.el -- end of configuration -*- byte-compile: t; lexical-binding:t -*-
 
