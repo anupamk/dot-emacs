@@ -1016,6 +1016,9 @@ Per $HOST configuration.
   (if (anupam-common:host-name-is "aws-devel-06")
       (anupam:load-user-config-file "anupam-emacs-module/anupam-emacs-host-aws-devel-06-customizations.el"))
 
+  (if (anupam-common:host-name-is "soma-debian-vm")
+      (anupam:load-user-config-file "anupam-emacs-module/anupam-emacs-host-soma-debian-vm-customizations.el"))
+
 #+end_src
 
 ** Host =shakti=
@@ -1644,6 +1647,193 @@ Per $HOST configuration.
   ;; last line
 
   (princ (format "=aws-devel-06 config loaded="))
+
+#+end_src
+
+** Host =soma-debian-vm=
+:PROPERTIES:
+:CUSTOM_ID: h:68590E4D-0108-4CD5-AE9A-2C07523E923F
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-host-soma-debian-vm-customizations.el" :mkdirp yes :tangle-mode (identity #o444)
+
+  ;;; anupam-emacs-host-soma-customizations.el -- soma-debian-vm-host specific customizations -*- lexical-binding:t -*-
+
+  ;; -----------------------------------------------------------------------------
+  ;; host specific theme+font customizations
+  (defconst anupam-theme-name "modus-operandi")
+  (defconst anupam-font-family-name "Berkeley Mono")
+
+  ;; -----------------------------------------------------------------------------
+  ;; setup 'language-server-protocol' (LSP) server.
+  ;;
+  ;; so for all code related actions, the picture looks something like this:
+  ;;
+  ;;    emacs == lsp-client (via a builtin package called eglot), and
+  ;;    'external' language specific servers, for example:
+  ;;
+  ;;        - 'c' / 'c++' => 'clangd' / 'ccls'
+  ;;        - 'golang'    => 'gopls'
+  ;;        - <this place is for rent>
+  ;;
+  ;; here we configure lsp-servers for c/c++
+
+  ;; -----------------------------------------------------------------------------
+  ;; for ccls don't forget to do the following:
+  ;;
+  ;;     1. once 'compile_commands.json' is created, generate an
+  ;;     offline-index for ccls to use: 'ccls-index=$PWD', *AND*
+  ;;
+  ;;     2. create an empty '.ccls-root' file in top-level i.e. the place
+  ;;     where you just generated the offline-index at.
+  ;;
+  ;; the first one is the offline index ofcourse, and the 2nd one marks
+  ;; the $ROOT of the project for which the index was created.
+  ;;
+  ;; heck, if you are creative enough, you can do #1 & #2 together !!!
+  ;; what the world is coming to ? <snicker>
+  ;; -----------------------------------------------------------------------------
+  (defconst anupam-cc-mode:lsp-server-ccls-with-args '("/usr/bin/ccls"
+                                                       "--log-file=/tmp/ccls.log"
+                                                       "--log-file-append=false"
+                                                       "-v=1"
+                                                       ))
+
+  (defconst anupam-cc-mode:lsp-server-clangd-with-args '("/usr/bin/clangd-19"
+                                                         "--enable-config"
+                                                         "-j=8"
+                                                         "--malloc-trim"
+                                                         "--all-scopes-completion=1"
+                                                         "--background-index=1"
+                                                         "--limit-results=128"
+                                                         "--limit-references=128"
+                                                         "--completion-style=detailed"
+                                                         "--sync"
+                                                         "--pch-storage=disk"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; this is the actual server that will be used. see eglot
+  ;; configuration section more information
+  (defconst cc-mode:lsp-server-with-args anupam-cc-mode:lsp-server-clangd-with-args)
+
+  ;; -----------------------------------------------------------------------------
+  ;; setup less noisy flags.
+  ;; see the gcc man-page for more information.
+  (defconst gcc-plain-diag-args
+    (concat "-fno-diagnostics-show-caret "
+            "-fdiagnostics-color=never "
+            "-fdiagnostics-path-format=separate-events "
+            ))
+
+  (defconst gcc-with-args (concat "/usr/bin/gcc-14 " gcc-plain-diag-args))
+  (defconst g++-with-args (concat "/usr/bin/g++-14 " gcc-plain-diag-args))
+
+  ;; -----------------------------------------------------------------------------
+  ;; clang and clang++ with less noisy flags
+  (defconst clang-plain-diag-args
+    (concat ""))
+
+  (defconst clang-with-args (concat "/usr/bin/clang-19 " clang-plain-diag-args))
+  (defconst clang++-with-args (concat "/usr/bin/clang++-19 " clang-plain-diag-args))
+
+  ;; -----------------------------------------------------------------------------
+  ;; now choose a compiler family, 'gcc' or 'clang'
+  (defconst c-compiler clang-with-args)
+  (defconst c++-compiler clang++-with-args)
+
+  ;; -----------------------------------------------------------------------------
+  ;; where is `clang-format-executable' ?
+  (defconst anupam-cc-mode:clang-format-executable "/usr/bin/clang-format-19")
+
+  ;; -----------------------------------------------------------------------------
+  ;; where is git installed ?
+  ;; much fasta magit experience: https://jakemccrary.com/blog/2020/11/14/speeding-up-magit/
+  (defconst anupam-magit:magit-git-executable "/usr/bin/git")
+
+  ;; ---------------------------------------------------------------------------
+  ;; resort to the canonical `dict.org' for lookups
+  (defconst anupam-dictionary-server-host "dict.org")
+
+  ;; =============================================================================
+  ;; c/c++ mode customizations
+  ;; =============================================================================
+
+  (defun anupam-cc-mode-hook ()
+    ;; ---------------------------------------------------------------------------
+    ;; default styles, and then our configuration overriding it.
+    (add-to-list 'c-default-style '(c-mode . "linux"))
+    (add-to-list 'c-default-style '(c++-mode . "Stroustrup"))
+
+    ;; ---------------------------------------------------------------------------
+    ;; Distance between tab stops (for display of tab characters), in
+    ;; columns.
+    (setq tab-width 8)
+
+    ;; ----------------------------------------------------------------------------
+    ;; column beyond which automatic line-wrapping should happen.
+    (setq fill-column 80)
+
+    ;; ---------------------------------------------------------------------------
+    ;; column to indent right-margin comments to...
+    (setq comment-column 80)
+
+    ;; ---------------------------------------------------------------------------
+    ;; Specifies how M-x indent-for-comment should handle comment-only
+    ;; lines. When this variable is non-nil, comment-only lines are
+    ;; indented according to syntactic analysis via
+    ;; `c-offsets-alist'. Otherwise, the comment is indented as if it
+    ;; was preceded by code. Note that this variable does not affect how
+    ;; the normal line indentation treats comment-only lines.
+    (setq c-indent-comments-syntactically-p t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; comment syntax
+    (setq comment-start "///")
+    (setq comment-end "")
+
+    ;; ---------------------------------------------------------------------------
+    ;; '_' is not a modifier anymore
+    (modify-syntax-entry ?_ "w")
+
+    ;; ---------------------------------------------------------------------------
+    ;; amount of basic offset used by `+' and `-' symbols in `c-offsets-alist'
+    (setq c-basic-offset 8)
+
+    ;; ---------------------------------------------------------------------------
+    ;; syntax help
+    ;;  +   c-basic-offset times 1
+    ;;  -   c-basic-offset times -1
+    ;;  ++  c-basic-offset times 2
+    ;;  --  c-basic-offset times -2
+    ;;  *   c-basic-offset times 0.5
+    ;;  /   c-basic-offset times -0.5
+    (c-set-offset 'case-label '+)
+    (c-set-offset 'access-label '/)
+    (c-set-offset 'label '/)
+
+    ;; ---------------------------------------------------------------------------
+    ;; some useful bindings
+    (define-key c-mode-map (kbd "RET")  #'newline-and-indent)
+    (define-key c-mode-map (kbd "C-<ret>") #'recompile)
+
+    ;; ---------------------------------------------------------------------------
+    ;; jump directly to source when we see compilation errors
+    (add-to-list 'compilation-search-path (getenv "PWD")))
+
+  ;; -----------------------------------------------------------------------------
+  ;; when connecting from macos to development machines, we cannot use
+  ;; these keys anymore, because they are already used by macos.
+  (global-unset-key (kbd "M-."))
+  (global-unset-key (kbd "M-,"))
+
+  ;; -----------------------------------------------------------------------------
+  ;; define something similar.
+  (global-set-key (kbd "C-M-.") 'xref-find-definitions)
+  (global-set-key (kbd "C-M-,") 'xref-go-back)
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line just see if things are setup ok.
+  (princ (format "=soma config loaded="))
 
 #+end_src
 
