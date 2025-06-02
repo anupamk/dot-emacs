@@ -1895,6 +1895,17 @@ lipstick on a pig.
       (t :background "red" :foreground "black"))
     "modeline indicator with a red background.")
 
+  (defface anupam-modeline--indicator-blue-bg
+    '(
+      (((class color) (min-colors 88) (background light))
+       :background "#00008b" :foreground "white")
+
+      (((class color) (min-colors 88) (background dark))
+       :background "#1e90ff" :foreground "white")
+
+      (t :background "blue" :foreground "white"))
+    "modeline indicator with a blue background.")
+
   ;; -----------------------------------------------------------------------------
   ;; STEP-1 : Have the vanilla thing first
   ;; =====================================
@@ -1958,6 +1969,7 @@ lipstick on a pig.
   ;; -----------------------------------------------------------------------------
   (setq-default mode-line-format '(""
                                    anupam-modeline--remote-buffer-indicator
+                                   anupam-modeline--buffer-modified-indicator
                                    anupam-modeline--buffer-name-info
                                    mode-line-format-right-align
                                    anupam-modeline--git-info
@@ -1971,6 +1983,7 @@ lipstick on a pig.
   ;; -----------------------------------------------------------------------------
   ;; make all variables risky
   (dolist (modeline-var-i '(anupam-modeline--remote-buffer-indicator
+                            anupam-modeline--buffer-modified-indicator
                             anupam-modeline--buffer-name-info
                             anupam-modeline--major-mode
                             anupam-modeline--git-info
@@ -1979,13 +1992,22 @@ lipstick on a pig.
     (put modeline-var-i 'risky-local-variable t))
 
   ;; ==============================================================================
-  ;; buffer-remote-or-local
+  ;; buffer-remote ?
   (defvar-local anupam-modeline--remote-buffer-indicator
       '(:eval
         (when (file-remote-p default-directory)
           (propertize " @ "
                       'face 'anupam-modeline--indicator-red-bg)))
     "mode line definition for remote buffers.")
+
+  ;; ==============================================================================
+  ;; buffer-modified ?
+  (defvar-local anupam-modeline--buffer-modified-indicator
+      '(:eval
+        (when (buffer-modified-p)
+          (propertize " * "
+                      'face 'anupam-modeline--indicator-blue-bg)))
+    "mode line definition for modified buffers.")
 
   ;; ==============================================================================
   ;; buffer-name-info
