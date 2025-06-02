@@ -591,15 +591,9 @@ them.
           ("nongnu"   . "https://elpa.nongnu.org/nongnu/")
           ("melpa"    . "https://melpa.org/packages/")))
 
-  ;; Highest number gets priority (what is not mentioned has priority 0)
-  (setq package-archive-priorities
-        '(("gnu-elpa" . 3)
-          ("melpa"    . 2)
-          ("nongnu"   . 1)))
-
   ;; -----------------------------------------------------------------------------
-  ;; don't suggest packages to be upgraded (via the package archive)
-  (setq package-install-upgrade-built-in nil)
+  ;; please suggest packages to be upgraded (via the package archive)
+  (setq package-install-upgrade-built-in t)
 
   ;; -----------------------------------------------------------------------------
   ;; initialize and refresh package contents if needed
@@ -1479,7 +1473,6 @@ Per $HOST configuration.
   ;; -----------------------------------------------------------------------------
   (defconst anupam-cc-mode:lsp-server-ccls-with-args   '("/twbuild/anupam.kapoor/local/usr/bin/ccls"
                                                          "--log-file=/tmp/anupam-kapoor-repo-03.log"
-                                                         "--log-file-append=true"
                                                          "-v=1"
                                                          ))
 
@@ -2561,6 +2554,11 @@ etc. etc.
 :END:
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+  (use-package transient
+    :ensure t
+    :defer t
+    :config
+    (setq transient-show-popup 0.5))
 
   (use-package emacs
     :ensure nil
@@ -4409,12 +4407,6 @@ And finally, the *best* git client by far.
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-version-control.el"
 
-  (use-package transient
-    :ensure t
-    :defer t
-    :config
-    (setq transient-show-popup 0.5))
-
   (use-package magit
     :ensure t
     :init
@@ -4650,6 +4642,7 @@ We install the eglot wrapper here.
       :ensure nil
       :after eglot
       :load-path (lambda() (concat user-emacs-directory "elpa/eglot-booster"))
+      :custom (eglot-booster-io-only t)
       :config
       (eglot-booster-mode))
 
