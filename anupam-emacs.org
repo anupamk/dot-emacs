@@ -1334,15 +1334,14 @@ Per $HOST configuration.
   ;; -----------------------------------------------------------------------------
   ;; language server protocol (lsp) server, we use ccls on this machine.
   (defconst anupam-cc-mode:lsp-server-ccls-with-args (executable-find "ccls"))
-  (defconst anupam-cc-mode:lsp-server-clangd-with-args '("/usr/bin/clangd"
-                                                         "-j=8"
-                                                         "--malloc-trim"
+  (defconst anupam-cc-mode:lsp-server-clangd-with-args '("/opt/homebrew/Cellar/llvm/20.1.6/bin/clangd"
+                                                         "-j=2"
                                                          "--all-scopes-completion=1"
                                                          "--background-index=1"
                                                          "--limit-results=128"
                                                          "--completion-style=detailed"
-                                                         "--pch-storage=memory"
-                                                         "--log=error"))
+                                                         "--pch-storage=disk"
+                                                         "--log=verbose"))
 
 
   ;; -----------------------------------------------------------------------------
