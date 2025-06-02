@@ -127,12 +127,9 @@ sendto
 shm
 solaar
 src
-<<<<<<< Updated upstream
 stddev
-=======
 stdin
 strace
->>>>>>> Stashed changes
 stringified
 stringify
 syscalls

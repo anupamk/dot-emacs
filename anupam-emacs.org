@@ -924,6 +924,7 @@ here.
     :prefix 'anupam-buffer-mode
     "r"      #'recenter
     "b"      #'anupam-common:quick-bookmark
+    "t"      #'anupam-common:truncate-lines-silently
     "<end>"  #'end-of-buffer
     "<home>" #'beginning-of-buffer
     )
@@ -4947,9 +4948,9 @@ worry / care about.
      :map c-mode-base-map
      ;; ---------------------------------------------------------------
      ;; some useful bindings
-     ("RET"        . #'newline-and-indent)
-     ("C-<return>" . #'recompile)
-     ("C-c c"      . #'anupam-cc-mode:quick-compile))
+     ("RET"           . #'newline-and-indent)
+     ("C-<return>"    . #'recompile)
+     ("C-c <return>"  . #'anupam-cc-mode:quick-compile))
 
     :hook
     (c-mode   . anupam-cc-mode-hook)
@@ -5077,6 +5078,20 @@ option to set this up.
   (provide 'anupam-emacs-org-mode)
 
 #+end_src
+
+
+* Tips & Tricks
+
+Just some assorted tips and tricks gathered from the ether.
+
+** Narrow/Widen to/from region
+
+The command =narrow-to-region= lets you narrow the current buffer
+i.e. hide all text other than the selected text. Useful from
+time-to-time to focus on current portion of the buffer.
+
+It can be undone with =widen=.
+
 
 * End of configuration
 :PROPERTIES:
