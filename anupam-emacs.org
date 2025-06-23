@@ -1348,7 +1348,7 @@ Per $HOST configuration.
 
   ;; -----------------------------------------------------------------------------
   ;; where is `clang-format-executable' ?
-  (defconst anupam-cc-mode:clang-format-executable (executable-find "clang-format-mp-18"))
+  (defconst anupam-cc-mode:clang-format-executable (executable-find "clang-format"))
 
   ;; -----------------------------------------------------------------------------
   ;; where is git installed ?
