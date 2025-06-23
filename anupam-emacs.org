@@ -586,10 +586,12 @@ them.
 
   (add-hook 'package-menu-mode-hook #'hl-line-mode)
 
+  (add-to-list 'package-archives '("gnu-devel" . "https://elpa.gnu.org/devel/"))
   (setq package-archives
-        '(("gnu-elpa" . "https://elpa.gnu.org/packages/")
-          ("nongnu"   . "https://elpa.nongnu.org/nongnu/")
-          ("melpa"    . "https://melpa.org/packages/")))
+        '(("gnu-elpa"  . "https://elpa.gnu.org/packages/")
+          ("gnu-devel" . "https://elpa.gnu.org/devel/")
+          ("nongnu"    . "https://elpa.nongnu.org/nongnu/")
+          ("melpa"     . "https://melpa.org/packages/")))
 
   ;; -----------------------------------------------------------------------------
   ;; please suggest packages to be upgraded (via the package archive)
@@ -1473,11 +1475,11 @@ Per $HOST configuration.
   ;; what the world is coming to ? <snicker>
   ;; -----------------------------------------------------------------------------
   (defconst anupam-cc-mode:lsp-server-ccls-with-args   '("/twbuild/anupam.kapoor/local/usr/bin/ccls"
-                                                         "--log-file=/tmp/anupam-kapoor-repo-03.log"
+                                                         "--log-file=/tmp/anupam-kapoor-ccls.log"
                                                          "-v=1"
                                                          ))
 
-  (defconst anupam-cc-mode:lsp-server-clangd-with-args '("/twbuild/anupam.kapoor/local/usr/bin/clangd"
+  (defconst anupam-cc-mode:lsp-server-clangd-with-args '("/twbuild/anupam.kapoor/local/llvm/bin/clangd"
                                                          "--enable-config"
                                                          "-j=8"
                                                          "--malloc-trim"
@@ -1493,7 +1495,7 @@ Per $HOST configuration.
   ;; -----------------------------------------------------------------------------
   ;; this is the actual server that will be used. see eglot
   ;; configuration section more information
-  (defconst cc-mode:lsp-server-with-args anupam-cc-mode:lsp-server-ccls-with-args)
+  (defconst cc-mode:lsp-server-with-args anupam-cc-mode:lsp-server-clangd-with-args)
 
   ;; -----------------------------------------------------------------------------
   ;; ,----[from the man-page]
