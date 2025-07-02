@@ -4770,6 +4770,20 @@ Low /configuration overhead/ jump to definition.
 
 #+end_src
 
+**** Meson Integration
+:PROPERTIES:
+:CUSTOM_ID: h:281b31eb-41db-43ad-b82d-b876f0ac2536
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; no configuration is necessary i hope
+  (use-package meson-mode
+    :ensure t)
+
+#+end_src
+
 **** C & C++
 :PROPERTIES:
 :CUSTOM_ID: h:01f765c4-db72-4812-958f-2ef18ed62e36
@@ -4970,6 +4984,20 @@ worry / care about.
     (c-mode   . anupam-cc-mode-hook)
     (c++-mode . anupam-cc-mode-hook)
     (c++-mode . modern-c++-font-lock-mode))
+
+#+end_src
+
+****** Color compilation
+
+Lots of compilers f.e. =gcc= =clang= now support color output. Instead
+of disabling that like a caveman, let's just use it.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  (use-package ansi-color
+    :ensure nil
+    :hook
+    (compilation-filter . ansi-color-compilation-filter))
 
 #+end_src
 
