@@ -1479,7 +1479,7 @@ Per $HOST configuration.
   ;;
   ;; so for all code related actions, the picture looks something like this:
   ;;
-  ;;    emacs == lsp-client (via a builtin package called eglot), and
+  ;;    emacs == lsp-client (via a builtin package called lspce), and
   ;;    'external' language specific servers, for example:
   ;;
   ;;        - 'c' / 'c++' => 'clangd' / 'ccls'
@@ -1532,15 +1532,6 @@ Per $HOST configuration.
                                     )
                        " ")
             ))
-
-  ;; -----------------------------------------------------------------------------
-  ;; this is the actual server that will be used. see eglot
-  ;; configuration section more information
-  (defconst anupam-cc-mode:lsp-server-clangd-with-args
-    (list (anupam-cc-mode:lsp-server-clangd)
-          (anupam-cc-mode:lsp-server-clangd-args)))
-
-  (defconst cc-mode:lsp-server-with-args anupam-cc-mode:lsp-server-clangd-with-args)
 
   ;; -----------------------------------------------------------------------------
   ;; ,----[from the man-page]
@@ -4501,126 +4492,6 @@ And finally, the *best* git client by far.
 
 #+end_src
 
-*** Eglot configuration
-:PROPERTIES:
-:CUSTOM_ID: h:9cf5a33d-baef-4bbc-bf2b-1ea8fb950e5f
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
-
-  (use-package eglot
-    :disabled
-    :ensure nil
-    :demand t
-
-    :custom
-    (fset #'jsonrpc--log-event #'ignore)
-
-    ;; ---------------------------------------------------------------------------
-    ;; when `nil' ==> don't block the ui while eglot connection is
-    ;; getting established.
-    (eglot-sync-connect nil)
-
-    ;; ---------------------------------------------------------------------------
-    ;; dont timeout lsp connection attempts
-    (eglot-connect-timeout nil)
-
-    ;; ---------------------------------------------------------------------------
-    ;; don't tell server of changes before Emacs has been idle for this
-    ;; many seconds
-    (eglot-send-changes-idle-time 3)
-
-    ;; ---------------------------------------------------------------------------
-    ;; don't allow eldoc to use multiline in the echo-area for
-    ;; displaying documentation strings.
-    ;;
-    ;; when 'nil' the documentation string will be truncated.
-    (eldoc-echo-area-use-multiline-p nil)
-
-    ;; ---------------------------------------------------------------------------
-    ;; shut down server after killing last managed buffer
-    (eglot-autoshutdown t)
-
-    ;; ---------------------------------------------------------------------------
-    ;; activate in cross-referenced non-project files.
-    (eglot-extend-to-xref t)
-
-    ;; ---------------------------------------------------------------------------
-    ;; don't show progress of long running lsp server work
-    (eglot-report-progress nil)
-
-    ;; ---------------------------------------------------------------------------
-    ;; disable annoying, _distracting_, over-the-top features that serve
-    ;; no useful purpose at all (imnsho)
-    (eglot-ignored-server-capabilities '(:documentHighlightProvider    ; highlight symbols automatically
-                                         :documentSymbolProvider       ; list symbols in a buffer
-                                         :hoverProvider                ; documentation on hover
-                                         :signatureHelpProvider        ; function-signature help
-                                         ))
-
-    :config
-    ;; ---------------------------------------------------------------------------
-    ;; reduce to 0. by default eglot retains 2m lines, and each new
-    ;; event triggers pretty-printing of entire buffer, leading to
-    ;; gradual performance decline.
-    (setf (plist-get eglot-events-buffer-config :size) 0)
-
-    ;; ---------------------------------------------------------------------------
-    ;; Inlay hints are small text annotations to specific parts of the
-    ;; whole buffer, not unlike diagnostics, but designed to help
-    ;; readability instead of indicating problems.
-    ;;
-    ;; For example, a C++ LSP server can serve hints about positional
-    ;; parameter names in function calls and a variable's automatically
-    ;; deduced type. Emacs can display these hints in many little
-    ;; 0-length overlays with an 'before-string property, thus helping
-    ;; the user remember those types and parameter names.
-    ;;
-    ;; we disable this explicitly, it is quite annoying honestly.
-    (push ':inlayHintProvider eglot-ignored-server-capabilities))
-
-#+end_src
-
-*** Eglot booster
-:PROPERTIES:
-:CUSTOM_ID: h:88b42b27-f74b-4701-b94a-085abc5dd1ca
-:END:
-
-Dramatically improve the performance of lsp-mode or eglot using a
-wrapper executable written in rust. This is available from [[https://github.com/blahgeek/emacs-lsp-booster][here]].
-
-We install the eglot wrapper here.
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
-
-  ;; -----------------------------------------------------------------------------
-  ;; for as of yet (Feb 06, 2025) 'eglot-booster' refuses to install via
-  ;; the canonical
-  ;;     ':vc (:url "https://github.com/jdtsmith/eglot-booster")'
-  ;; stanza in the use-package snippet below.
-  ;;
-  ;; have to resort to manual installation like a peasant.
-
-  (unless (require 'eglot-booster nil 'noerror)
-    (package-vc-install '(eglot-booster :url "https://github.com/jdtsmith/eglot-booster")))
-
-  (use-package eglot-booster
-    :disabled
-    :ensure nil
-    :after eglot
-    :load-path (lambda() (concat user-emacs-directory "elpa/eglot-booster"))
-    :custom (eglot-booster-io-only t)
-    :config
-    (eglot-booster-mode))
-
-#+end_src
-
-I think it would be a good idea to actually /benchmark/ the whole
-thing though, and not take anybodys word for it.
-
-For as of yet (Feb 06, 2025) unknown reason, this is only installed
-via the ':vc' stanza when /not/ on 'aws-devel-06' host.
-
 *** LSPCE
 
 [[https://github.com/zbelial/lspce][LSPCE]] is a simple LSP client that is implemented as an Emacs module.
@@ -4992,28 +4863,6 @@ of disabling that like a caveman, let's just use it.
 
 #+end_src
 
-****** Eglot configuration
-:PROPERTIES:
-:CUSTOM_ID: h:5fa882bc-af79-495b-8690-621d9e9bf6a2
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
-
-  (use-package eglot
-    :disabled
-    :ensure nil
-    :config
-    (add-to-list 'eglot-server-programs `(c-mode   . ,cc-mode:lsp-server-with-args))
-    (add-to-list 'eglot-server-programs `(c++-mode . ,cc-mode:lsp-server-with-args))
-
-    :hook
-    ;; ---------------------------------------------------------------------------
-    ;; repititive but OK
-    (c-mode   . eglot-ensure)
-    (c++-mode . eglot-ensure))
-
-#+end_src
-
 ****** LSPCE configuration
 :PROPERTIES:
 :CUSTOM_ID: h:ef228d53-cd3a-4cb6-aa62-8f844a841443
@@ -5038,14 +4887,14 @@ option to set this up.
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
 
-  ;; -----------------------------------------------------------------------------
-  ;; use eglot-java for java programming
-  (use-package eglot-java
-    :disabled
-    :ensure t
-    :after eglot)
+  ;; ;; -----------------------------------------------------------------------------
+  ;; ;; use eglot-java for java programming
+  ;; (use-package eglot-java
+  ;;   :disabled
+  ;;   :ensure t
+  ;;   :after eglot)
 
-  (add-hook 'java-mode-hook 'eglot-java-mode)
+  ;; (add-hook 'java-mode-hook 'eglot-java-mode)
 
 #+end_src
 *** Epilogue
