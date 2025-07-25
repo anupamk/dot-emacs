@@ -224,6 +224,10 @@ initialized before loading the regular init file.
     (set-horizontal-scroll-bar-mode nil))
 
   ;; -----------------------------------------------------------------------------
+  ;; Remember the last 10000 keystrokes
+  (lossage-size 10000)
+
+  ;; -----------------------------------------------------------------------------
   ;; for startup errors, uncomment this
   ;; (toggle-debug-on-error t)
 
@@ -606,7 +610,16 @@ them.
   ;; -----------------------------------------------------------------------------
   ;; Install use-package if necessary
   (unless (package-installed-p 'use-package)
+    (package-refresh-contents)
     (package-install 'use-package))
+
+  ;; -----------------------------------------------------------------------------
+  ;; The `:ensure-system-package` keyword allows you to ensure system
+  ;; binaries exist alongside your `use-package` declarations.  Using it
+  ;; requires the `system-packages' package to be installed
+  (use-package use-package-ensure-system-package)
+  (use-package system-packages
+    :ensure t)
 
   ;; -----------------------------------------------------------------------------
   ;; Ensure use-package is available at compile time
@@ -1030,6 +1043,10 @@ Per $HOST configuration.
   (defconst anupam-font-family-name "PragmataPro Mono")
 
   ;; -----------------------------------------------------------------------------
+  ;; '100m' file size is considered large here
+  (defconst anupam-large-file-size-bytes (* 100 1024 1024))
+
+  ;; -----------------------------------------------------------------------------
   ;; setup 'language-server-protocol' (LSP) server.
   ;;
   ;; so for all code related actions, the picture looks something like this:
@@ -1157,6 +1174,10 @@ Per $HOST configuration.
   ;; host specific theme+font customizations
   (defconst anupam-theme-name "modus-operandi")
   (defconst anupam-font-family-name "Berkeley Mono")
+
+  ;; -----------------------------------------------------------------------------
+  ;; '100m' file size is considered large here
+  (defconst anupam-large-file-size-bytes (* 100 1024 1024))
 
   ;; -----------------------------------------------------------------------------
   ;; language server protocol (lsp) server, we use ccls on this machine.
@@ -1329,6 +1350,10 @@ Per $HOST configuration.
   (defconst anupam-font-family-name "Berkeley Mono")
 
   ;; -----------------------------------------------------------------------------
+  ;; '10m' file size is considered large here
+  (defconst anupam-large-file-size-bytes (* 10 1024 1024))
+
+  ;; -----------------------------------------------------------------------------
   ;; language server protocol (lsp) server, we use ccls on this machine.
   (defconst anupam-cc-mode:lsp-server-ccls-with-args (executable-find "ccls"))
   (defconst anupam-cc-mode:lsp-server-clangd-with-args '("/opt/homebrew/Cellar/llvm/20.1.6/bin/clangd"
@@ -1444,6 +1469,10 @@ Per $HOST configuration.
   ;; host specific theme+font customizations
   (defconst anupam-theme-name "modus-operandi")
   (defconst anupam-font-family-name "Berkeley Mono")
+
+  ;; -----------------------------------------------------------------------------
+  ;; '100m' file size is considered large here
+  (defconst anupam-large-file-size-bytes (* 100 1024 1024))
 
   ;; -----------------------------------------------------------------------------
   ;; setup 'language-server-protocol' (LSP) server.
@@ -1658,6 +1687,10 @@ Per $HOST configuration.
   ;; host specific theme+font customizations
   (defconst anupam-theme-name "modus-operandi")
   (defconst anupam-font-family-name "Berkeley Mono")
+
+  ;; -----------------------------------------------------------------------------
+  ;; '32m' file size is considered large here
+  (defconst anupam-large-file-size-bytes (* 32 1024 1024))
 
   ;; -----------------------------------------------------------------------------
   ;; setup 'language-server-protocol' (LSP) server.
@@ -2756,6 +2789,11 @@ etc. etc.
     (setq read-process-output-max (* 8 1024 1024))
 
     ;; ---------------------------------------------------------------------------
+    ;; a file is considered 'large' based on the 'host-specific' value
+    ;; of 'anupam-large-file-size-bytes'
+    (setq large-file-warning-threshold anupam-large-file-size-bytes)
+
+    ;; ---------------------------------------------------------------------------
     ;; advice-redefinition is *not* an error. this happens when some
     ;; advice has been evaluated in advance of $mode itself being defined
     ;; or loaded.
@@ -3033,35 +3071,6 @@ Highlight line in active windows only please.
     (setq hl-line-sticky-flag t))
 
   (global-hl-line-mode)
-
-#+end_src
-
-*** Display time
-:PROPERTIES:
-:CUSTOM_ID: h:de87013d-8f52-4ae1-bbb6-c7927fe1717b
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
-
-  (use-package time
-    :ensure nil
-    :hook (after-init . display-time-mode)
-    :config
-    (setq display-time-format " %a %e %b, %H:%M ")
-    ;;;; Covered by `display-time-format'
-    ;; (setq display-time-24hr-format t)
-    ;; (setq display-time-day-and-date t)
-    (setq display-time-interval 60)
-    (setq display-time-default-load-average nil)
-
-    ;; I don't need the load average and the mail indicator, so let this
-    ;; be simple:
-    (setq display-time-string-forms
-          '((propertize
-             (format-time-string display-time-format now)
-             'face 'display-time-date-and-time
-             'help-echo (format-time-string "%a %b %e, %Y" now))
-            " ")))
 
 #+end_src
 
@@ -3711,46 +3720,6 @@ of order, not unlike ~fzf~ on unix shells.
 
 #+end_src
 
-*** Dynamic text expansion
-:PROPERTIES:
-:CUSTOM_ID: h:74d9daca-2d65-4854-859a-ad9efa821274
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
-
-  (use-package dabbrev
-    :ensure nil
-    :commands (dabbrev-expand dabbrev-completion)
-
-    :config
-    ;; ---------------------------------------------------------------------------
-    ;; regexp for skipping leading characters of an abbreviation.
-    (setq dabbrev-abbrev-skip-leading-regexp "[$*/=~']")
-    (setq dabbrev-backward-only nil)
-
-    ;; ---------------------------------------------------------------------------
-    ;; fixups for 'case' searching.
-    (setq dabbrev-case-distinction 'case-replace)
-    (setq dabbrev-case-replace 'case-replace)
-
-    ;; ---------------------------------------------------------------------------
-    ;; control whether dabbrev searches should ignore case.
-    ;;    'nil' ==> case-is-significant
-    (setq dabbrev-case-fold-search nil)
-    (setq dabbrev-upcase-means-case-search t)
-
-    (setq dabbrev-check-other-buffers t)
-    (setq dabbrev-eliminate-newlines t)
-
-    ;; ---------------------------------------------------------------------------
-    ;; inhibit looking for abbreviations in buffers derived from these modes
-    (setq dabbrev-ignored-buffer-modes '(archive-mode
-                                         image-mode
-                                         docview-mode
-                                         pdf-view-mode)))
-
-#+end_src
-
 *** Vertico
 :PROPERTIES:
 :CUSTOM_ID: h:0b92d580-27e0-44f9-8629-34831732f861
@@ -3803,110 +3772,29 @@ of order, not unlike ~fzf~ on unix shells.
 
   (use-package consult
     :ensure t
-    :demand t
-    :after minibuffer
+    :bind (
+           :map global-map
+           ("M-s f"   . consult-find)
+           ("C-x b"   . consult-buffer)
+           ("M-y"     . yank-pop)
 
-    :custom
-    ((register-preview-delay 0)
-     (consult-narrow-key "<"))
+           :map ctrl-c-c-map
+           ("C-s"   . consult-line))
 
-    :init
-    ;; ---------------------------------------------------------------------------
-    ;; show absolute line-numbers when narrowing is active
-    (setq consult-line-numbers-widen t)
+    :preface
+    (defun consult-grep-dwim ()
+      (interactive)
+      (require 'vc)
+      (let ((directory (project-root (project-current)))
+            (initial (when (region-active-p)
+                       (buffer-substring (region-beginning) (region-end)))))
+        (cond
+         ((eq 'Git (vc-deduce-backend))
+          (consult-git-grep directory initial))
 
-    ;; ---------------------------------------------------------------------------
-    ;; use plocate as the locate backend, ignoring case, and limiting to 100
-    ;; results
-    (setq consult-locate-args "plocate --ignore-case --limit 100"))
-
-  (global-set-key (kbd "C-x b") #'consult-buffer)
-
-#+end_src
-
-*** Cape
-:PROPERTIES:
-:CUSTOM_ID: h:10F2578B-F772-4CE9-9517-B02870AF574A
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
-
-  (defun anupam:setup-cape-completions()
-    (setq-local completion-at-point-functions '(cape-file
-						      cape-abbrev
-						      cape-dabbrev
-						      cape-keyword)))
-  (use-package cape
-    :ensure t
-    :config
-
-    ;; -----------------------------------------------------------------------------
-    ;; same as corfu
-    (setq cape-dabbrev-min-length 2)
-    (setq cape-file-directory-must-exist nil)
-
-    :hook
-    (text-mode . anupam:setup-cape-completions)
-    (prog-mode . anupam:setup-cape-completions))
-
-#+end_src
-
-*** Corfu
-:PROPERTIES:
-:CUSTOM_ID: h:ECCCA56F-1E00-4202-9DFE-8407932F4C29
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
-
-  (use-package corfu
-    :ensure t
-
-    :custom
-    ;; ---------------------------------------------------------------------------
-    ;; allow cycling through candidate list
-    (corfu-cycle t)
-
-    ;; ---------------------------------------------------------------------------
-    ;; enable auto completion (disabled by default)
-    (corfu-auto t)
-
-    ;; ---------------------------------------------------------------------------
-    ;; minimum length of prefix for auto completion to kick in.
-    (corfu-auto-prefix 2)
-
-    ;; ---------------------------------------------------------------------------
-    ;; delay for auto completion
-    (corfu-auto-delay 0.1)
-
-    ;; ---------------------------------------------------------------------------
-    ;; preview currently selected candidate
-    (corfu-preview-current 'insert)
-
-    ;; ---------------------------------------------------------------------------
-    ;; always select the prompt.
-    (corfu-preselect 'prompt)
-
-    ;; ---------------------------------------------------------------------------
-    ;; use TAB for cycling, default is `corfu-complete'.
-    :bind
-    (:map corfu-map
-          ("M-SPC" . corfu-insert-separator)
-          ("TAB"   . corfu-next)
-          ("M-TAB" . corfu-previous)
-          ("RET"   . corfu-insert))
-
-    :init
-    ;; ---------------------------------------------------------------------------
-    ;; use it everywhere
-    (global-corfu-mode)
-
-    ;; ---------------------------------------------------------------------------
-    ;; save completion history for better sorting
-    (corfu-history-mode)
-
-    ;; ---------------------------------------------------------------------------
-    ;; display brief candidate documentation in the 'echo' area.
-    (corfu-echo-mode))
+         (t
+          (consult-grep directory initial)))))
+    )
 
 #+end_src
 
@@ -4103,22 +3991,6 @@ search results, specifying custom query commands etc. etc.
   ;; regex search always
   (define-key global-map [remap isearch-forward]  #'isearch-forward-regexp)
   (define-key global-map [remap isearch-backward] #'isearch-backward-regexp)
-
-#+end_src
-
-*** XRef
-:PROPERTIES:
-:CUSTOM_ID: h:6E0F51F3-04D7-4650-9C18-1C3FC040FD6A
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el"
-
-  ;; -----------------------------------------------------------------------------
-  ;; use ripgrep for xref as well
-  (use-package xref
-    :ensure nil
-    :custom
-    (xref-search-program 'ripgrep))
 
 #+end_src
 
