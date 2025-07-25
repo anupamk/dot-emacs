@@ -1508,22 +1508,38 @@ Per $HOST configuration.
                                                          "-v=1"
                                                          ))
 
-  (defconst anupam-cc-mode:lsp-server-clangd-with-args '("/twbuild/anupam.kapoor/local/llvm/bin/clangd"
-                                                         "--enable-config"
-                                                         "-j=8"
-                                                         "--malloc-trim"
-                                                         "--all-scopes-completion=1"
-                                                         "--background-index=1"
-                                                         "--limit-results=128"
-                                                         "--limit-references=128"
-                                                         "--completion-style=detailed"
-                                                         "--sync"
-                                                         "--pch-storage=disk"
-                                                         "--log=verbose"))
+  (defun anupam-cc-mode:lsp-server-clangd()
+    "/twbuild/anupam.kapoor/local/llvm/bin/clangd")
+
+  ;; -----------------------------------------------------------------------------
+  ;; '--compile-commands-dir' is needed for background indexing with
+  ;; 'clangd' otherwise it just indexes files 'on-demand' i.e. as and
+  ;; when they are opened.
+  ;;
+  ;; but '--compile-commands-dir' changes based on projects etc. so we
+  ;; just use the '${PWD}' as the starting point.
+  (defun anupam-cc-mode:lsp-server-clangd-args()
+    (concat "--compile-commands-dir=" (getenv "PWD") " "
+            (mapconcat #'identity `(
+                                    "-j=1"
+                                    "--malloc-trim"
+                                    "--all-scopes-completion"
+                                    "--background-index"
+                                    "--limit-references=8"
+                                    "--limit-results=8"
+                                    "--pch-storage=disk"
+                                    "--header-insertion-decorators=0"
+                                    )
+                       " ")
+            ))
 
   ;; -----------------------------------------------------------------------------
   ;; this is the actual server that will be used. see eglot
   ;; configuration section more information
+  (defconst anupam-cc-mode:lsp-server-clangd-with-args
+    (list (anupam-cc-mode:lsp-server-clangd)
+          (anupam-cc-mode:lsp-server-clangd-args)))
+
   (defconst cc-mode:lsp-server-with-args anupam-cc-mode:lsp-server-clangd-with-args)
 
   ;; -----------------------------------------------------------------------------
@@ -2905,6 +2921,19 @@ etc. etc.
     (("C-z" . anupam-prefix)))
 
 #+end_src
+*** Define some prefix-maps
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  (use-package bind-key
+    :ensure t)
+
+  ;; -----------------------------------------------------------------------------
+  (bind-keys* :prefix "C-c ," :prefix-map ctrl-c-comma-map)
+  (bind-keys* :prefix "C-c c" :prefix-map ctrl-c-c-map)
+
+#+end_src
+
 *** Global keymaps
 :PROPERTIES:
 :CUSTOM_ID: h:857b43de-a575-407d-af55-7f4d2e926187
@@ -3085,11 +3114,35 @@ Collection of Ridiculously Useful Extensions for Emacs.
   (use-package crux
     :ensure t
 
-    :bind
-    (("C-a" . crux-move-beginning-of-line)))
+    :commands
+    (crux-swap-windows
+     crux-transpose-windows)
+
+    :bind (("C-a"           . crux-move-beginning-of-line)
+           ("C-<backspace>" . crux-kill-line-backwards)
+
+           :map ctrl-c-c-map
+           ("<return>" . crux-switch-to-previous-buffer))
+
+    :hook
+    (after-init . crux-reopen-as-root-mode))
 
 #+end_src
 
+*** Expand Region
+
+Increase the selected region by semantic units. This is slightly more
+intuitive than =hyperbole=
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  (use-package expand-region
+    :ensure t
+    :bind (:map ctrl-c-c-map
+                ("e" . er/expand-region))
+    )
+
+#+end_src
 *** Try a package
 :PROPERTIES:
 :CUSTOM_ID: h:68451155-C4AF-444B-9761-F7B7B5186670
@@ -3142,16 +3195,28 @@ Try a package without installing it.
 changes in window configuration so that changes can be undone using
 the =winner-undo= command.
 
+When the =repeat-mode= is enabled, via the =M-x repeat-mode=,
+repeatedly pressing the =<= or =>= keys cycles through the window
+configuration.
+
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-window.el"
 
   (use-package winner
     :ensure nil
-    :bind
-    (("C-c C-x <right>" . winner-redo)
-     ("C-c C-x <left>"  . winner-undo))
+
+    :init
+    (setq winner-dont-bind-my-keys t)
+
+    :bind (:map ctrl-c-comma-map
+           (">" . winner-redo)
+           ("<"  . winner-undo))
+
+    :config
+    (define-key winner-repeat-map ">" #'winner-redo)
+    (define-key winner-repeat-map "<" #'winner-undo)
+
     :hook
-    (after-init . winner-mode)
-    )
+    (after-init . winner-mode))
 
 #+end_src
 
@@ -3945,6 +4010,7 @@ search results, specifying custom query commands etc. etc.
 
   (use-package rg
     :ensure t
+    :ensure-system-package rg
     :custom
 
     ;; ---------------------------------------------------------------------------
@@ -3970,13 +4036,25 @@ search results, specifying custom query commands etc. etc.
     ;; ---------------------------------------------------------------------------
     ;; default file alias to use when no alias can be determined
     (rg-default-alias-fallback "all")
+    )
 
-    :bind
-    (:map rg-mode-map
-          ("C-n" . next-line)
-          ("C-p" . prev-line)
-          ("M-n" . rg-next-file)
-          ("M-p" . rg-prev-file)))
+#+end_src
+
+**** R.I.P.GREP ≫ GREP
+
+In 2025, there is no reason to stick with =grep= anymore neither in
+the terminal, nor within Emacs. Lets set that up.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el"
+
+  (grep-apply-setting 'grep-find-command
+                      ;; ---------------------------------------------------------
+                      ;; `46' because the '' is `46' characters away
+                      ;; from the begining of 'rg -n ...' stanza
+                      ;; 0....!....1....!....2....!....3....!....4....!....5....!....6....!....7....!....8....!....9
+                      '("rg -g '!third_party/' -n -H --no-heading -e '' $(git rev-parse --show-toplevel || pwd)" . 46))
+
+  (global-set-key (kbd "C-c g") 'grep-find)
 
 #+end_src
 
@@ -4431,6 +4509,7 @@ And finally, the *best* git client by far.
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
 
   (use-package eglot
+    :disabled
     :ensure nil
     :demand t
 
@@ -4526,12 +4605,13 @@ We install the eglot wrapper here.
     (package-vc-install '(eglot-booster :url "https://github.com/jdtsmith/eglot-booster")))
 
   (use-package eglot-booster
-      :ensure nil
-      :after eglot
-      :load-path (lambda() (concat user-emacs-directory "elpa/eglot-booster"))
-      :custom (eglot-booster-io-only t)
-      :config
-      (eglot-booster-mode))
+    :disabled
+    :ensure nil
+    :after eglot
+    :load-path (lambda() (concat user-emacs-directory "elpa/eglot-booster"))
+    :custom (eglot-booster-io-only t)
+    :config
+    (eglot-booster-mode))
 
 #+end_src
 
@@ -4540,6 +4620,45 @@ thing though, and not take anybodys word for it.
 
 For as of yet (Feb 06, 2025) unknown reason, this is only installed
 via the ':vc' stanza when /not/ on 'aws-devel-06' host.
+
+*** LSPCE
+
+[[https://github.com/zbelial/lspce][LSPCE]] is a simple LSP client that is implemented as an Emacs module.
+
+Lets set that up here:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; install the following dependencies first
+  (use-package f :ensure t)
+  (use-package markdown-mode :ensure t)
+
+  (use-package lspce
+    :ensure nil
+    :load-path (lambda() (concat user-emacs-directory "lspce"))
+    :config
+    (setq lspce-send-changes-idle-time 0.1)
+    (setq lspce-show-log-level-in-modeline nil)
+    (setq lspce-xref-append-implementations-to-definitions t)
+    (setq lspce-enable-eldoc nil)
+    (setq lspce-eldoc-enable-hover nil)
+    (setq lspce-eldoc-enable-signature nil)
+    (setq lspce-enable-flymake nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; where lspce does its logging ?
+    (lspce-set-log-file "/tmp/lspce.log")
+    (lspce-enable-logging)
+
+    ;; ---------------------------------------------------------------------------
+    ;; update 'lspce-server-programs' to use appropriate lsp server for
+    ;; different programming modes.
+    (setq lspce-server-programs `(("python" "pylsp" "" )
+                                  ("C" anupam-cc-mode:lsp-server-clangd  anupam-cc-mode:lsp-server-clangd-args))
+          ))
+
+#+end_src
 
 *** Dumbjump
 :PROPERTIES:
@@ -4881,6 +5000,7 @@ of disabling that like a caveman, let's just use it.
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
 
   (use-package eglot
+    :disabled
     :ensure nil
     :config
     (add-to-list 'eglot-server-programs `(c-mode   . ,cc-mode:lsp-server-with-args))
@@ -4894,6 +5014,23 @@ of disabling that like a caveman, let's just use it.
 
 #+end_src
 
+****** LSPCE configuration
+:PROPERTIES:
+:CUSTOM_ID: h:ef228d53-cd3a-4cb6-aa62-8f844a841443
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  (use-package lspce
+    :ensure nil
+
+    :hook
+    ;; ---------------------------------------------------------------------------
+    ;; repititive but OK
+    (c-mode   . lspce-mode)
+    (c++-mode . lspce-mode))
+
+#+end_src
 **** Java
 
 As of now (Feb 09, 2025), it seems that ~eglot-java~ is the /easiest/
@@ -4904,6 +5041,7 @@ option to set this up.
   ;; -----------------------------------------------------------------------------
   ;; use eglot-java for java programming
   (use-package eglot-java
+    :disabled
     :ensure t
     :after eglot)
 
