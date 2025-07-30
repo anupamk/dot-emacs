@@ -340,10 +340,21 @@ without a modicum of understanding of the innards.
 #+begin_src emacs-lisp :tangle "early-init.el"
 
   ;; -----------------------------------------------------------------------------
-  ;; Defer garbage collection to later, and set a 'proper' scheme via
-  ;; the gcmh
-  (setq gc-cons-threshold most-positive-fixnum)
-  (setq gc-cons-percentage 0.5)
+  ;; garbage collect when idle, and disable while in the minibuffer
+  (defun my-minibuffer-setup-hook ()
+    (setq gc-cons-threshold most-positive-fixnum))
+
+  (defun my-minibuffer-exit-hook ()
+    (setq gc-cons-threshold 800000000))
+
+  (add-hook 'minibuffer-setup-hook #'my-minibuffer-setup-hook)
+  (add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
+
+  (defun gc-idle-timer ()
+    "Trigger garbage collection when Emacs is idle for 0.5 seconds."
+    (run-with-idle-timer 1.2 t 'garbage-collect))
+
+  (gc-idle-timer)
 
   ;; -----------------------------------------------------------------------------
   ;; make startup faster.
@@ -624,6 +635,10 @@ them.
   ;; Ensure use-package is available at compile time
   (eval-when-compile
     (require 'use-package))
+
+  ;; -----------------------------------------------------------------------------
+  ;; bump up the number of bindings / unwind-protects
+  (setq max-lisp-eval-depth 2000)
 
   ;; -----------------------------------------------------------------------------
   ;; want to see loading time of each package during startup ? here is
@@ -1058,21 +1073,74 @@ Per $HOST configuration.
   ;;        - <this place is for rent>
   ;;
   ;; here we configure lsp-servers for c/c++
-  (defconst anupam-cc-mode:lsp-server-ccls-with-args   (executable-find "ccls"))
-  (defconst anupam-cc-mode:lsp-server-clangd-with-args '("clangd"
-                                                         "-j=8"
-                                                         "--malloc-trim"
-                                                         "--all-scopes-completion=1"
-                                                         "--background-index=1"
-                                                         "--limit-results=128"
-                                                         "--completion-style=detailed"
-                                                         "--pch-storage=memory"
-                                                         "--log=error"))
+
+  (defun anupam-cc-mode:lsp-server-ccls()
+    (executable-find "ccls"))
+
+  (defun anupam-cc-mode:lsp-server-ccls-args()
+    (mapconcat #'identity `(
+                            "--log-file=/tmp/ccls.log"
+                            "-v=1"
+                            )
+               " "))
 
   ;; -----------------------------------------------------------------------------
-  ;; this is the actual server that will be used. see eglot
-  ;; configuration section more information
-  (defconst cc-mode:lsp-server-with-args anupam-cc-mode:lsp-server-clangd-with-args)
+  ;; '--compile-commands-dir' is needed for background indexing with
+  ;; 'clangd' otherwise it just indexes files 'on-demand' i.e. as and
+  ;; when they are opened.
+  ;;
+  ;; but '--compile-commands-dir' changes based on projects etc. so we
+  ;; just use the '${PWD}' as the starting point.
+  (defun anupam-cc-mode:lsp-server-clangd()
+    "/usr/sbin/clangd")
+
+  (defun anupam-cc-mode:lsp-server-clangd-args()
+    (concat "--compile-commands-dir=" (getenv "PWD") " "
+            (mapconcat #'identity `(
+                                    "-j=1"
+                                    "--malloc-trim"
+                                    "--all-scopes-completion"
+                                    "--background-index"
+                                    "--limit-references=8"
+                                    "--limit-results=8"
+                                    "--pch-storage=disk"
+                                    "--header-insertion-decorators=0"
+                                    )
+                       " ")
+            ))
+
+  ;; -----------------------------------------------------------------------------
+  ;; ,----[from the man-page]
+  ;; | -fdiagnostics-plain-output
+  ;; | This option requests that diagnostic output look as plain as
+  ;; | possible, which may be useful when running dejagnu or other
+  ;; | utilities that need to parse diagnostics output and prefer that it
+  ;; | remain more stable over time. -fdiagnostics-plain-output is
+  ;; | currently equivalent to the following options:
+  ;; |
+  ;; | -fno-diagnostics-show-caret
+  ;; | -fno-diagnostics-show-line-numbers
+  ;; | -fdiagnostics-color=never
+  ;; | -fdiagnostics-urls=never
+  ;; | -fdiagnostics-path-format=separate-events
+  ;; | -fdiagnostics-text-art-charset=none .............  na
+  ;; | -fno-diagnostics-show-event-links ................ na
+  ;; `----
+  ;; -----------------------------------------------------------------------------
+
+  ;; -----------------------------------------------------------------------------
+  ;; which setup less noisy flags
+  (defconst plain-diag-args
+    (concat "-fno-diagnostics-show-caret "
+            "-fdiagnostics-color=never "
+            "-fdiagnostics-path-format=separate-events "
+            ))
+
+  (defconst gcc-with-args (concat "gcc " plain-diag-args))
+  (defconst g++-with-args (concat "g++ " plain-diag-args))
+
+  (defconst c-compiler gcc-with-args)
+  (defconst c++-compiler g++-with-args)
 
   ;; -----------------------------------------------------------------------------
   ;; where is `clang-format-executable' ?
@@ -2596,6 +2664,7 @@ etc. etc.
 :END:
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
   (use-package transient
     :ensure t
     :defer t
@@ -2613,12 +2682,24 @@ etc. etc.
     (setf inhibit-startup-message t)
 
     ;; ---------------------------------------------------------------------------
+    ;; no need for GNU agitprop
+    (set inhibit-startup-screen t)
+
+    ;; ---------------------------------------------------------------------------
     ;; auto-fill by default ?
     (auto-fill-mode t)
 
     ;; ---------------------------------------------------------------------------
     ;; look ma, nobell
-    (setf ring-bell-function (lambda()))
+    (setf ring-bell-function 'ignore)
+
+    ;; ---------------------------------------------------------------------------
+    ;; save existing clipboard text into the kill ring before replacing it.
+    (setq save-interprogram-paste-before-kill t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; fix undo in commands affecting the mark.
+    (setq mark-even-if-inactive nil)
 
     ;; -------------------------------------------------------------------------
     ;; prefix for generating auto-save-list-file-name
@@ -2709,6 +2790,22 @@ etc. etc.
     (setq switch-to-buffer-preserve-window-point t)
 
     ;; ---------------------------------------------------------------------------
+    ;; unicode ellipsises are better
+    (setq truncate-string-ellipsis "…")
+
+    ;; ---------------------------------------------------------------------------
+    ;; close help window immediately
+    (setq help-window-select t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; more information in completions
+    (setq completions-detailed t)
+
+    ;; ---------------------------------------------------------------------------
+    ;; don't keep duplicate entries in kill ring
+    (setq kill-do-not-save-duplicates t)
+
+    ;; ---------------------------------------------------------------------------
     ;; adjust scrolling behavior
     ;;
     ;;    - `scroll-margin': number of lines between cursor and vertical
@@ -2773,7 +2870,8 @@ etc. etc.
     ;; ---------------------------------------------------------------------------
     ;; enforce utf-8 as the default coding system for all files, buffers
     ;; and comint processes.
-    (set-default-coding-systems 'utf-8)
+    (set-charset-priority 'unicode)
+    (prefer-coding-system 'utf-8-unix)
 
     ;; ---------------------------------------------------------------------------
     ;; treat clipboard input as utf-8 string first; compound text next
@@ -4501,6 +4599,7 @@ Lets set that up here:
   ;; install the following dependencies first
   (use-package f :ensure t)
   (use-package markdown-mode :ensure t)
+  (use-package yasnippet :ensure t)
 
   (use-package lspce
     :ensure nil
@@ -4523,7 +4622,7 @@ Lets set that up here:
     ;; update 'lspce-server-programs' to use appropriate lsp server for
     ;; different programming modes.
     (setq lspce-server-programs `(("python" "pylsp" "" )
-                                  ("C" anupam-cc-mode:lsp-server-clangd  anupam-cc-mode:lsp-server-clangd-args))
+                                  ("C" anupam-cc-mode:lsp-server-ccls  anupam-cc-mode:lsp-server-ccls-args))
           ))
 
 #+end_src
@@ -4611,6 +4710,10 @@ Low /configuration overhead/ jump to definition.
   (setq compilation-scroll-output 'first-error ; Scroll but stop at first error.
         compilation-skip-threshold 2           ; Skip anything less than errors.
         compilation-always-kill t)             ; Don't ask, just start new compilation.
+
+  ;; -----------------------------------------------------------------------------
+  ;; compilation buffers should wrap their lines.
+  (add-hook 'compilation-mode-hook 'visual-line-mode)
 
 #+end_src
 
