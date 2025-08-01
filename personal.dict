@@ -1,4 +1,4 @@
-personal_ws-1.1 en 66 
+personal_ws-1.1 en 79 
 BN
 Bazel
 DEBUGINFOD
@@ -26,14 +26,18 @@ Vertico
 Vivendi
 Wucuo
 addr
+alloc
 alloced
 async
 aws
 bn
+ceil
 cmf
 deps
 destructor
 devel
+fd
+fname
 fvwm
 goto
 gtest
@@ -43,19 +47,27 @@ io
 iso
 llvm
 macos
+mmapped
 nullness
 nullptr
 ofcourse
 ok
+onwards
 param
 params
 pb
+pid
+proc
 protobuf
 recv
+recvmsg
 reinit
 repo
+req
 rn
 shm
+src
+stat'ed
 stringified
 stringify
 submoduled
@@ -64,4 +76,5 @@ tracy
 usr
 util
 vnc
+whaaaat
 xorg

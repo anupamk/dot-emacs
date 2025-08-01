@@ -782,14 +782,6 @@ here.
       (find-alternate-file (concat "/sudo:root@localhost:" buffer-file-name))))
 
   ;; -----------------------------------------------------------------------------
-  ;; add many items to a list
-  ;;;###autoload
-  (defun anupam-common:add-many-to-list (L &rest items)
-    (dolist (item items)
-      (add-to-list L item))
-    (eval L))
-
-  ;; -----------------------------------------------------------------------------
   ;; insert current date
   ;;;###autoload
   (defun anupam-common:insert-current-date (iso)
@@ -1570,10 +1562,16 @@ Per $HOST configuration.
   ;; heck, if you are creative enough, you can do #1 & #2 together !!!
   ;; what the world is coming to ? <snicker>
   ;; -----------------------------------------------------------------------------
-  (defconst anupam-cc-mode:lsp-server-ccls-with-args   '("/twbuild/anupam.kapoor/local/usr/bin/ccls"
-                                                         "--log-file=/tmp/anupam-kapoor-ccls.log"
-                                                         "-v=1"
-                                                         ))
+  (defun anupam-cc-mode:lsp-server-ccls()
+    "/twbuild/anupam.kapoor/local/usr/bin/ccls")
+
+
+  (defun anupam-cc-mode:lsp-server-ccls-args()
+    (mapconcat #'identity `(
+                            "--log-file=/tmp/anupam-kapoor-ccls.log"
+                            "-v=1"
+                            )
+               " "))
 
   (defun anupam-cc-mode:lsp-server-clangd()
     "/twbuild/anupam.kapoor/local/llvm/bin/clangd")
@@ -2136,7 +2134,7 @@ lipstick on a pig.
     "Return indicator for major-mode"
 
     (let ((mm-ind-value (cond ((derived-mode-p 'text-mode) "§")
-                              ((derived-mode-p 'prog-mode) "λ")
+                              ((derived-mode-p 'prog-mode) "𝞴")
                               (t "◦"))))
       (propertize mm-ind-value 'face 'shadow)))
 
@@ -2682,10 +2680,6 @@ etc. etc.
     (setf inhibit-startup-message t)
 
     ;; ---------------------------------------------------------------------------
-    ;; no need for GNU agitprop
-    (set inhibit-startup-screen t)
-
-    ;; ---------------------------------------------------------------------------
     ;; auto-fill by default ?
     (auto-fill-mode t)
 
@@ -2865,13 +2859,14 @@ etc. etc.
     ;; lexical binding by default. Must be delayed since Emacs sets this
     ;; on its own to nil after initialization.
     (run-at-time 0 nil (lambda ()
-			       (setq-default lexical-binding t)))
+				   (setq-default lexical-binding t)))
 
     ;; ---------------------------------------------------------------------------
     ;; enforce utf-8 as the default coding system for all files, buffers
     ;; and comint processes.
-    (set-charset-priority 'unicode)
-    (prefer-coding-system 'utf-8-unix)
+    (prefer-coding-system         'utf-8)
+    (set-language-environment     'utf-8)
+    (setq locale-coding-system    'utf-8)
 
     ;; ---------------------------------------------------------------------------
     ;; treat clipboard input as utf-8 string first; compound text next
@@ -2941,6 +2936,7 @@ etc. etc.
     ;; When enabled, this minor mode allows you to scroll the display
     ;; precisely, according to the turning of the mouse wheel.
     (setq pixel-scroll-precision-mode t)
+    (setq pixel-scroll-precision-use-momentum nil)
 
     ;; ---------------------------------------------------------------------------
     ;; resize frames independent of `frame-char-{height,width}'
