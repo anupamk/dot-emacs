@@ -3867,6 +3867,32 @@ of order, not unlike ~fzf~ on unix shells.
 
 #+end_src
 
+*** Company
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  (use-package company
+    :ensure t
+
+    :hook
+    (after-init . global-company-mode)
+
+    :config
+    (setq company-idle-delay 2.0
+          company-tooltip-align-annotations t
+          company-tooltip-flip-when-above t
+          company-tooltip-offset-display 'lines
+          company-format-margin-function nil)
+
+    :preface
+    (defun company-mode-quicker ()
+      "Makes `company-mode' show completions quickly in a buffer."
+      (interactive)
+      (make-local-variable 'company-idle-delay)
+      (setq-local company-idle-delay 0.1)
+      (company-mode +1)))
+
+#+end_src
 *** Vertico
 :PROPERTIES:
 :CUSTOM_ID: h:0b92d580-27e0-44f9-8629-34831732f861
@@ -4974,6 +5000,38 @@ of disabling that like a caveman, let's just use it.
     ;; repititive but OK
     (c-mode   . lspce-mode)
     (c++-mode . lspce-mode))
+
+#+end_src
+
+**** Python
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  (use-package python-mode
+    :ensure nil
+
+    :init
+    (setq python-indent-guess-indent-offset-verbose nil
+          python-indent-guess-indent-offset nil
+          python-indent-offset 4)
+
+    :hook
+    ((python-mode . company-mode-quicker)))
+
+  (use-package lazy-ruff
+    :ensure t
+
+    :bind
+    (("C-c f" . lazy-ruff-lint-format-dwim))
+
+    :config
+    (lazy-ruff-mode-global-toggle t))
+
+  (use-package lspce
+    :ensure nil
+
+    :hook
+    (python-mode . lspce-mode))
 
 #+end_src
 **** Java
