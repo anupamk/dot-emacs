@@ -844,12 +844,6 @@ here.
     (message "Bookmarked saved at current position"))
 
   ;; -----------------------------------------------------------------------------
-  ;; clear the minibuffer
-  (defun anupam-common:clear-minibuffer-messages ()
-    "clear minibuffer messages"
-    (message ""))
-
-  ;; -----------------------------------------------------------------------------
   ;; truncate lines silently
   ;;;###autoload
   (defun anupam-common:truncate-lines-silently ()
@@ -3842,57 +3836,6 @@ of order, not unlike ~fzf~ on unix shells.
 
 #+end_src
 
-*** Orderless
-:PROPERTIES:
-:CUSTOM_ID: h:be801d35-439e-4e9c-98cf-b5aad89d3a1f
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
-
-  (use-package orderless
-    :ensure t
-    :demand t
-    :custom
-    (completion-styles '(basic partial-completion orderless))
-    (completion-category-defaults nil)
-    (completion-category-overrides '((file (styles . (partial-completion)))))
-
-    ;; ---------------------------------------------------------------------------
-    ;; SPC should never complete: use it for `orderless' groups. The `?'
-    ;; is a regexp construct.
-    :bind
-    (:map minibuffer-local-completion-map
-          ("SPC" . nil)
-          ("?" . nil)))
-
-#+end_src
-
-*** Company
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
-
-  (use-package company
-    :ensure t
-
-    :hook
-    (after-init . global-company-mode)
-
-    :config
-    (setq company-idle-delay 2.0
-          company-tooltip-align-annotations t
-          company-tooltip-flip-when-above t
-          company-tooltip-offset-display 'lines
-          company-format-margin-function nil)
-
-    :preface
-    (defun company-mode-quicker ()
-      "Makes `company-mode' show completions quickly in a buffer."
-      (interactive)
-      (make-local-variable 'company-idle-delay)
-      (setq-local company-idle-delay 0.1)
-      (company-mode +1)))
-
-#+end_src
 *** Vertico
 :PROPERTIES:
 :CUSTOM_ID: h:0b92d580-27e0-44f9-8629-34831732f861
@@ -3902,19 +3845,68 @@ of order, not unlike ~fzf~ on unix shells.
 
   (use-package vertico
     :ensure t
-    :hook (after-init . vertico-mode)
+
+    :custom
+    ;; ---------------------------------------------------------------------------
+    ;; only '10' items if you please.
+    (vertico-count 10)
+
+    ;; ---------------------------------------------------------------------------
+    ;; disable resize of vertico buffer
+    (vertico resize nil)
+
+    ;; ---------------------------------------------------------------------------
+    ;; don't cycle through the candidate when reaching the end of the
+    ;; list
+    (vertico-cycle nil)
+
+    :config
+    ;; ---------------------------------------------------------------------------
+    ;; customize display of current candidate in the completion list by
+    ;; prefixing him with “» ” to make it stand out.
+    ;;
+    ;; from:
+    ;;    https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow
+    ;; ---------------------------------------------------------------------------
+    (advice-add #'vertico--format-candidate :around
+                (lambda (orig cand prefix suffix index _start)
+                  (setq cand (funcall orig cand prefix suffix index _start))
+                  (concat
+                   (if (= vertico--index index)
+                       (propertize "» " 'face '(:foreground "#80adf0" :weight bold))
+                     "  ")
+                   cand)))
+
+    :hook (after-init . vertico-mode))
+
+#+end_src
+
+*** Orderless
+:PROPERTIES:
+:CUSTOM_ID: h:be801d35-439e-4e9c-98cf-b5aad89d3a1f
+:END:
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  (use-package orderless
+    :ensure t
+
+    :defer t
+
+    :after vertico
+
+    :custom
+    (completion-styles '(basic partial-completion orderless))
+    (completion-category-defaults nil)
+    (completion-category-overrides '((file (styles (partial-completion)))))
+
+    ;; ---------------------------------------------------------------------------
+    ;; SPC should never complete: use it for `orderless' groups. The `?'
+    ;; is a regexp construct.
     :bind
-    (:map vertico-map
-          ("TAB" . minibuffer-complete)
-
-          ;; ---------------------------------------------------------------------
-          ;; M-v is taken by vertico
-          ("M-g M-c" . switch-to-completions)
-
-          ;; ---------------------------------------------------------------------
-          ;; Original tab binding, which we want sometimes when using
-          ;; orderless completion.
-          ("M-TAB" . vertico-insert)))
+    (:map minibuffer-local-completion-map
+          ("SPC" . nil)
+          ("?" . nil)))
 
 #+end_src
 
@@ -3927,15 +3919,9 @@ of order, not unlike ~fzf~ on unix shells.
 
   (use-package marginalia
     :ensure t
-    :hook (after-init . marginalia-mode)
 
-    :custom
-    ((marginalia-align-offset -1)         ; 1 space on the right
-     (marginalia-align 'right)
-     (marginalia-margin-threshold 200)
-     (marginalia-separator-threshold 120)
-     (marginalia-truncate-width 100)
-     (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil))))
+    :hook
+    (after-init . marginalia-mode))
 
 #+end_src
 
@@ -3971,6 +3957,32 @@ of order, not unlike ~fzf~ on unix shells.
 
 #+end_src
 
+*** Company
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  (use-package company
+    :ensure t
+
+    :hook
+    (after-init . global-company-mode)
+
+    :config
+    (setq company-idle-delay 2.0
+          company-tooltip-align-annotations t
+          company-tooltip-flip-when-above t
+          company-tooltip-offset-display 'lines
+          company-format-margin-function nil)
+
+    :preface
+    (defun company-mode-quicker ()
+      "Makes `company-mode' show completions quickly in a buffer."
+      (interactive)
+      (make-local-variable 'company-idle-delay)
+      (setq-local company-idle-delay 0.1)
+      (company-mode +1)))
+
+#+end_src
 *** Epilogue
 :PROPERTIES:
 :CUSTOM_ID: h:1bc53f97-9b2e-48e1-8062-6975224a6b02
