@@ -3237,7 +3237,30 @@ Try a package without installing it.
     :ensure t)
 
 #+end_src
+*** Unbold fonts ... puhleease !
+:PROPERTIES:
+:CUSTOM_ID: h:7b7dd48e-17a6-4002-9a35-50945b4c721a
+:END:
 
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-unannoy.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; also fonts are reset to their ugly bolder cousins on theme
+  ;; change. let's see if we can fix that ?
+  (defvar after-load-theme-hook nil
+    "Hook to run after a color theme is loaded with a 'load-theme'")
+
+  (defadvice load-theme (after run-after-load-theme-hook activate)
+    "run 'after-load-theme-hook'"
+    (run-hooks 'after-load-theme-hook))
+
+  ;; -----------------------------------------------------------------------------
+  ;; unbold all fonts everywhere. hopefully by this time around all
+  ;; faces are loaded.
+  (add-hook 'emacs-startup-hook #'anupam-common:unannoy-fonts)
+  (add-hook 'after-load-theme-hook #'anupam-common:unannoy-fonts)
+
+#+end_src
 *** Epilogue
 :PROPERTIES:
 :CUSTOM_ID: h:ce3a0be4-fbb2-448f-85a0-0f37e475f7fd
@@ -3889,7 +3912,7 @@ of order, not unlike ~fzf~ on unix shells.
       (((class color) (min-colors 88) (background dark))
        :foreground "#ffd700")
 
-      (t :foreground "red"))
+      (t :foreground "#ff0000"))
 
     "Prefix face for display of current candidates in vertico completion list")
 
@@ -5228,11 +5251,6 @@ All of our configuration is now loaded. Happy hacking !
     (message "= all configuration is now loaded. happy hacking ! ="))
 
   (add-hook 'emacs-startup-hook #'greet-post-startup-complete)
-
-  ;; -----------------------------------------------------------------------------
-  ;; unbold all fonts everywhere. hopefully by this time around all
-  ;; faces are loaded.
-  (add-hook 'emacs-startup-hook #'anupam-common:unannoy-fonts)
 
   ;; -----------------------------------------------------------------------------
   ;; show some statistics for Emacs loading.
