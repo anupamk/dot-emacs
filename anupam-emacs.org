@@ -3843,6 +3843,22 @@ of order, not unlike ~fzf~ on unix shells.
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
 
+  ;; -----------------------------------------------------------------------------
+  ;; define a face for the prefix-character used to display current
+  ;; candidates in vertico completion list.
+  (defface anupam-vertico-prefix-face
+    '((default :inherit bold)
+
+      (((class color) (min-colors 88) (background light))
+       :foreground "#000000")
+
+      (((class color) (min-colors 88) (background dark))
+       :foreground "#ffd700")
+
+      (t :foreground "red"))
+
+    "Prefix face for display of current candidates in vertico completion list")
+
   (use-package vertico
     :ensure t
 
@@ -3873,7 +3889,7 @@ of order, not unlike ~fzf~ on unix shells.
                   (setq cand (funcall orig cand prefix suffix index _start))
                   (concat
                    (if (= vertico--index index)
-                       (propertize "» " 'face '(:foreground "#80adf0" :weight bold))
+                       (propertize "» " 'face 'anupam-vertico-prefix-face)
                      "  ")
                    cand)))
 
@@ -3890,15 +3906,12 @@ of order, not unlike ~fzf~ on unix shells.
 
   (use-package orderless
     :ensure t
-
     :defer t
-
     :after vertico
 
     :custom
     (completion-styles '(basic partial-completion orderless))
     (completion-category-defaults nil)
-    (completion-category-overrides '((file (styles (partial-completion)))))
 
     ;; ---------------------------------------------------------------------------
     ;; SPC should never complete: use it for `orderless' groups. The `?'
