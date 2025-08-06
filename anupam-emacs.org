@@ -2225,79 +2225,81 @@ lipstick on a pig.
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-modus-operandi-theme.el" :tangle-mode (identity #o444)
 
-;; -----------------------------------------------------------------------------
-;; slightly tweaked modus-operandi theme.
-(use-package modus-themes
-  :ensure t
-  :demand t
+  ;;; anupam-emacs-modus-operandi-theme.el --- modus operandi tweaks -*- lexical-binding: t; -*-
 
-  :config
-  (require 'modus-themes)
+  ;; -----------------------------------------------------------------------------
+  ;; slightly tweaked modus-operandi theme.
+  (use-package modus-themes
+    :ensure t
+    :demand t
 
-  ;; ---------------------------------------------------------------------------
-  ;; some minor tweaks
-  (setq modus-themes-italic-constructs nil
-        modus-themes-bold-constructs nil
-        modus-themes-mixed-fonts nil)
+    :config
+    (require 'modus-themes)
 
-  ;; ---------------------------------------------------------------------------
-  ;; some color customizations
-  (setq modus-themes-prompts '(bold))
-  (setq modus-themes-org-blocks 'gray-background)
+    ;; ---------------------------------------------------------------------------
+    ;; some minor tweaks
+    (setq modus-themes-italic-constructs nil
+          modus-themes-bold-constructs nil
+          modus-themes-mixed-fonts nil)
 
-  ;; ---------------------------------------------------------------------------
-  ;; overall steps (for customizing specific colors) are as follows:
-  ;;
-  ;;    1. place point at character whose color needs modification,
-  ;;    and issue a 'M-x describe-char'
-  ;;
-  ;;    2. scroll to bottom of help-buffer (from 1), and find the
-  ;;    'face' property, it would look something like
-  ;;    'font-lock-<face-name>-face'
-  ;;
-  ;;    3. next find what color corresponds to that face in the
-  ;;    current theme via a 'M-x modus-themes-list-colors-current'
-  ;;
-  ;;    4. find a color you like or any other color, and add the face
-  ;;    into the 'modus-operandi-palette-overrides' below
-  ;;
-  ;;    5. reload theme
+    ;; ---------------------------------------------------------------------------
+    ;; some color customizations
+    (setq modus-themes-prompts '(bold))
+    (setq modus-themes-org-blocks 'gray-background)
 
-  ;; ---------------------------------------------------------------------------
-  ;; modus-operandi-palette customizations
-  (setq modus-operandi-palette-overrides
-        '(
-          ;; -------------------------------------------------------------------
-          ;; dimmer backgrounds are better
-          (bg-main "#d4d4d4")
-          (fg-main "#3a484d")
-          (bg-hl-line bg-blue-subtle)
-          (cursor red-faint)
+    ;; ---------------------------------------------------------------------------
+    ;; overall steps (for customizing specific colors) are as follows:
+    ;;
+    ;;    1. place point at character whose color needs modification,
+    ;;    and issue a 'M-x describe-char'
+    ;;
+    ;;    2. scroll to bottom of help-buffer (from 1), and find the
+    ;;    'face' property, it would look something like
+    ;;    'font-lock-<face-name>-face'
+    ;;
+    ;;    3. next find what color corresponds to that face in the
+    ;;    current theme via a 'M-x modus-themes-list-colors-current'
+    ;;
+    ;;    4. find a color you like or any other color, and add the face
+    ;;    into the 'modus-operandi-palette-overrides' below
+    ;;
+    ;;    5. reload theme
 
-          ;; -------------------------------------------------------------------
-          ;; face specific configuration
-          (type "#000088")
-          (string "#006600")
-          (fnname "#660000")
-          ))
+    ;; ---------------------------------------------------------------------------
+    ;; modus-operandi-palette customizations
+    (setq modus-operandi-palette-overrides
+          '(
+            ;; -------------------------------------------------------------------
+            ;; dimmer backgrounds are better
+            (bg-main "#d4d4d4")
+            (fg-main "#3a484d")
+            (bg-hl-line bg-blue-subtle)
+            (cursor red-faint)
 
-  ;; ---------------------------------------------------------------------------
-  ;; modus-operandi-tinted-palette customizations
-  (setq modus-operandi-tinted-palette-overrides
-        '(
-          ;; -------------------------------------------------------------------
-          ;; dimmer backgrounds are better
-          (bg-main bg-dim)
-          (comment "#696969")
-          ))
+            ;; -------------------------------------------------------------------
+            ;; face specific configuration
+            (type "#000088")
+            (string "#006600")
+            (fnname "#660000")
+            ))
 
-  ;; ---------------------------------------------------------------------------
-  ;; finally load the theme
-  (load-theme 'modus-operandi :no-confirm-loading))
+    ;; ---------------------------------------------------------------------------
+    ;; modus-operandi-tinted-palette customizations
+    (setq modus-operandi-tinted-palette-overrides
+          '(
+            ;; -------------------------------------------------------------------
+            ;; dimmer backgrounds are better
+            (bg-main bg-dim)
+            (comment "#696969")
+            ))
 
-;; -----------------------------------------------------------------------------
-;; last line
-(provide 'anupam-emacs-modus-operandi-theme)
+    ;; ---------------------------------------------------------------------------
+    ;; finally load the theme
+    (load-theme 'modus-operandi :no-confirm-loading))
+
+  ;; -----------------------------------------------------------------------------
+  ;; last line
+  (provide 'anupam-emacs-modus-operandi-theme)
 
 #+end_src
 
@@ -2307,6 +2309,8 @@ lipstick on a pig.
 :END:
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-modus-vivendi-theme.el" :tangle-mode (identity #o444)
+
+  ;;; anupam-emacs-modus-vivendi-theme.el --- modus vivendi tweaks -*- lexical-binding: t; -*-
 
   ;; -----------------------------------------------------------------------------
   ;; slightly tweaked modus-operandi theme.
@@ -2390,6 +2394,8 @@ interactions with Emacs. Lets set that up here.
 
 #+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-zenburn-theme.el" :tangle-mode (identity #o444)
 
+  ;;; anupam-emacs-zenburn-theme.el --- zenburn tweaks -*- lexical-binding: t; -*-
+
   (use-package zenburn-theme
     :ensure t
     :demand t
@@ -2425,20 +2431,19 @@ interactions with Emacs. Lets set that up here.
 
   ;; -----------------------------------------------------------------------------
   ;; load a named-theme, following names are supported
+  ;;
   ;;    - 'modus-operandi'
   ;;    - 'modus-vivendi'
   ;;    - 'zenburn'
+  ;;
+  ;; these themes are very slightly tweaked to my tastes
   (defun anupam-theme:load-a-theme-by-name (theme-name-string)
-
     (pcase theme-name-string
       ("modus-operandi" (require 'anupam-emacs-modus-operandi-theme))
       ("modus-vivendi" (require 'anupam-emacs-modus-vivendi-theme))
       ("zenburn" (require 'anupam-emacs-zenburn-theme))
       ))
 
-  ;; -----------------------------------------------------------------------------
-  ;; load a theme. either `modus-operandi' or `zenburn'. these are
-  ;; slightly tweaked to my tastes
   (anupam-theme:load-a-theme-by-name anupam-theme-name)
 
   ;; ---------------------------------------------------------------------------
