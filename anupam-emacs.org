@@ -3815,6 +3815,35 @@ of order, not unlike ~fzf~ on unix shells.
 
 #+end_src
 
+*** Completion Preview
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-completion.el"
+
+  (global-completion-preview-mode 1)
+
+  (with-eval-after-load 'completion-preview
+    ;; ---------------------------------------------------------------------------
+    ;; show the preview already after two symbol characters
+    (setq completion-preview-minimum-symbol-length 2)
+
+    ;; ---------------------------------------------------------------------------
+    ;; org-mode has a custom 'self-insert-command'
+    (push 'org-self-insert-command completion-preview-commands)
+
+    ;; ---------------------------------------------------------------------------
+    ;; paredit has a custom 'delete-backward-char' command
+    (push 'paredit-backward-delete completion-preview-commands)
+
+    ;; ---------------------------------------------------------------------------
+    ;; cycle the completion candidate that the preview shows
+    (keymap-set completion-preview-active-mode-map "M-n" #'completion-preview-next-candidate)
+    (keymap-set completion-preview-active-mode-map "M-p" #'completion-preview-prev-candidate)
+
+    ;; ---------------------------------------------------------------------------
+    ;; Convenient alternative to 'C-i' after typing one of the above
+    (keymap-set completion-preview-active-mode-map "M-i" #'completion-preview-insert))
+
+#+end_src
 *** Minibuffer UI configuration
 :PROPERTIES:
 :CUSTOM_ID: h:024e5417-a2b0-457d-8a22-48e8b1b5b973
@@ -3894,7 +3923,7 @@ of order, not unlike ~fzf~ on unix shells.
                   (setq cand (funcall orig cand prefix suffix index _start))
                   (concat
                    (if (= vertico--index index)
-                       (propertize "» " 'face 'anupam-vertico-prefix-face)
+                       (propertize "‣ " 'face 'anupam-vertico-prefix-face)
                      "  ")
                    cand)))
 
@@ -3917,6 +3946,7 @@ of order, not unlike ~fzf~ on unix shells.
     :custom
     (completion-styles '(basic partial-completion orderless))
     (completion-category-defaults nil)
+    (completion-category-overrides '((file (styles basic partial-completion))))
 
     ;; ---------------------------------------------------------------------------
     ;; SPC should never complete: use it for `orderless' groups. The `?'
