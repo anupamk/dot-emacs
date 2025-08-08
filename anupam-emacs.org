@@ -2896,7 +2896,18 @@ etc. etc.
     ;;
     ;; when the function is defined, the existing advice immediately
     ;; redefines it, and Emacs provides notice that this has happened.
-    (set 'ad-redefinition-action 'accept))
+    (set 'ad-redefinition-action 'accept)
+
+    ;; ---------------------------------------------------------------------------
+    ;; question: how do you undo an inadvertent motion ? something like
+    ;; 'winner-mode' but for the point.
+    ;;
+    ;; you can invoke 'C-u C-<space>' to jump back to where 'mark' was
+    ;; (you don't need to set it beforehand)
+    ;;
+    ;; with 'set-mark-command-repeat-pop' you can do
+    ;; 'C-u C-<space> C-<space> C-<space> ...' for great good.
+    (setq set-mark-command-repeat-pop t))
 
 #+end_src
 
@@ -4764,6 +4775,43 @@ Low /configuration overhead/ jump to definition.
 :CUSTOM_ID: h:5922c06d-1d46-4a32-8d56-0cb11527c613
 :END:
 
+**** Flycheck Integration
+:PROPERTIES:
+:CUSTOM_ID: h:8046d388-d424-4af8-9790-005e4fad2c83
+:END:
+
+[[https://www.flycheck.org/en/latest/index.html][Flycheck]] is a =on the fly= linter frontend for Emacs. I just enable it
+here. Programming language specific configuration f.e. which version
+to check for etc. is done in their respective sections.
+
+I tried using the builtin flymake earlier, but it was just too slow
+for my tastes. Lets see how this goes.
+
+#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
+
+  ;; -----------------------------------------------------------------------------
+  ;; enable it globally
+  (use-package flycheck
+    :ensure t
+    :init
+    (global-flycheck-mode 1)
+
+    :config
+    (setq flycheck-check-syntax-automatically '(save mode-enabled))
+
+    :hook
+    (flycheck-error-list-mode-hook . visual-line-mode))
+
+  ;; -----------------------------------------------------------------------------
+  ;; disable flycheck (on typical emacs configs, produces far more false
+  ;; positives than useful warnings).
+  (with-eval-after-load 'flycheck
+    (->> (default-value 'flycheck-disabled-checkers)
+         (append '(emacs-lisp emacs-lisp-checkdoc))
+         (-uniq)
+         (setq-default flycheck-disabled-checkers)))
+
+#+end_src
 **** Compilation mode buffer configuration
 :PROPERTIES:
 :CUSTOM_ID: h:EA49ED46-0CF9-4E2E-836C-03917447ADA9
@@ -5013,17 +5061,16 @@ worry / care about.
     (compile (anupam-cc-mode:quick-compile-cmdstr)))
 
   ;; -----------------------------------------------------------------------------
-  ;; disable `flymake' mode by default. makes things just too slow for
-  ;; my taste.
-  (use-package flymake
-    :ensure nil
-    :custom
-    (flymake-no-changes-timeout nil)
-    (flymake-start-on-flymake-mode nil)
-    (flymake-start-on-save-buffer nil)
+  ;; flycheck use c99 for C
+  (defun anupam-cc-mode:flycheck-c-standard ()
+    (setq flycheck-gcc-language-standard "c99")
+    (setq flycheck-clang-language-standard "c99"))
 
-    :config
-    (setq flymake-diagnostic-functions nil))
+  ;; -----------------------------------------------------------------------------
+  ;; flycheck use c++20 for C++
+  (defun anupam-c++-mode:flycheck-c++-standard ()
+    (setq flycheck-gcc-language-standard "c++20")
+    (setq flycheck-clang-language-standard "c++20"))
 
   ;; -----------------------------------------------------------------------------
   ;; configure the `cc-mode'. the 'anupam-cc-mode-hook', which contains
@@ -5040,16 +5087,18 @@ worry / care about.
     (flymake-mode -1)
 
     :bind(
-     :map c-mode-base-map
-     ;; ---------------------------------------------------------------
-     ;; some useful bindings
-     ("RET"           . #'newline-and-indent)
-     ("C-<return>"    . #'recompile)
-     ("C-c <return>"  . #'anupam-cc-mode:quick-compile))
+          :map c-mode-base-map
+          ;; ---------------------------------------------------------------
+          ;; some useful bindings
+          ("RET"           . #'newline-and-indent)
+          ("C-<return>"    . #'recompile)
+          ("C-c <return>"  . #'anupam-cc-mode:quick-compile))
 
     :hook
     (c-mode   . anupam-cc-mode-hook)
     (c++-mode . anupam-cc-mode-hook)
+    (c++-mode . anupam-c++-mode:flycheck-c++-standard)
+    (c-mode   . anupam-cc-mode:flycheck-c-standard)
     (c++-mode . modern-c++-font-lock-mode))
 
 #+end_src

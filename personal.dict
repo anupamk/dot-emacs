@@ -1,4 +1,4 @@
-personal_ws-1.1 en 86 
+personal_ws-1.1 en 91 
 BN
 Bazel
 DEBUGINFOD
@@ -6,6 +6,7 @@ DYNLOAD
 Dired
 Eglot
 GTEST
+GenerateCsr
 INIT
 INLINES
 Isearch
@@ -17,6 +18,7 @@ NOPSLEDS
 Ofcourse
 RAII
 REQ
+RSA
 Svc
 UI
 Unannoy
@@ -42,6 +44,7 @@ devel
 fd
 fname
 fvwm
+gRPC
 goto
 gtest
 iff
@@ -49,6 +52,7 @@ inet
 inlined
 io
 iso
+linter
 llvm
 macos
 mmapped
@@ -57,6 +61,7 @@ nullptr
 ofcourse
 ok
 onwards
+openssl
 param
 params
 pb
