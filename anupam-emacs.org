@@ -900,8 +900,10 @@ here.
   ;;;###autoload
   (defun anupam-common:unannoy-fonts ()
     "I really don't like bold text at ALL. Just disable them. This function is
-  run after the startup is done i.e. as late as possible. Hopefully by that time
-  all faces are loaded."
+  run after:
+      a) startup is done i.e. as late as possible, and
+      b) after a theme change.
+  Hopefully by that time all faces are loaded."
     (interactive)
     (mapc (lambda (face)
             (set-face-attribute face nil
