@@ -1,4 +1,4 @@
-personal_ws-1.1 en 91 
+personal_ws-1.1 en 101 
 BN
 Bazel
 DEBUGINFOD
@@ -38,13 +38,16 @@ bn
 ceil
 cmf
 const
+cpu
 deps
 destructor
 devel
+emacs
 fd
 fname
 fvwm
 gRPC
+gerrit
 goto
 gtest
 iff
@@ -56,6 +59,7 @@ linter
 llvm
 macos
 mmapped
+ng
 nullness
 nullptr
 ofcourse
@@ -66,6 +70,7 @@ param
 params
 pb
 pid
+pids
 proc
 protobuf
 puhleease
@@ -82,11 +87,16 @@ stat'ed
 stringified
 stringify
 submoduled
+sudo
 svc
+syslog
+tarana
+tcp
 tracy
 url
 usr
 util
 vnc
+vterm
 whaaaat
 xorg
