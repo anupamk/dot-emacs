@@ -2107,19 +2107,19 @@ lipstick on a pig.
   ;; ==============================================================================
   ;; buffer-remote ?
   (defvar-local anupam-modeline--remote-buffer-indicator
-      '(:eval
-        (when (file-remote-p default-directory)
-          (propertize " @ "
-                      'face 'anupam-modeline--indicator-red-bg)))
+    '(:eval
+      (when (file-remote-p default-directory)
+        (propertize " @ "
+                    'face 'anupam-modeline--indicator-red-bg)))
     "mode line definition for remote buffers.")
 
   ;; ==============================================================================
   ;; buffer-modified ?
   (defvar-local anupam-modeline--buffer-modified-indicator
-      '(:eval
-        (when (buffer-modified-p)
-          (propertize " * "
-                      'face 'anupam-modeline--indicator-blue-bg)))
+    '(:eval
+      (when (buffer-modified-p)
+        (propertize " * "
+                    'face 'anupam-modeline--indicator-blue-bg)))
     "mode line definition for modified buffers.")
 
   ;; ==============================================================================
@@ -2135,10 +2135,10 @@ lipstick on a pig.
     (format-mode-line "[%l:%c]"))
 
   (defvar-local anupam-modeline--buffer-name-info
-      '(:eval
-        (concat (anupam-modeline--buffer-name-with-ro-ind)
-                " "
-                (anupam-modeline--buffer-location)))
+    '(:eval
+      (concat (anupam-modeline--buffer-name-with-ro-ind)
+              " "
+              (anupam-modeline--buffer-location)))
     "mode line definition for displaying buffer-name")
 
   ;; ==============================================================================
@@ -2156,10 +2156,10 @@ lipstick on a pig.
     (capitalize (string-replace "-mode" "" (symbol-name major-mode))))
 
   (defvar-local anupam-modeline--major-mode
-      '(:eval
-        (concat (anupam-modeline--major-mode-indicator)
-                " "
-                (propertize (anupam-modeline--major-mode-short-name) 'face 'shadow)))
+    '(:eval
+      (concat (anupam-modeline--major-mode-indicator)
+              " "
+              (propertize (anupam-modeline--major-mode-short-name) 'face 'shadow)))
 
     "mode line definition for displaying major-mode")
 
@@ -2201,16 +2201,16 @@ lipstick on a pig.
      ))
 
   (defvar-local anupam-modeline--git-info
-      '(:eval
-        (when-let* ((file-name (buffer-file-name))
-                    ;; -----------------------------------------------------------
-                    ;; file is registered with git ?
-                    (vc-git-registered file-name)
+    '(:eval
+      (when-let* ((file-name (buffer-file-name))
+                  ;; -----------------------------------------------------------
+                  ;; file is registered with git ?
+                  (vc-git-registered file-name)
 
-                    ;; -----------------------------------------------------------
-                    ;; get git-branch-name
-                    (branch-name (vc-git--symbolic-ref file-name)))
-          (anupam-modeline--git-info-text file-name branch-name)))
+                  ;; -----------------------------------------------------------
+                  ;; get git-branch-name
+                  (branch-name (vc-git--symbolic-ref file-name)))
+        (anupam-modeline--git-info-text file-name branch-name)))
     "mode line definition for displaying version control information")
 
   ;; ==============================================================================
@@ -2222,9 +2222,15 @@ lipstick on a pig.
   ;;     '%H' => hour on 24h clock
   ;;     '%M' => minute (00..59)
   (defvar-local anupam-modeline--date-time-info
-      '(:eval
-        (propertize (format-time-string " ❬ %d-%B ❙ %H:%M ❭ ") 'face 'shadow))
+    '(:eval
+      (propertize (format-time-string " ❬ %d-%B ❙ %H:%M ❭ ") 'face 'shadow))
     "mode line definition for displaying date and time")
+
+  ;; -----------------------------------------------------------------------------
+  ;; setup modeline fonts to be different than the buffer fonts.
+  (set-face-attribute 'mode-line nil :font "PragmataPro Mono" :weight 'bold :height 180)
+  (set-face-attribute 'mode-line-inactive nil :font "PragmataPro Mono" :height 180)
+
 
   ;; -----------------------------------------------------------------------------
   ;; last line of this file
