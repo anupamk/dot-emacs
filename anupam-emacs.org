@@ -1083,15 +1083,11 @@ Per $HOST configuration.
   (defun anupam-cc-mode:lsp-server-clangd-args()
     (concat "--compile-commands-dir=" (getenv "PWD") " "
             (mapconcat #'identity `(
-                                    "-j=1"
-                                    "--malloc-trim"
-                                    "--all-scopes-completion"
-                                    "--background-index"
-                                    "--limit-references=8"
-                                    "--limit-results=8"
-                                    "--pch-storage=disk"
-                                    "--header-insertion-decorators=0"
-                                    )
+                            "-j=4"
+                            "--all-scopes-completion"
+                            "--background-index"
+                            "--header-insertion-decorators=0"
+                            )
                        " ")
             ))
 
@@ -1233,21 +1229,47 @@ Per $HOST configuration.
   (defconst anupam-large-file-size-bytes (* 100 1024 1024))
 
   ;; -----------------------------------------------------------------------------
-  ;; language server protocol (lsp) server, we use ccls on this machine.
-  (defconst anupam-cc-mode:lsp-server-ccls-with-args '("/opt/homebrew/bin/ccls"))
-  (defconst anupam-cc-mode:lsp-server-clangd-with-args '("/opt/homebrew/Cellar/llvm/19.1.7_1/bin/clangd"
-                                                         "-j=8"
-                                                         "--all-scopes-completion=1"
-                                                         "--background-index=1"
-                                                         "--limit-results=128"
-                                                         "--completion-style=detailed"
-                                                         "--pch-storage=memory"
-                                                         "--log=error"))
+  ;; setup 'language-server-protocol' (LSP) server.
+  ;;
+  ;; so for all code related actions, the picture looks something like this:
+  ;;
+  ;;    emacs == lsp-client (via a builtin package called eglot), and
+  ;;    'external' language specific servers, for example:
+  ;;
+  ;;        - 'c' / 'c++' => 'clangd' / 'ccls'
+  ;;        - 'golang'    => 'gopls'
+  ;;        - <this place is for rent>
+  ;;
+  ;; here we configure lsp-servers for c/c++
+
+  (defun anupam-cc-mode:lsp-server-ccls()
+    (executable-find "ccls"))
+
+  (defun anupam-cc-mode:lsp-server-ccls-args()
+    (mapconcat #'identity `(
+                            "--log-file=/tmp/ccls.log"
+                            "-v=1"
+                            )
+               " "))
 
   ;; -----------------------------------------------------------------------------
-  ;; this is the actual server that will be used. see eglot
-  ;; configuration section more information
-  (defconst cc-mode:lsp-server-with-args anupam-cc-mode:lsp-server-ccls-with-args)
+  ;; '--compile-commands-dir' is needed for background indexing with
+  ;; 'clangd' otherwise it just indexes files 'on-demand' i.e. as and
+  ;; when they are opened.
+  ;;
+  ;; but '--compile-commands-dir' changes based on projects etc. so we
+  ;; just use the '${PWD}' as the starting point.
+  (defun anupam-cc-mode:lsp-server-clangd()
+    (executable-find "clangd"))
+
+  (defun anupam-cc-mode:lsp-server-clangd-args()
+    (mapconcat #'identity `(
+                            "-j=4"
+                            "--all-scopes-completion"
+                            "--background-index"
+                            "--header-insertion-decorators=0"
+                            )
+               " "))
 
   ;; -----------------------------------------------------------------------------
   ;; ,----[from the gcc man-page]
@@ -1276,16 +1298,16 @@ Per $HOST configuration.
             "-fdiagnostics-path-format=separate-events "
             ))
 
-  (defconst gcc-with-args (concat "/opt/homebrew/Cellar/gcc/14.2.0_1/bin/gcc-14 " gcc-plain-diag-args))
-  (defconst g++-with-args (concat "/opt/homebrew/Cellar/gcc/14.2.0_1/bin/g++-14 " gcc-plain-diag-args))
+  (defconst gcc-with-args (concat "/opt/homebrew/opt/gcc/bin/gcc-15 " gcc-plain-diag-args))
+  (defconst g++-with-args (concat "/opt/homebrew/opt/gcc/bin/g++-15 " gcc-plain-diag-args))
 
   ;; -----------------------------------------------------------------------------
   ;; clang and clang++ with less noisy flags
   (defconst clang-plain-diag-args
     (concat ""))
 
-  (defconst clang-with-args (concat "/opt/homebrew/Cellar/llvm/19.1.7_1/bin/clang " clang-plain-diag-args))
-  (defconst clang++-with-args (concat "/opt/homebrew/Cellar/llvm/19.1.7_1/bin/clang++ " clang-plain-diag-args))
+  (defconst clang-with-args (concat "/opt/homebrew/opt/llvm/bin/clang" clang-plain-diag-args))
+  (defconst clang++-with-args (concat "/opt/homebrew/opt/llvm/bin/clang++ " clang-plain-diag-args))
 
   ;; -----------------------------------------------------------------------------
   ;; now choose a compiler family, 'gcc' or 'clang'
@@ -1584,9 +1606,6 @@ Per $HOST configuration.
                                     "--malloc-trim"
                                     "--all-scopes-completion"
                                     "--background-index"
-                                    "--limit-references=8"
-                                    "--limit-results=8"
-                                    "--pch-storage=disk"
                                     "--header-insertion-decorators=0"
                                     )
                        " ")
@@ -4738,7 +4757,7 @@ Lets set that up here:
     ;; update 'lspce-server-programs' to use appropriate lsp server for
     ;; different programming modes.
     (setq lspce-server-programs `(("python" "pylsp" "" )
-                                  ("C" anupam-cc-mode:lsp-server-ccls  anupam-cc-mode:lsp-server-ccls-args))
+                                  ("C" anupam-cc-mode:lsp-server-clangd  anupam-cc-mode:lsp-server-clangd-args))
           ))
 
 #+end_src
