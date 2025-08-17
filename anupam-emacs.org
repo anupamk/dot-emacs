@@ -340,39 +340,61 @@ without a modicum of understanding of the innards.
 #+begin_src emacs-lisp :tangle "early-init.el"
 
   ;; -----------------------------------------------------------------------------
-  ;; garbage collect when idle, and disable while in the minibuffer
-  (defun my-minibuffer-setup-hook ()
+  ;; 1G !!! we are R.I.C.H
+  (defvar anupam/gc-cons-threshold
+    (* 1024 1024 1024))
+
+  ;; -----------------------------------------------------------------------------
+  ;; max amount that can be read from a process. this is '32mb' due to
+  ;; lsp.
+  (defvar anupam/process-max-memory
+    (* 32 1024 1024))
+
+  (defvar anupam/file-name-handler-alist file-name-handler-alist)
+
+  (setq gc-cons-threshold most-positive-fixnum
+        gc-cons-percentage 0.6
+        file-name-handler-alist nil
+        site-run-file nil
+        read-process-output-max anupam/process-max-memory)
+
+  ;; -----------------------------------------------------------------------------
+  ;; run this function once init files are loaded.
+  (defun anupam-early-init:after-loading-init-files-run ()
+    ;; ---------------------------------------------------------------------------
+    ;; restore it back
+    (setq file-name-handler-alist anupam/file-name-handler-alist)
+
+    ;; ---------------------------------------------------------------------------
+    ;; garbage-collection can happen automatically once these many bytes
+    ;; have been allocated since last garbage colletion.
+    (setq gc-cons-threshold anupam/gc-cons-threshold)
+
+    ;; ---------------------------------------------------------------------------
+    ;; portion of heap used for allocation
+    (setq gc-cons-percentage 0.1))
+
+  (add-hook 'emacs-startup-hook  #'anupam-early-init:after-loading-init-files-run)
+
+  ;; -----------------------------------------------------------------------------
+  ;; disable garbage collection when in minibuffer
+  (defun anupam-early-init:on-minibuffer-enter-run ()
     (setq gc-cons-threshold most-positive-fixnum))
 
-  (defun my-minibuffer-exit-hook ()
-    (setq gc-cons-threshold 800000000))
+  ;; -----------------------------------------------------------------------------
+  ;; run when exiting the minibuffer
+  (defun anupam-early-init:on-minibuffer-exit-run ()
+    (garbage-collect)
+    (setq gc-cons-threshold anupam/gc-cons-threshold))
 
-  (add-hook 'minibuffer-setup-hook #'my-minibuffer-setup-hook)
-  (add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
+  (add-hook 'minibuffer-setup-hook #'anupam-early-init:on-minibuffer-enter-run)
+  (add-hook 'minibuffer-exit-hook #'anupam-early-init:on-minibuffer-exit-run)
 
   (defun gc-idle-timer ()
     "Trigger garbage collection when Emacs is idle for 0.5 seconds."
     (run-with-idle-timer 1.2 t 'garbage-collect))
 
   (gc-idle-timer)
-
-  ;; -----------------------------------------------------------------------------
-  ;; make startup faster.
-  ;;
-  ;; some background: the variable `file-name-handler-alist' specifies
-  ;; an alist of elements (regexp . handler) for file names handled
-  ;; specially. if a file name matches the regexp, all i/o on that file
-  ;; is done by calling the handler.
-  ;;
-  ;; during startup we don't care about these. once startup is
-  ;; over, we restore things back.
-  (defvar startup/file-name-handler-alist file-name-handler-alist)
-
-  (setq file-name-handler-alist nil)
-
-  (add-hook 'emacs-startup-hook
-            #'(lambda ()
-                file-name-handler-alist startup/file-name-handler-alist))
 
 #+end_src
 
@@ -2900,14 +2922,6 @@ etc. etc.
     ;; -------------------------------------------------------------------------
     ;; additional space to put between lines when displaying a buffer
     (setq-default line-spacing -1)
-
-    ;; ---------------------------------------------------------------------------
-    ;; maximum number of bytes to read from a sub-process in a single
-    ;; chunk.
-    ;;
-    ;; `8mb' at max, good for interfacing with lsp endpoints. they do
-    ;; generate megabytes of data !
-    (setq read-process-output-max (* 8 1024 1024))
 
     ;; ---------------------------------------------------------------------------
     ;; a file is considered 'large' based on the 'host-specific' value
