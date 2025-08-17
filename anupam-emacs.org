@@ -4243,39 +4243,30 @@ search results, specifying custom query commands etc. etc.
     ;; ---------------------------------------------------------------------------
     ;; default file alias to use when no alias can be determined
     (rg-default-alias-fallback "all")
-    )
 
-#+end_src
+    :config
+    ;; ---------------------------------------------------------------------------
+    ;; a custom search function.
+    (rg-define-search anupam-rg:project-root-or-cwd
+      :query ask
+      :format regexp
+      :files "everything"
+      :dir (let ((proj-root-dir (vc-root-dir)))
+             (if proj-root-dir
+                 proj-root-dir
+               default-directory))
+      :confirm prefix
+      :flags ("--hidden -g '!third_party/'"))
 
-**** R.I.P.GREP ≫ GREP
+    :bind (("M-s p" . anupam-rg:project-root-or-cwd)
 
-In 2025, there is no reason to stick with =grep= anymore neither in
-the terminal, nor within Emacs. Lets set that up.
+           :map rg-mode-map
+           ("C-n" . next-line)
+           ("C-p" . previous-line)
+           ("M-n" . rg-next-file)
+           ("M-p" . rg-prev-file)))
 
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el"
-
-  (grep-apply-setting 'grep-find-command
-                      ;; ---------------------------------------------------------
-                      ;; `46' because the '' is `46' characters away
-                      ;; from the begining of 'rg -n ...' stanza
-                      ;; 0....!....1....!....2....!....3....!....4....!....5....!....6....!....7....!....8....!....9
-                      '("rg -g '!third_party/' -n -H --no-heading -e '' $(git rev-parse --show-toplevel || pwd)" . 46))
-
-  (global-set-key (kbd "C-c g") 'grep-find)
-
-#+end_src
-
-*** Some modified keybindings
-:PROPERTIES:
-:CUSTOM_ID: h:8ba7650d-ed8c-43e3-8511-b8a736e6e828
-:END:
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el"
-
-  ;; ---------------------------------------------------------------------------
-  ;; regex search always
-  (define-key global-map [remap isearch-forward]  #'isearch-forward-regexp)
-  (define-key global-map [remap isearch-backward] #'isearch-backward-regexp)
+  (global-set-key (kbd "C-c r") #'rg-menu)
 
 #+end_src
 
