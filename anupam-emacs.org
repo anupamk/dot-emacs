@@ -1624,8 +1624,7 @@ Per $HOST configuration.
   (defun anupam-cc-mode:lsp-server-clangd-args()
     (concat "--compile-commands-dir=" (getenv "PWD") " "
             (mapconcat #'identity `(
-                                    "-j=1"
-                                    "--malloc-trim"
+                                    "-j=4"
                                     "--all-scopes-completion"
                                     "--background-index"
                                     "--header-insertion-decorators=0"
@@ -4207,111 +4206,6 @@ Configure search within Emacs.
 
 #+end_src
 
-*** Isearch configuration
-:PROPERTIES:
-:CUSTOM_ID: h:62240120-6e34-4785-a929-57def0553b7f
-:END:
-
-With the ~.*?~ regex enabled, we can just type =one two= and have the
-space be interpreted as /intermediate characters/ instead of using
-regexes all the time.
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-search.el"
-
-  ;; -----------------------------------------------------------------------------
-  ;; When you search a buffer with a word it may become tedious to jump
-  ;; around with 'C-s', you can use the key combo 'M-s o' in isearch to
-  ;; automatically have an overview of all the occurrences in the occur
-  ;; buffer.
-  ;;
-  ;; I like to keep that buffer and have the isearch mode exited. To be
-  ;; able to do this I have a little function that does it:
-  (defun anupam:isearch-occur-from-isearch ()
-    (interactive)
-    (let ((query (if isearch-regexp
-                     isearch-string
-                   (regexp-quote isearch-string))))
-      (isearch-update-ring isearch-string isearch-regexp)
-      (let (search-nonincremental-instead)
-        (ignore-errors (isearch-done t t)))
-      (occur query)))
-
-  ;; -----------------------------------------------------------------------------
-  ;; perform a project search out of the current search word instead of
-  ;; limiting ourselves to the current buffer:
-  (defun anupam:project-search-from-isearch ()
-    (interactive)
-    (let ((query (if isearch-regexp
-                     isearch-string
-                   (regexp-quote isearch-string))))
-      (isearch-update-ring isearch-string isearch-regexp)
-      (let (search-nonincremental-instead)
-        (ignore-errors (isearch-done t t)))
-      (project-find-regexp query)))
-
-  ;; -----------------------------------------------------------------------------
-  ;; Sometime I want to have a interactive way to jump into the current
-  ;; search word, you can use consult-line from the consult package to
-  ;; jump interactively. But if you want to jump from the current
-  ;; isearch term you can just use that same simple function from
-  ;; earlier and instead consult-line like this:
-  (defun anupam:isearch-consult-line-from-isearch ()
-    "Invoke `consult-line' from isearch."
-    (interactive)
-    (let ((query (if isearch-regexp
-                     isearch-string
-                   (regexp-quote isearch-string))))
-      (isearch-update-ring isearch-string isearch-regexp)
-      (let (search-nonincremental-instead)
-        (ignore-errors (isearch-done t t)))
-      (consult-line query)))
-
-  (use-package isearch
-    :ensure nil
-    :demand t
-
-    :bind (:map global-map
-                ;; ---------------------------------------------------------------
-                ;; these are made available all the timer.
-                ("M-s M-o" . anupam:isearch-occur-from-isearch)
-                ("M-s M-p" . anupam:project-search-from-isearch)
-
-                ;; ---------------------------------------------------------------------
-                ;; bind to a more convenient key
-                ("M-s M-d" . isearch-forward-thing-at-point)
-
-                ;; ---------------------------------------------------------------------
-                ;; invoke 'consult-line' from isearch
-                ("M-s M-c" . anupam:isearch-consult-line-from-isearch))
-
-    :config
-    ;; ---------------------------------------------------------------------------
-    ;; basic settings
-    (setq search-whitespace-regexp ".*?")
-    (setq search-highlight t)
-    (setq isearch-lax-whitespace t)
-    (setq isearch-regexp-lax-whitespace nil)
-    (setq isearch-lazy-highlight t)
-
-    ;; ---------------------------------------------------------------------------
-    ;; these are newer
-    (setq isearch-lazy-count t)
-    (setq lazy-count-prefix-format "(%s/%s) ")
-    (setq lazy-count-suffix-format "[%s of %s]")
-    (setq isearch-yank-on-move 'shift)
-    (setq isearch-allow-scroll 'unlimited)
-
-    ;; ---------------------------------------------------------------------------
-    ;; seconds to wait before beginning to lazily highlight all matches.
-    (setq lazy-highlight-initial-delay 0.5)
-
-    ;; ---------------------------------------------------------------------------
-    ;; search strings at least '4' long, lazy highlight starts
-    ;; immediately.
-    (setq lazy-highlight-no-delay-length 4))
-
-#+end_src
-
 *** Ripgrep
 
 RipGrep is a wrapper over the versatile and /fast/ ripgrep command
@@ -4848,36 +4742,8 @@ Lets set that up here:
     ;; ---------------------------------------------------------------------------
     ;; update 'lspce-server-programs' to use appropriate lsp server for
     ;; different programming modes.
-    (setq lspce-server-programs `(("python" "pylsp" "" )
-                                  ("C" anupam-cc-mode:lsp-server-clangd  anupam-cc-mode:lsp-server-clangd-args))
+    (setq lspce-server-programs `(("C" anupam-cc-mode:lsp-server-clangd  anupam-cc-mode:lsp-server-clangd-args))
           ))
-
-#+end_src
-
-*** Dumbjump
-:PROPERTIES:
-:CUSTOM_ID: h:87ABCB3C-82D1-4E63-A5FF-868FF40D67E4
-:END:
-
-Low /configuration overhead/ jump to definition.
-
-#+begin_src emacs-lisp :tangle "anupam-emacs-module/anupam-emacs-langs.el"
-
-  (use-package dumb-jump
-    :ensure t
-
-    :custom
-    (dumb-jump-force-searcher 'rg)
-    )
-
-  ;; -----------------------------------------------------------------------------
-  ;; remove TAGS as an option from xref, as i never use that.
-  (setq xref-backend-functions (remq 'etags--xref-backend xref-backend-functions))
-
-  ;; -----------------------------------------------------------------------------
-  ;; add dumb-jump as an option of last resort for navigation within
-  ;; buffers in a project.
-  (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate t)
 
 #+end_src
 
