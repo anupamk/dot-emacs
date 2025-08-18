@@ -4252,7 +4252,7 @@ search results, specifying custom query commands etc. etc.
 
     :config
     ;; ---------------------------------------------------------------------------
-    ;; a custom search function.
+    ;; project-wide and current-working-directory custom searches.
     (rg-define-search anupam-rg:project-root-or-cwd
       :query ask
       :format regexp
@@ -4264,7 +4264,15 @@ search results, specifying custom query commands etc. etc.
       :confirm prefix
       :flags ("--hidden -g '!third_party/'"))
 
+    (rg-define-search anupam-rg:cwd
+      :query ask
+      :format regexp
+      :files "everything"
+      :dir default-directory
+      :confirm prefix)
+
     :bind (("M-s p" . anupam-rg:project-root-or-cwd)
+           ("M-s d" . anupam-rg:cwd)
 
            :map rg-mode-map
            ("C-n" . next-line)
