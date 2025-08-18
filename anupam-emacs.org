@@ -1569,6 +1569,11 @@ Per $HOST configuration.
   (defconst anupam-theme-name "modus-operandi")
   (defconst anupam-font-family-name "Berkeley Mono")
 
+  ;; ---------------------------------------------------------------------------
+  ;; define font & size for modeline
+  (defconst anupam-modeline-font "Berkeley Mono")
+  (defconst anupam-modeline-font-size 150)
+
   ;; -----------------------------------------------------------------------------
   ;; '100m' file size is considered large here
   (defconst anupam-large-file-size-bytes (* 100 1024 1024))
@@ -2251,9 +2256,8 @@ lipstick on a pig.
 
   ;; -----------------------------------------------------------------------------
   ;; setup modeline fonts to be different than the buffer fonts.
-  (set-face-attribute 'mode-line nil :font "PragmataPro Mono" :weight 'bold :height 180)
-  (set-face-attribute 'mode-line-inactive nil :font "PragmataPro Mono" :height 180)
-
+  (set-face-attribute 'mode-line nil :font anupam-modeline-font :height anupam-modeline-font-size)
+  (set-face-attribute 'mode-line-inactive nil :font anupam-modeline-font :height anupam-modeline-font-size)
 
   ;; -----------------------------------------------------------------------------
   ;; last line of this file
