@@ -508,28 +508,6 @@ compilation enabled, things are slightly less convoluted here.
 
 #+end_src
 
-** Backups and lockfiles
-:PROPERTIES:
-:CUSTOM_ID: h:06628ee2-8d04-4ac7-b216-5567a8de1ba8
-:END:
-
-Configure how Emacs backs the files up
-
-#+begin_src emacs-lisp :tangle "init.el"
-
-  (setq backup-directory-alist       ; File name patterns and backup directory names.
-        `(("." . ,(expand-file-name "backups" user-emacs-directory)))
-        make-backup-files t          ; Backup of a file the first time it is saved.
-        vc-make-backup-files nil     ; No backup of files under version control
-        backup-by-copying t          ; Don't clobber symlinks
-        version-control t            ; Version numbers for backup files
-        delete-old-versions t        ; Delete excess backup files silently
-        kept-old-versions 6          ; Number of old versions to keep
-        kept-new-versions 9          ; Number of new versions to keep
-        delete-by-moving-to-trash t) ; Delete files to trash
-
-#+end_src
-
 ** Load user customization after init
 :PROPERTIES:
 :CUSTOM_ID: h:b0f3f080-6878-49e3-b449-136716a9678c
@@ -1247,6 +1225,11 @@ Per $HOST configuration.
   ;; host specific theme+font customizations
   (defconst anupam-theme-name "modus-operandi")
   (defconst anupam-font-family-name "Berkeley Mono")
+
+  ;; ---------------------------------------------------------------------------
+  ;; define font & size for modeline
+  (defconst anupam-modeline-font "PragmataPro Mono")
+  (defconst anupam-modeline-font-size 150)
 
   ;; -----------------------------------------------------------------------------
   ;; '100m' file size is considered large here
